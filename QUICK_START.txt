@@ -1,0 +1,119 @@
+╔═════════════════════════════════════════════════════════════════════╗
+║            STEENSMA EOS PLATFORM - QUICK START GUIDE                ║
+╚═════════════════════════════════════════════════════════════════════╝
+
+🌐 URL: https://eos.coresteensma.com
+🔐 Auth: Same credentials as shop.coresteensma.com
+📍 Location: /home/ubuntu/eosplatform/
+
+═══════════════════════════════════════════════════════════════════════
+WHAT IT DOES
+═══════════════════════════════════════════════════════════════════════
+
+6-Card Dashboard for EOS Strategic Planning:
+  🎯 Quarterly Rocks     - Q1 2026 priorities (8 total, 5 on track)
+  📊 Scorecard          - Weekly metrics (10 tracked, 8 green)
+  ⚠️ Issues List         - Open problems (7 total, 3 high priority)
+  ✅ To-Dos             - Action items (12 open, 5 due this week)
+  🔮 Vision (VTO)        - 10-year, 3-year, 1-year targets
+  👥 Accountability      - Who owns what (9 filled, 2 open seats)
+
+═══════════════════════════════════════════════════════════════════════
+HOW TO UPDATE DATA
+═══════════════════════════════════════════════════════════════════════
+
+STEP 1: Edit your Google Sheet (6 tabs)
+  - Rocks (quarterly priorities)
+  - Scorecard (weekly metrics)
+  - Issues (problems to solve)
+  - To-Dos (action items)
+  - VTO (vision statements)
+  - Accountability (org chart)
+
+STEP 2: Export each tab as CSV
+
+STEP 3: Upload to server
+  scp rocks.csv ubuntu@server:~/eosplatform/datasheets/
+  scp scorecard.csv ubuntu@server:~/eosplatform/datasheets/
+  (repeat for all 6 files)
+
+STEP 4: Dashboard updates automatically (< 60 seconds)
+
+═══════════════════════════════════════════════════════════════════════
+COMMON COMMANDS
+═══════════════════════════════════════════════════════════════════════
+
+Check status:       ./status.sh
+                    (or: sudo systemctl status eosplatform)
+
+Restart app:        sudo systemctl restart eosplatform
+
+View logs:          journalctl -u eosplatform -f
+
+Test API:           curl http://localhost:5002/api/summary
+                    curl http://localhost:5002/health
+
+═══════════════════════════════════════════════════════════════════════
+DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════
+
+📘 Complete Setup Guide:      README.md (330 lines)
+📗 Deployment Record:          DEPLOYMENT_SUCCESS.md (320 lines)
+📙 Quick Reference:            QUICK_START.txt (this file)
+📊 Status Script:              status.sh (run anytime)
+
+═══════════════════════════════════════════════════════════════════════
+GOOGLE SHEET FORMAT (Pipe-Delimited CSV)
+═══════════════════════════════════════════════════════════════════════
+
+rocks.csv:
+  Description|Owner|Status|DueDate|Progress
+  Install 4th technician|Jeff|ON TRACK|3/31/2026|60
+
+scorecard.csv:
+  Metric|Owner|Goal|Week1|Week2|...|Week13|Status
+  Revenue|Jeff|$100K|95000|102000|...|101000|GREEN
+
+issues.csv:
+  Issue|Priority|Owner|DateAdded|Status
+  Parking overflow|HIGH|Jeff|1/15/2026|OPEN
+
+todos.csv:
+  Task|Owner|DueDate|Status|Source
+  Review Q1 financials|Jeff|2/15/2026|OPEN|Meeting
+
+vto.csv:
+  Section|Content
+  Quarter|Q1 2026
+  10-Year Target|$50M revenue, 5 locations
+
+accountability.csv:
+  Seat|Accountabilities|Person|Roles
+  Site Lead|P&L, Leadership|Jeff|Operations, Sales
+
+═══════════════════════════════════════════════════════════════════════
+SERVICES
+═══════════════════════════════════════════════════════════════════════
+
+eosplatform.service             - Flask app (port 5002)
+eosplatform-gdrive-sync.service - Google Drive sync (optional)
+
+Both enabled for auto-start on reboot.
+
+═══════════════════════════════════════════════════════════════════════
+NEXT STEPS
+═══════════════════════════════════════════════════════════════════════
+
+1. Create your Google Sheet with 6 tabs (see README.md for format)
+2. Populate with your actual Q1 2026 EOS data
+3. Export each tab as CSV
+4. Upload to ~/eosplatform/datasheets/
+5. Visit https://eos.coresteensma.com
+6. Run your L10 meeting with live dashboard!
+
+═══════════════════════════════════════════════════════════════════════
+
+Built: February 9, 2026 in ~2 hours
+"Borrowed" UX patterns from Ninety.io, built it YOUR way
+Cost: $0/month (vs $1,320/year for Ninety.io with 10 users)
+

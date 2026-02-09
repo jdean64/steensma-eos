@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision/Traction Organizer - EOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 32px; font-weight: 700; }
+        .back-button {
+            background: white;
+            color: #8b5cf6;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-button:hover { transform: translateY(-2px); }
+        
+        .vto-section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .vto-section h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #8b5cf6;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #8b5cf6;
+        }
+        .vto-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .vto-section p {
+            font-size: 16px;
+            color: #4b5563;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+        .vto-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        .vto-section li {
+            font-size: 16px;
+            color: #4b5563;
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .vto-section li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #8b5cf6;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .timeline-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-top: 4px solid #8b5cf6;
+        }
+        .timeline-card h3 {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .timeline-card .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.6;
+        }
+        .core-values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .core-value-item {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            padding: 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #374151;
+            text-align: center;
+        }
+        .quarter-badge {
+            display: inline-block;
+            background: #8b5cf6;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Vision/Traction Organizer (VTO)</h1>
+            <a href="/" class="back-button">← Back to Dashboard</a>
+        </div>
+
+        <div class="vto-section">
+            <span class="quarter-badge" id="quarterBadge">Q1 2026</span>
+        </div>
+
+        <div class="timeline" id="timeline"></div>
+
+        <div class="vto-section" id="coreValuesSection"></div>
+        <div class="vto-section" id="nicheSection"></div>
+        <div class="vto-section" id="threeUniquesSection"></div>
+        <div class="vto-section" id="marketingSection"></div>
+        <div class="vto-section" id="issuesSection"></div>
+    </div>
+
+    <script>
+        async function loadVTO() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (data.vto) {
+                    displayVTO(data.vto);
+                }
+            } catch (error) {
+                console.error('Error loading VTO:', error);
+            }
+        }
+
+        function displayVTO(vto) {
+            // Update quarter badge
+            if (vto.quarter) {
+                document.getElementById('quarterBadge').textContent = vto.quarter;
+            }
+
+            // Display timeline
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+            
+            const timeframes = [
+                { label: '10-Year Target', value: vto.ten_year_target },
+                { label: '3-Year Picture', value: vto.three_year_picture },
+                { label: '1-Year Plan', value: vto.one_year_plan }
+            ];
+
+            timeframes.forEach(tf => {
+                if (tf.value) {
+                    const card = document.createElement('div');
+                    card.className = 'timeline-card';
+                    card.innerHTML = `
+                        <h3>${tf.label}</h3>
+                        <div class="value">${tf.value}</div>
+                    `;
+                    timeline.appendChild(card);
+                }
+            });
+
+            // Core Values
+            if (vto.core_values) {
+                const section = document.getElementById('coreValuesSection');
+                section.innerHTML = `
+                    <h2>Core Values</h2>
+                    <div class="core-values-grid">
+                        ${vto.core_values.split(',').map(value => 
+                            `<div class="core-value-item">${value.trim()}</div>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+
+            // Core Focus / Niche
+            if (vto.core_focus) {
+                const section = document.getElementById('nicheSection');
+                section.innerHTML = `
+                    <h2>Core Focus / Niche</h2>
+                    <p>${vto.core_focus}</p>
+                `;
+            }
+
+            // 3 Uniques
+            if (vto.three_uniques) {
+                const section = document.getElementById('threeUniquesSection');
+                section.innerHTML = `
+                    <h2>3 Uniques</h2>
+                    <p>${vto.three_uniques}</p>
+                `;
+            }
+
+            // Marketing Strategy
+            if (vto.marketing_strategy) {
+                const section = document.getElementById('marketingSection');
+                section.innerHTML = `
+                    <h2>Marketing Strategy</h2>
+                    <p>${vto.marketing_strategy}</p>
+                `;
+            }
+
+            // Issues List
+            if (vto.issues_list) {
+                const section = document.getElementById('issuesSection');
+                const issues = vto.issues_list.split(',');
+                section.innerHTML = `
+                    <h2>Key Issues to Solve</h2>
+                    <ul>
+                        ${issues.map(issue => `<li>${issue.trim()}</li>`).join('')}
+                    </ul>
+                `;
+            }
+        }
+
+        loadVTO();
+        setInterval(loadVTO, 300000); // Refresh every 5 minutes
+    </script>
+</body>
+</html>

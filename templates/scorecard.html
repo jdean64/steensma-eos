@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scorecard - EOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 32px; font-weight: 700; }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .summary-card h3 { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+        .summary-card .value { font-size: 32px; font-weight: 700; }
+        .summary-card.green .value { color: #10b981; }
+        .summary-card.yellow .value { color: #f59e0b; }
+        .summary-card.red .value { color: #ef4444; }
+        .back-button {
+            background: white;
+            color: #10b981;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-button:hover { transform: translateY(-2px); }
+        .scorecard-table {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f9fafb;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        th.week { text-align: center; min-width: 50px; font-size: 12px; }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        td.week-cell {
+            text-align: center;
+            font-weight: 600;
+        }
+        .status-green { color: #10b981; }
+        .status-yellow { color: #f59e0b; }
+        .status-red { color: #ef4444; }
+        .metric-name { font-weight: 600; color: #111827; }
+        .metric-owner { color: #6b7280; font-size: 14px; }
+        .metric-goal { color: #9ca3af; font-size: 13px; }
+        tr:hover { background: #f9fafb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Weekly Scorecard</h1>
+            <a href="/" class="back-button">← Back to Dashboard</a>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card green">
+                <h3>GREEN METRICS</h3>
+                <div class="value" id="greenCount">-</div>
+            </div>
+            <div class="summary-card yellow">
+                <h3>YELLOW METRICS</h3>
+                <div class="value" id="yellowCount">-</div>
+            </div>
+            <div class="summary-card red">
+                <h3>RED METRICS</h3>
+                <div class="value" id="redCount">-</div>
+            </div>
+            <div class="summary-card">
+                <h3>TOTAL METRICS</h3>
+                <div class="value" id="totalCount">-</div>
+            </div>
+        </div>
+
+        <div class="scorecard-table">
+            <table id="scorecardTable">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Owner</th>
+                        <th>Goal</th>
+                        <th class="week">W1</th>
+                        <th class="week">W2</th>
+                        <th class="week">W3</th>
+                        <th class="week">W4</th>
+                        <th class="week">W5</th>
+                        <th class="week">W6</th>
+                        <th class="week">W7</th>
+                        <th class="week">W8</th>
+                        <th class="week">W9</th>
+                        <th class="week">W10</th>
+                        <th class="week">W11</th>
+                        <th class="week">W12</th>
+                        <th class="week">W13</th>
+                    </tr>
+                </thead>
+                <tbody id="scorecardBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadScorecard() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (data.scorecard) {
+                    displayScorecard(data.scorecard);
+                }
+            } catch (error) {
+                console.error('Error loading scorecard:', error);
+            }
+        }
+
+        function displayScorecard(scorecard) {
+            // Update summary
+            document.getElementById('greenCount').textContent = scorecard.summary.green;
+            document.getElementById('yellowCount').textContent = scorecard.summary.yellow;
+            document.getElementById('redCount').textContent = scorecard.summary.red;
+            document.getElementById('totalCount').textContent = scorecard.summary.total;
+
+            // Display metrics
+            const tbody = document.getElementById('scorecardBody');
+            tbody.innerHTML = '';
+
+            scorecard.metrics.forEach(metric => {
+                const row = document.createElement('tr');
+                
+                let html = `
+                    <td>
+                        <div class="metric-name">${metric.metric}</div>
+                    </td>
+                    <td class="metric-owner">${metric.owner}</td>
+                    <td class="metric-goal">${metric.goal}</td>
+                `;
+
+                // Add 13 weeks of data
+                metric.weeks.forEach(week => {
+                    const statusClass = `status-${week.status.toLowerCase()}`;
+                    html += `<td class="week-cell ${statusClass}">${week.value || '-'}</td>`;
+                });
+
+                row.innerHTML = html;
+                tbody.appendChild(row);
+            });
+        }
+
+        loadScorecard();
+        setInterval(loadScorecard, 300000); // Refresh every 5 minutes
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[Unit]
+Description=Steensma EOS Strategic Platform
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/eosplatform
+Environment="PATH=/home/ubuntu/eosplatform/venv/bin:/usr/bin"
+ExecStart=/home/ubuntu/eosplatform/venv/bin/python app.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

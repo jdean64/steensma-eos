@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accountability Chart - EOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 32px; font-weight: 700; }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .summary-card h3 { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+        .summary-card .value { font-size: 32px; font-weight: 700; color: #111827; }
+        .summary-card.filled .value { color: #10b981; }
+        .summary-card.open .value { color: #ef4444; }
+        .back-button {
+            background: white;
+            color: #ec4899;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-button:hover { transform: translateY(-2px); }
+        
+        .org-chart {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .seat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 5px solid #e5e7eb;
+        }
+        .seat-card.filled { border-left-color: #10b981; }
+        .seat-card.open { border-left-color: #ef4444; }
+        
+        .seat-header {
+            margin-bottom: 15px;
+        }
+        .seat-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+        .seat-person {
+            font-size: 18px;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .seat-person.filled { color: #10b981; font-weight: 600; }
+        .seat-person.open { color: #ef4444; font-weight: 600; }
+        
+        .seat-roles {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .seat-roles h4 {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .seat-roles ul {
+            list-style: none;
+            padding: 0;
+        }
+        .seat-roles li {
+            font-size: 14px;
+            color: #4b5563;
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .seat-roles li::before {
+            content: "•";
+            position: absolute;
+            left: 5px;
+            color: #ec4899;
+            font-weight: bold;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .status-filled { background: #d1fae5; color: #059669; }
+        .status-open { background: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👥 Accountability Chart</h1>
+            <a href="/" class="back-button">← Back to Dashboard</a>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card filled">
+                <h3>FILLED SEATS</h3>
+                <div class="value" id="filledCount">-</div>
+            </div>
+            <div class="summary-card open">
+                <h3>OPEN SEATS</h3>
+                <div class="value" id="openCount">-</div>
+            </div>
+            <div class="summary-card">
+                <h3>TOTAL SEATS</h3>
+                <div class="value" id="totalCount">-</div>
+            </div>
+        </div>
+
+        <div class="org-chart" id="orgChart"></div>
+    </div>
+
+    <script>
+        async function loadAccountability() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (data.accountability) {
+                    displayAccountability(data.accountability);
+                }
+            } catch (error) {
+                console.error('Error loading accountability chart:', error);
+            }
+        }
+
+        function displayAccountability(accountability) {
+            // Update summary
+            document.getElementById('filledCount').textContent = accountability.summary.filled;
+            document.getElementById('openCount').textContent = accountability.summary.open;
+            document.getElementById('totalCount').textContent = accountability.summary.total;
+
+            // Display seats
+            const chart = document.getElementById('orgChart');
+            chart.innerHTML = '';
+
+            accountability.seats.forEach(seat => {
+                const statusClass = seat.status === 'FILLED' ? 'filled' : 'open';
+                const personClass = seat.status === 'FILLED' ? 'filled' : 'open';
+                const statusBadgeClass = seat.status === 'FILLED' ? 'status-filled' : 'status-open';
+                
+                const card = document.createElement('div');
+                card.className = `seat-card ${statusClass}`;
+                
+                const rolesHtml = seat.roles && seat.roles.length > 0 ? `
+                    <div class="seat-roles">
+                        <h4>Key Roles & Responsibilities</h4>
+                        <ul>
+                            ${seat.roles.map(role => `<li>${role}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : '';
+                
+                card.innerHTML = `
+                    <div class="seat-header">
+                        <div class="seat-title">${seat.seat}</div>
+                        <div class="seat-person ${personClass}">
+                            ${seat.status === 'FILLED' ? '✓' : '○'} ${seat.person}
+                        </div>
+                        <span class="status-badge ${statusBadgeClass}">${seat.status}</span>
+                    </div>
+                    ${rolesHtml}
+                `;
+                chart.appendChild(card);
+            });
+        }
+
+        loadAccountability();
+        setInterval(loadAccountability, 300000); // Refresh every 5 minutes
+    </script>
+</body>
+</html>
