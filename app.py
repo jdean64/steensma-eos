@@ -803,6 +803,195 @@ def update_vto():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
+@app.route('/l10')
+@app.route('/l10/<int:meeting_id>')
+def l10_meeting(meeting_id=None):
+    """Display L10 Meeting Interface"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get the meeting (use provided ID or get next scheduled meeting)
+        if meeting_id:
+            cursor.execute('SELECT id, meeting_date, team_name, start_time, status FROM l10_meetings WHERE id = ?', (meeting_id,))
+        else:
+            cursor.execute('SELECT id, meeting_date, team_name, start_time, status FROM l10_meetings WHERE status != "COMPLETED" ORDER BY meeting_date LIMIT 1')
+        
+        meeting_row = cursor.fetchone()
+        if not meeting_row:
+            return "No scheduled L10 meetings found. <a href='/'>Back to Dashboard</a>", 404
+        
+        meeting = {
+            'id': meeting_row[0],
+            'meeting_date': meeting_row[1],
+            'team_name': meeting_row[2],
+            'start_time': meeting_row[3],
+            'status': meeting_row[4]
+        }
+        
+        # Get to-dos for review
+        cursor.execute('SELECT id, todo_text, who, done FROM l10_todos_review WHERE meeting_id = ?', (meeting['id'],))
+        todos_review = [{'id': row[0], 'todo_text': row[1], 'who': row[2], 'done': row[3]} for row in cursor.fetchall()]
+        
+        # Get issues for discussion
+        cursor.execute('''
+            SELECT ld.id, i.id, i.issue, i.priority, i.owner, i.ids_stage, ld.discussed, ld.resolved
+            FROM l10_issues_discussed ld
+            JOIN issues i ON ld.issue_id = i.id
+            WHERE ld.meeting_id = ?
+            ORDER BY CASE i.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 ELSE 3 END
+        ''', (meeting['id'],))
+        issues = [{'id': row[1], 'issue': row[2], 'priority': row[3], 'owner': row[4], 'ids_stage': row[5], 'discussed': row[6], 'resolved': row[7]} for row in cursor.fetchall()]
+        
+        # Get new to-dos created during meeting
+        cursor.execute('SELECT id, todo_text, who FROM l10_new_todos WHERE meeting_id = ?', (meeting['id'],))
+        new_todos = [{'id': row[0], 'todo_text': row[1], 'who': row[2]} for row in cursor.fetchall()]
+        
+        # Get headlines
+        cursor.execute('SELECT id, headline_type, sentiment, headline_text, who_reported FROM l10_headlines WHERE meeting_id = ?', (meeting['id'],))
+        headlines = [{'id': row[0], 'headline_type': row[1], 'sentiment': row[2], 'headline_text': row[3], 'who_reported': row[4]} for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return render_template('l10.html',
+            meeting=meeting,
+            todos_review=todos_review,
+            issues=issues,
+            new_todos=new_todos,
+            headlines=headlines
+        )
+    except Exception as e:
+        return f"Error loading L10 meeting: {str(e)}", 500
+
+@app.route('/api/l10/<int:meeting_id>/todo/<int:todo_id>', methods=['PUT'])
+def update_l10_todo(meeting_id, todo_id):
+    """Mark a to-do as done or not done"""
+    try:
+        data = request.get_json()
+        done = data.get('done', False)
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('UPDATE l10_todos_review SET done = ? WHERE id = ?', (done, todo_id))
+        
+        # If not done, optionally convert to issue
+        if not done:
+            cursor.execute('SELECT todo_text, who FROM l10_todos_review WHERE id = ?', (todo_id,))
+            todo = cursor.fetchone()
+            if todo:
+                # Create new issue from incomplete to-do
+                cursor.execute('''
+                    INSERT INTO issues (issue, priority, owner, status, ids_stage, is_active)
+                    VALUES (?, 'MEDIUM', ?, 'OPEN', 'IDENTIFY', 1)
+                ''', (f"Incomplete To-Do: {todo[0]}", todo[1]))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/l10/<int:meeting_id>/issue/<int:issue_id>/resolve', methods=['PUT'])
+def resolve_l10_issue(meeting_id, issue_id):
+    """Mark an issue as resolved during L10"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE l10_issues_discussed 
+            SET resolved = 1, discussed = 1 
+            WHERE meeting_id = ? AND issue_id = ?
+        ''', (meeting_id, issue_id))
+        
+        # Update issue to SOLVE stage
+        cursor.execute('''
+            UPDATE issues 
+            SET ids_stage = 'SOLVE', status = 'IN_PROGRESS'
+            WHERE id = ?
+        ''', (issue_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/l10/<int:meeting_id>/new-todo', methods=['POST'])
+def add_l10_todo(meeting_id):
+    """Add a new to-do during L10 meeting"""
+    try:
+        data = request.get_json()
+        todo_text = data.get('todo_text')
+        who = data.get('who')
+        
+        if not todo_text or not who:
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Add to L10 new to-dos
+        cursor.execute('''
+            INSERT INTO l10_new_todos (meeting_id, todo_text, who, created_during_meeting)
+            VALUES (?, ?, ?, 1)
+        ''', (meeting_id, todo_text, who))
+        
+        todo_id = cursor.lastrowid
+        
+        # Also add to main todos table
+        due_date = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
+        cursor.execute('''
+            INSERT INTO todos (task, owner, due_date, status, source, is_active)
+            VALUES (?, ?, ?, 'PENDING', 'L10', 1)
+        ''', (todo_text, who, due_date))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'id': todo_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/l10/<int:meeting_id>/complete', methods=['PUT'])
+def complete_l10_meeting(meeting_id):
+    """Mark L10 meeting as complete"""
+    try:
+        data = request.get_json()
+        cascading_messages = data.get('cascading_messages', '')
+        rating = data.get('rating', 0)
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Update meeting status
+        cursor.execute('''
+            UPDATE l10_meetings 
+            SET status = 'COMPLETED', 
+                meeting_notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (f"Rating: {rating}/10\nCascading Messages:\n{cascading_messages}", meeting_id))
+        
+        # Save cascading messages
+        if cascading_messages:
+            for msg in cascading_messages.split('\n'):
+                if msg.strip():
+                    cursor.execute('''
+                        INSERT INTO l10_cascading_messages (meeting_id, message_text)
+                        VALUES (?, ?)
+                    ''', (meeting_id, msg.strip()))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 if __name__ == '__main__':
     # Create archive directory if it doesn't exist
     os.makedirs(ARCHIVE_DIR, exist_ok=True)

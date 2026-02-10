@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L10 Meeting - {{ meeting.meeting_date }} - EOS Platform</title>
+    <style>
+        :root {
+            --primary: #2c5282;
+            --success: #38a169;
+            --warning: #dd6b20;
+            --danger: #e53e3e;
+            --gray: #718096;
+            --light-bg: #f7fafc;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            background: #fff;
+        }
+        
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24pt;
+            margin-bottom: 5px;
+        }
+        
+        .header .meeting-info {
+            font-size: 13pt;
+            opacity: 0.9;
+        }
+        
+        .timer-bar {
+            background: #2d3748;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .current-section {
+            font-size: 14pt;
+            font-weight: bold;
+        }
+        
+        .timer {
+            font-size: 32pt;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: var(--success);
+        }
+        
+        .timer.warning { color: var(--warning); }
+        .timer.danger { color: var(--danger); }
+        
+        .timer-controls button {
+            padding: 8px 16px;
+            margin-left: 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11pt;
+            cursor: pointer;
+            background: var(--success);
+            color: white;
+        }
+        
+        .timer-controls button:hover {
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .agenda {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .section {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .section.active {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(44, 82, 130, 0.2);
+        }
+        
+        .section.complete {
+            opacity: 0.7;
+            border-color: var(--success);
+        }
+        
+        .section-header {
+            background: var(--light-bg);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .section.active .section-header {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .section-title {
+            font-size: 14pt;
+            font-weight: bold;
+        }
+        
+        .section-time {
+            font-size: 11pt;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section.active .section-time {
+            color: white;
+        }
+        
+        .section-body {
+            padding: 20px;
+            display: none;
+        }
+        
+        .section.active .section-body,
+        .section.expanded .section-body {
+            display: block;
+        }
+        
+        /* To-Do Review Table */
+        .todo-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .todo-table th {
+            background: var(--light-bg);
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .todo-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .todo-table tr:hover {
+            background: #f7fafc;
+        }
+        
+        .checkbox-large {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .todo-done {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        
+        /* Issues List */
+        .issues-grid {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .issue-card {
+            background: var(--light-bg);
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid var(--gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .issue-card.high { border-left-color: var(--danger); }
+        .issue-card.medium { border-left-color: var(--warning); }
+        .issue-card.low { border-left-color: var(--success); }
+        
+        .issue-card.resolved {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        .issue-info {
+            flex: 1;
+        }
+        
+        .issue-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .issue-meta {
+            font-size: 9pt;
+            color: var(--gray);
+        }
+        
+        .issue-actions button {
+            padding: 6px 12px;
+            margin-left: 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 9pt;
+        }
+        
+        .btn-discuss {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-resolve {
+            background: var(--success);
+            color: white;
+        }
+        
+        /* New To-Dos */
+        .new-todo-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .new-todo-form input {
+            flex: 2;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 11pt;
+        }
+        
+        .new-todo-form select {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 11pt;
+        }
+        
+        .btn-add {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        /* Headlines */
+        .headlines-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .headline-section h4 {
+            font-size: 12pt;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .headline-item {
+            padding: 10px;
+            background: var(--light-bg);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .headline-item.good {
+            border-left: 4px solid var(--success);
+        }
+        
+        .headline-item.bad {
+            border-left: 4px solid var(--danger);
+        }
+        
+        /* Cascading Messages */
+        .cascading-messages textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 11pt;
+            min-height: 100px;
+            margin-bottom: 10px;
+        }
+        
+        /* Meeting Rating */
+        .rating-section {
+            text-align: center;
+            padding: 20px;
+            background: var(--light-bg);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .rating-stars {
+            font-size: 36pt;
+            margin: 15px 0;
+        }
+        
+        .star {
+            cursor: pointer;
+            color: #e2e8f0;
+        }
+        
+        .star.filled {
+            color: #fbbf24;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--light-bg);
+            border-radius: 8px;
+        }
+        
+        .btn-primary {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12pt;
+            font-weight: bold;
+        }
+        
+        .btn-secondary {
+            padding: 12px 24px;
+            background: var(--gray);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12pt;
+        }
+        
+        @media print {
+            .timer-bar, .action-buttons, .issue-actions {
+                display: none !important;
+            }
+            .section {
+                page-break-inside: avoid;
+            }
+            .section-body {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Level 10 Meeting™</h1>
+        <div class="meeting-info">
+            {{ meeting.team_name }} • {{ meeting.meeting_date }} • {{ meeting.start_time }}
+        </div>
+    </div>
+    
+    <div class="timer-bar">
+        <div class="current-section" id="currentSection">Segue</div>
+        <div class="timer" id="timer">5:00</div>
+        <div class="timer-controls">
+            <button id="startBtn" onclick="startTimer()">▶ Start</button>
+            <button id="pauseBtn" onclick="pauseTimer()" style="display:none;">⏸ Pause</button>
+            <button onclick="resetTimer()">🔄 Reset</button>
+            <button onclick="nextSection()">⏭ Next</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="agenda">
+            <!-- 1. Segue -->
+            <div class="section active" id="section-1" data-time="300">
+                <div class="section-header" onclick="toggleSection(1)">
+                    <div class="section-title">1. Segue</div>
+                    <div class="section-time">
+                        <span>5 minutes</span>
+                        <span id="status-1">📋</span>
+                    </div>
+                </div>
+                <div class="section-body">
+                    <p style="margin-bottom: 10px; color: var(--gray);">Share personal and business best news from the past week</p>
+                    <textarea class="cascading-messages" placeholder="Notes..."></textarea>
+                </div>
+            </div>
+            
+            <!-- 2. Headlines -->
+            <div class="section" id="section-2" data-time="300">
+                <div class="section-header" onclick="toggleSection(2)">
+                    <div class="section-title">2. Customer/Employee Headlines</div>
+                    <div class="section-time">
+                        <span>5 minutes</span>
+                        <span id="status-2">📋</span>
+                    </div>
+                </div>
+                <div class="section-body">
+                    <div class="headlines-grid">
+                        <div class="headline-section">
+                            <h4>✅ Good News</h4>
+                            {% for headline in headlines if headline.sentiment == 'GOOD' %}
+                            <div class="headline-item good">
+                                <strong>{{ headline.headline_type }}:</strong> {{ headline.headline_text }}
+                                <div style="font-size: 9pt; color: var(--gray); margin-top: 4px;">— {{ headline.who_reported }}</div>
+                            </div>
+                            {% endfor %}
+                            <textarea placeholder="Add good news..." style="width: 100%; padding: 8px; margin-top: 8px;"></textarea>
+                        </div>
+                        <div class="headline-section">
+                            <h4>⚠️ Bad News</h4>
+                            {% for headline in headlines if headline.sentiment == 'BAD' %}
+                            <div class="headline-item bad">
+                                <strong>{{ headline.headline_type }}:</strong> {{ headline.headline_text }}
+                                <div style="font-size: 9pt; color: var(--gray); margin-top: 4px;">— {{ headline.who_reported }}</div>
+                            </div>
+                            {% endfor %}
+                            <textarea placeholder="Add bad news (convert to issue)..." style="width: 100%; padding: 8px; margin-top: 8px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3. Scorecard Review -->
+            <div class="section" id="section-3" data-time="300">
+                <div class="section-header" onclick="toggleSection(3)">
+                    <div class="section-title">3. Scorecard Review</div>
+                    <div class="section-time">
+                        <span>5 minutes</span>
+                        <span id="status-3">📋</span>
+                    </div>
+                </div>
+                <div class="section-body">
+                    <p style="margin-bottom: 10px; color: var(--gray);">Review weekly measurables - On Track / Off Track only</p>
+                    <div style="text-align: center; padding: 20px;">
+                        <a href="/scorecard" class="btn-primary" style="text-decoration: none;">📊 Open Scorecard</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 4. Rock Review -->
+            <div class="section" id="section-4" data-time="300">
+                <div class="section-header" onclick="toggleSection(4)">
+                    <div class="section-title">4. Rock Review</div>
+                    <div class="section-time">
+                        <span>5 minutes</span>
+                        <span id="status-4">📋</span>
+                    </div>
+                </div>
+                <div class="section-body">
+                    <p style="margin-bottom: 10px; color: var(--gray);">Review quarterly rocks - On Track / Off Track only</p>
+                    <div style="text-align: center; padding: 20px;">
+                        <a href="/rocks" class="btn-primary" style="text-decoration: none;">🎯 Open Rocks</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 5. To-Do List Review -->
+            <div class="section" id="section-5" data-time="300">
+                <div class="section-header" onclick="toggleSection(5)">
+                    <div class="section-title">5. To-Do List Review</div>
+                    <div class="section-time">
+                        <span>5 minutes</span>
+                        <span id="status-5">📋</span>
+                    </div>
+                </div>
+                <div class="section-body">
+                    <p style="margin-bottom: 10px; color: var(--gray);">Review last week's to-dos - Done / Not Done (moves to issues)</p>
+                    <table class="todo-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50%;">To-Do</th>
+                                <th style="width: 25%;">Who</th>
+                                <th style="width: 12.5%; text-align: center;">Done</th>
+                                <th style="width: 12.5%; text-align: center;">Not Done</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for todo in todos_review %}
+                            <tr id="todo-{{ todo.id }}">
+                                <td class="todo-text">{{ todo.todo_text }}</td>
+                                <td>{{ todo.who }}</td>
+                                <td style="text-align: center;">
+                                    <input type="checkbox" class="checkbox-large" onchange="markTodoDone({{ todo.id }}, true)">
+                                </td>
+                                <td style="text-align: center;">
+                                    <input type="checkbox" class="checkbox-large" onchange="markTodoDone({{ todo.id }}, false)">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 6. IDS (Issues) -->
+            <div class="section" id="section-6" data-time="3600">
+                <div class="section-header" onclick="toggleSection(6)">
+                    <div class="section-title">6. IDS (Identify, Discuss, Solve)</div>
+                    <div class="section-time">
+                        <span>60 minutes</span>
+                        <span id="status-6">📋</span>
+                    </div>
+                </div>
+                <div class="section-body">
+                    <p style="margin-bottom: 15px; color: var(--gray);">Prioritize and solve the most important issues</p>
+                    <div class="issues-grid">
+                        {% for issue in issues %}
+                        <div class="issue-card {{ issue.priority.lower() }}" id="issue-{{ issue.id }}">
+                            <div class="issue-info">
+                                <div class="issue-title">{{ issue.issue }}</div>
+                                <div class="issue-meta">
+                                    Priority: {{ issue.priority }} • Owner: {{ issue.owner }} • Stage: {{ issue.ids_stage }}
+                                </div>
+                            </div>
+                            <div class="issue-actions">
+                                <button class="btn-discuss" onclick="discussIssue({{ issue.id }})">💬 Discuss</button>
+                                <button class="btn-resolve" onclick="resolveIssue({{ issue.id }})">✅ Resolve</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="/issues" class="btn-secondary" style="text-decoration: none;">View All Issues</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 7. New To-Dos -->
+            <div class="section" id="section-7" data-time="300">
+                <div class="section-header" onclick="toggleSection(7)">
+                    <div class="section-title">7. New To-Do List</div>
+                    <div class="section-time">
+                        <span>5 minutes</span>
+                        <span id="status-7">📋</span>
+                    </div>
+                </div>
+                <div class="section-body">
+                    <p style="margin-bottom: 10px; color: var(--gray);">Create action items from IDS discussion</p>
+                    <div class="new-todo-form">
+                        <input type="text" id="newTodoText" placeholder="To-Do description...">
+                        <select id="newTodoOwner">
+                            <option value="">Select Owner</option>
+                            <option value="Jeff">Jeff</option>
+                            <option value="Don">Don</option>
+                            <option value="Doug">Doug</option>
+                            <option value="Josh">Josh</option>
+                            <option value="Andrew">Andrew</option>
+                        </select>
+                        <button class="btn-add" onclick="addNewTodo()">+ Add</button>
+                    </div>
+                    <table class="todo-table" id="newTodosList">
+                        <thead>
+                            <tr>
+                                <th style="width: 70%;">To-Do</th>
+                                <th style="width: 30%;">Who</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for todo in new_todos %}
+                            <tr>
+                                <td>{{ todo.todo_text }}</td>
+                                <td>{{ todo.who }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 8. Conclude -->
+            <div class="section" id="section-8" data-time="300">
+                <div class="section-header" onclick="toggleSection(8)">
+                    <div class="section-title">8. Conclude</div>
+                    <div class="section-time">
+                        <span>5 minutes</span>
+                        <span id="status-8">📋</span>
+                    </div>
+                </div>
+                <div class="section-body">
+                    <h4 style="margin-bottom: 10px;">Cascading Messages</h4>
+                    <p style="margin-bottom: 10px; color: var(--gray); font-size: 10pt;">What messages should be cascaded to the rest of the organization?</p>
+                    <textarea class="cascading-messages" id="cascadingMessages" placeholder="Messages to share with the team..."></textarea>
+                    
+                    <div class="rating-section">
+                        <h4 style="font-size: 14pt; margin-bottom: 10px;">Rate this meeting</h4>
+                        <p style="color: var(--gray); margin-bottom: 10px;">Was this meeting a Level 10?</p>
+                        <div class="rating-stars" id="ratingStars">
+                            <span class="star" onclick="rateMeeting(1)">★</span>
+                            <span class="star" onclick="rateMeeting(2)">★</span>
+                            <span class="star" onclick="rateMeeting(3)">★</span>
+                            <span class="star" onclick="rateMeeting(4)">★</span>
+                            <span class="star" onclick="rateMeeting(5)">★</span>
+                            <span class="star" onclick="rateMeeting(6)">★</span>
+                            <span class="star" onclick="rateMeeting(7)">★</span>
+                            <span class="star" onclick="rateMeeting(8)">★</span>
+                            <span class="star" onclick="rateMeeting(9)">★</span>
+                            <span class="star" onclick="rateMeeting(10)">★</span>
+                        </div>
+                        <p id="ratingText" style="font-size: 12pt; font-weight: bold;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn-secondary" onclick="window.history.back()">← Back to Dashboard</button>
+            <div>
+                <button class="btn-secondary" onclick="window.print()">🖨 Print</button>
+                <button class="btn-primary" onclick="completeMeeting()">✅ Complete Meeting</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentSection = 1;
+        let timerInterval = null;
+        let timeRemaining = 300; // seconds
+        let isPaused = false;
+        const meetingId = {{ meeting.id }};
+        
+        function toggleSection(sectionNum) {
+            const section = document.getElementById(`section-${sectionNum}`);
+            section.classList.toggle('expanded');
+        }
+        
+        function startTimer() {
+            if (timerInterval) return;
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'inline-block';
+            
+            timerInterval = setInterval(() => {
+                if (!isPaused && timeRemaining > 0) {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                }
+                if (timeRemaining === 0) {
+                    playSound();
+                    pauseTimer();
+                }
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? '▶ Resume' : '⏸ Pause';
+        }
+        
+        function resetTimer() {
+            const section = document.getElementById(`section-${currentSection}`);
+            timeRemaining = parseInt(section.dataset.time);
+            updateTimerDisplay();
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = display;
+            
+            // Color coding
+            timerEl.classList.remove('warning', 'danger');
+            if (timeRemaining <= 60) {
+                timerEl.classList.add('danger');
+            } else if (timeRemaining <= 120) {
+                timerEl.classList.add('warning');
+            }
+        }
+        
+        function nextSection() {
+            // Mark current section complete
+            const currentEl = document.getElementById(`section-${currentSection}`);
+            currentEl.classList.remove('active');
+            currentEl.classList.add('complete');
+            document.getElementById(`status-${currentSection}`).textContent = '✅';
+            
+            // Move to next section
+            currentSection++;
+            if (currentSection <= 8) {
+                const nextEl = document.getElementById(`section-${currentSection}`);
+                nextEl.classList.add('active');
+                timeRemaining = parseInt(nextEl.dataset.time);
+                updateTimerDisplay();
+                
+                // Update section name
+                const sectionNames = ['', 'Segue', 'Headlines', 'Scorecard Review', 'Rock Review', 'To-Do List Review', 'IDS', 'New To-Dos', 'Conclude'];
+                document.getElementById('currentSection').textContent = sectionNames[currentSection];
+            }
+        }
+        
+        function playSound() {
+            // Simple beep using Web Audio API
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+            oscillator.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+        
+        async function markTodoDone(todoId, isDone) {
+            const row = document.getElementById(`todo-${todoId}`);
+            if (isDone) {
+                row.querySelector('.todo-text').classList.add('todo-done');
+            } else {
+                // Not done - convert to issue
+                if (confirm('Move this to-do to the issues list?')) {
+                    row.style.display = 'none';
+                    // API call to create issue from todo
+                }
+            }
+            
+            // API call to update todo status
+            await fetch(`/api/l10/${meetingId}/todo/${todoId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({done: isDone})
+            });
+        }
+        
+        async function discussIssue(issueId) {
+            const card = document.getElementById(`issue-${issueId}`);
+            card.style.border = '3px solid var(--warning)';
+            // Open issue details for IDS
+            window.open(`/issues#issue-${issueId}`, '_blank');
+        }
+        
+        async function resolveIssue(issueId) {
+            const card = document.getElementById(`issue-${issueId}`);
+            card.classList.add('resolved');
+            
+            await fetch(`/api/l10/${meetingId}/issue/${issueId}/resolve`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({resolved: true})
+            });
+        }
+        
+        async function addNewTodo() {
+            const text = document.getElementById('newTodoText').value.trim();
+            const owner = document.getElementById('newTodoOwner').value;
+            
+            if (!text || !owner) {
+                alert('Please enter to-do and select owner');
+                return;
+            }
+            
+            const tbody = document.querySelector('#newTodosList tbody');
+            const row = tbody.insertRow();
+            row.innerHTML = `<td>${text}</td><td>${owner}</td>`;
+            
+            document.getElementById('newTodoText').value = '';
+            document.getElementById('newTodoOwner').value = '';
+            
+            // API call to save todo
+            await fetch(`/api/l10/${meetingId}/new-todo`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({todo_text: text, who: owner})
+            });
+        }
+        
+        function rateMeeting(rating) {
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('filled');
+                } else {
+                    star.classList.remove('filled');
+                }
+            });
+            
+            const ratingText = rating === 10 ? '🎉 Level 10!' : rating >= 8 ? '👍 Great meeting!' : rating >= 6 ? '👌 Good meeting' : '⚠️ Needs improvement';
+            document.getElementById('ratingText').textContent = ratingText;
+        }
+        
+        async function completeMeeting() {
+            if (!confirm('Mark this meeting as complete?')) return;
+            
+            const cascadingMessages = document.getElementById('cascadingMessages').value;
+            const rating = document.querySelectorAll('.star.filled').length;
+            
+            await fetch(`/api/l10/${meetingId}/complete`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    status: 'COMPLETED',
+                    cascading_messages: cascadingMessages,
+                    rating: rating
+                })
+            });
+            
+            alert('✅ Meeting completed!');
+            window.location.href = '/';
+        }
+        
+        // Initialize timer
+        updateTimerDisplay();
+    </script>
+</body>
+</html>
