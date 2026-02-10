@@ -6,12 +6,17 @@
     <title>L10 Meeting - {{ meeting.meeting_date }} - EOS Platform</title>
     <style>
         :root {
-            --primary: #2c5282;
-            --success: #38a169;
-            --warning: #dd6b20;
-            --danger: #e53e3e;
-            --gray: #718096;
-            --light-bg: #f7fafc;
+            --enterprise-dark: #1a1a1a;
+            --enterprise-gray: #4a4a4a;
+            --enterprise-light: #f5f5f5;
+            --border-color: #d0d0d0;
+            --text-primary: #2a2a2a;
+            --text-secondary: #6a6a6a;
+            --accent-subtle: #e8e8e8;
+            --status-complete: #2d3748;
+            --status-active: #1a1a1a;
+            --alert-warning: #8a8a8a;
+            --alert-critical: #4a4a4a;
         }
         
         * {
@@ -21,69 +26,94 @@
         }
         
         body {
-            font-family: 'Arial', sans-serif;
-            font-size: 11pt;
-            line-height: 1.4;
-            background: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            background: #ffffff;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
         }
         
         .header {
-            background: var(--primary);
+            background: var(--enterprise-dark);
             color: white;
-            padding: 20px;
-            text-align: center;
+            padding: 32px 40px;
+            border-bottom: 1px solid var(--border-color);
         }
         
         .header h1 {
-            font-size: 24pt;
-            margin-bottom: 5px;
+            font-size: 28pt;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
         }
         
         .header .meeting-info {
-            font-size: 13pt;
-            opacity: 0.9;
+            font-size: 11pt;
+            color: #b0b0b0;
+            font-weight: 400;
         }
         
         .timer-bar {
-            background: #2d3748;
-            color: white;
-            padding: 15px 20px;
+            background: var(--enterprise-light);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 20px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         
         .current-section {
-            font-size: 14pt;
-            font-weight: bold;
+            font-size: 13pt;
+            font-weight: 600;
+            color: var(--enterprise-dark);
+            letter-spacing: -0.01em;
         }
         
         .timer {
-            font-size: 32pt;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-            color: var(--success);
+            font-size: 36pt;
+            font-weight: 300;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Courier New', monospace;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
         }
         
-        .timer.warning { color: var(--warning); }
-        .timer.danger { color: var(--danger); }
+        .timer.warning { color: var(--alert-warning); }
+        .timer.danger { color: var(--alert-critical); font-weight: 400; }
         
         .timer-controls button {
-            padding: 8px 16px;
-            margin-left: 8px;
-            border: none;
-            border-radius: 4px;
-            font-size: 11pt;
+            padding: 10px 20px;
+            margin-left: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-size: 10pt;
+            font-weight: 500;
             cursor: pointer;
-            background: var(--success);
-            color: white;
+            background: white;
+            color: var(--text-primary);
+            transition: all 0.15s ease;
+            letter-spacing: 0.01em;
         }
         
         .timer-controls button:hover {
-            opacity: 0.9;
+            background: var(--enterprise-light);
+            border-color: var(--enterprise-gray);
+        }
+        
+        .timer-controls button:first-child {
+            background: var(--enterprise-dark);
+            color: white;
+            border-color: var(--enterprise-dark);
+        }
+        
+        .timer-controls button:first-child:hover {
+            background: var(--enterprise-gray);
+            border-color: var(--enterprise-gray);
         }
         
         .container {
@@ -99,50 +129,60 @@
         
         .section {
             background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
             overflow: hidden;
+            margin-bottom: 1px;
         }
         
         .section.active {
-            border-color: var(--primary);
-            box-shadow: 0 4px 12px rgba(44, 82, 130, 0.2);
+            border-color: var(--enterprise-dark);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-width: 1px;
         }
         
         .section.complete {
-            opacity: 0.7;
-            border-color: var(--success);
+            opacity: 0.6;
+            background: var(--enterprise-light);
         }
         
         .section-header {
-            background: var(--light-bg);
-            padding: 15px 20px;
+            background: white;
+            padding: 20px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            border-bottom: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+        
+        .section-header:hover {
+            background: var(--accent-subtle);
         }
         
         .section.active .section-header {
-            background: var(--primary);
+            background: var(--enterprise-dark);
             color: white;
         }
         
         .section-title {
-            font-size: 14pt;
-            font-weight: bold;
+            font-size: 12pt;
+            font-weight: 600;
+            letter-spacing: -0.01em;
         }
         
         .section-time {
-            font-size: 11pt;
-            color: var(--gray);
+            font-size: 10pt;
+            color: var(--text-secondary);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-weight: 400;
         }
         
         .section.active .section-time {
-            color: white;
+            color: #b0b0b0;
         }
         
         .section-body {
@@ -163,20 +203,25 @@
         }
         
         .todo-table th {
-            background: var(--light-bg);
-            padding: 10px;
+            background: var(--enterprise-light);
+            padding: 12px 16px;
             text-align: left;
-            font-weight: bold;
-            border-bottom: 2px solid #e2e8f0;
+            font-weight: 600;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
         
         .todo-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 10pt;
         }
         
         .todo-table tr:hover {
-            background: #f7fafc;
+            background: var(--accent-subtle);
         }
         
         .checkbox-large {
@@ -197,18 +242,24 @@
         }
         
         .issue-card {
-            background: var(--light-bg);
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 4px solid var(--gray);
+            background: white;
+            padding: 16px 20px;
+            border-radius: 2px;
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--text-secondary);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.15s ease;
         }
         
-        .issue-card.high { border-left-color: var(--danger); }
-        .issue-card.medium { border-left-color: var(--warning); }
-        .issue-card.low { border-left-color: var(--success); }
+        .issue-card:hover {
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        
+        .issue-card.high { border-left-color: var(--enterprise-dark); border-left-width: 4px; }
+        .issue-card.medium { border-left-color: var(--enterprise-gray); }
+        .issue-card.low { border-left-color: #c0c0c0; }
         
         .issue-card.resolved {
             opacity: 0.5;
@@ -239,13 +290,23 @@
         }
         
         .btn-discuss {
-            background: var(--warning);
-            color: white;
+            background: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-discuss:hover {
+            background: var(--enterprise-light);
         }
         
         .btn-resolve {
-            background: var(--success);
+            background: var(--enterprise-dark);
             color: white;
+            border: 1px solid var(--enterprise-dark);
+        }
+        
+        .btn-resolve:hover {
+            background: var(--enterprise-gray);
         }
         
         /* New To-Dos */
@@ -257,28 +318,43 @@
         
         .new-todo-form input {
             flex: 2;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            font-size: 11pt;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-size: 10pt;
+            transition: all 0.15s ease;
+        }
+        
+        .new-todo-form input:focus {
+            outline: none;
+            border-color: var(--enterprise-gray);
+            box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.05);
         }
         
         .new-todo-form select {
             flex: 1;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            font-size: 11pt;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-size: 10pt;
+            background: white;
+            cursor: pointer;
         }
         
         .btn-add {
-            padding: 10px 20px;
-            background: var(--primary);
+            padding: 10px 24px;
+            background: var(--enterprise-dark);
             color: white;
-            border: none;
-            border-radius: 4px;
+            border: 1px solid var(--enterprise-dark);
+            border-radius: 2px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        
+        .btn-add:hover {
+            background: var(--enterprise-gray);
+            border-color: var(--enterprise-gray);
         }
         
         /* Headlines */
@@ -289,89 +365,128 @@
         }
         
         .headline-section h4 {
-            font-size: 12pt;
-            margin-bottom: 10px;
-            color: var(--primary);
+            font-size: 11pt;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            font-weight: 600;
+            letter-spacing: -0.01em;
         }
         
         .headline-item {
-            padding: 10px;
-            background: var(--light-bg);
-            border-radius: 4px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 2px;
             margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--text-secondary);
         }
         
         .headline-item.good {
-            border-left: 4px solid var(--success);
+            border-left-color: var(--enterprise-dark);
         }
         
         .headline-item.bad {
-            border-left: 4px solid var(--danger);
+            border-left-color: var(--enterprise-gray);
         }
         
         /* Cascading Messages */
         .cascading-messages textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
             font-family: inherit;
-            font-size: 11pt;
+            font-size: 10pt;
             min-height: 100px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            transition: all 0.15s ease;
+        }
+        
+        .cascading-messages textarea:focus {
+            outline: none;
+            border-color: var(--enterprise-gray);
+            box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.05);
         }
         
         /* Meeting Rating */
         .rating-section {
             text-align: center;
-            padding: 20px;
-            background: var(--light-bg);
-            border-radius: 8px;
-            margin-top: 20px;
+            padding: 32px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            margin-top: 24px;
+        }
+        
+        .rating-section h4 {
+            font-size: 12pt;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
         }
         
         .rating-stars {
-            font-size: 36pt;
-            margin: 15px 0;
+            font-size: 32pt;
+            margin: 20px 0;
+            letter-spacing: 4px;
         }
         
         .star {
             cursor: pointer;
-            color: #e2e8f0;
+            color: var(--border-color);
+            transition: color 0.15s ease;
+        }
+        
+        .star:hover {
+            color: var(--text-secondary);
         }
         
         .star.filled {
-            color: #fbbf24;
+            color: var(--enterprise-dark);
         }
         
         .action-buttons {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
-            padding: 20px;
-            background: var(--light-bg);
-            border-radius: 8px;
+            margin-top: 32px;
+            padding: 24px 32px;
+            background: var(--enterprise-light);
+            border-top: 1px solid var(--border-color);
         }
         
         .btn-primary {
-            padding: 12px 24px;
-            background: var(--primary);
+            padding: 12px 28px;
+            background: var(--enterprise-dark);
             color: white;
-            border: none;
-            border-radius: 4px;
+            border: 1px solid var(--enterprise-dark);
+            border-radius: 2px;
             cursor: pointer;
-            font-size: 12pt;
-            font-weight: bold;
+            font-size: 11pt;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            letter-spacing: 0.01em;
+        }
+        
+        .btn-primary:hover {
+            background: var(--enterprise-gray);
+            border-color: var(--enterprise-gray);
         }
         
         .btn-secondary {
-            padding: 12px 24px;
-            background: var(--gray);
-            color: white;
-            border: none;
-            border-radius: 4px;
+            padding: 12px 28px;
+            background: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
             cursor: pointer;
-            font-size: 12pt;
+            font-size: 11pt;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--enterprise-light);
+            border-color: var(--enterprise-gray);
         }
         
         @media print {
@@ -414,7 +529,7 @@
                     <div class="section-title">1. Segue</div>
                     <div class="section-time">
                         <span>5 minutes</span>
-                        <span id="status-1">📋</span>
+                        <span id="status-1" style="font-size: 9pt;">●</span>
                     </div>
                 </div>
                 <div class="section-body">
@@ -429,13 +544,13 @@
                     <div class="section-title">2. Customer/Employee Headlines</div>
                     <div class="section-time">
                         <span>5 minutes</span>
-                        <span id="status-2">📋</span>
+                        <span id="status-2" style="font-size: 9pt;">●</span>
                     </div>
                 </div>
                 <div class="section-body">
                     <div class="headlines-grid">
                         <div class="headline-section">
-                            <h4>✅ Good News</h4>
+                            <h4 style="color: var(--text-primary); font-weight: 600;">Good News</h4>
                             {% for headline in headlines if headline.sentiment == 'GOOD' %}
                             <div class="headline-item good">
                                 <strong>{{ headline.headline_type }}:</strong> {{ headline.headline_text }}
@@ -445,7 +560,7 @@
                             <textarea placeholder="Add good news..." style="width: 100%; padding: 8px; margin-top: 8px;"></textarea>
                         </div>
                         <div class="headline-section">
-                            <h4>⚠️ Bad News</h4>
+                            <h4 style="color: var(--text-primary); font-weight: 600;">Issues to Address</h4>
                             {% for headline in headlines if headline.sentiment == 'BAD' %}
                             <div class="headline-item bad">
                                 <strong>{{ headline.headline_type }}:</strong> {{ headline.headline_text }}
@@ -464,13 +579,13 @@
                     <div class="section-title">3. Scorecard Review</div>
                     <div class="section-time">
                         <span>5 minutes</span>
-                        <span id="status-3">📋</span>
+                        <span id="status-3" style="font-size: 9pt;">●</span>
                     </div>
                 </div>
                 <div class="section-body">
                     <p style="margin-bottom: 10px; color: var(--gray);">Review weekly measurables - On Track / Off Track only</p>
                     <div style="text-align: center; padding: 20px;">
-                        <a href="/scorecard" class="btn-primary" style="text-decoration: none;">📊 Open Scorecard</a>
+                        <a href="/scorecard" class="btn-primary" style="text-decoration: none;">Open Scorecard</a>
                     </div>
                 </div>
             </div>
@@ -481,13 +596,13 @@
                     <div class="section-title">4. Rock Review</div>
                     <div class="section-time">
                         <span>5 minutes</span>
-                        <span id="status-4">📋</span>
+                        <span id="status-4" style="font-size: 9pt;">●</span>
                     </div>
                 </div>
                 <div class="section-body">
                     <p style="margin-bottom: 10px; color: var(--gray);">Review quarterly rocks - On Track / Off Track only</p>
                     <div style="text-align: center; padding: 20px;">
-                        <a href="/rocks" class="btn-primary" style="text-decoration: none;">🎯 Open Rocks</a>
+                        <a href="/rocks" class="btn-primary" style="text-decoration: none;">Open Rocks</a>
                     </div>
                 </div>
             </div>
@@ -498,7 +613,7 @@
                     <div class="section-title">5. To-Do List Review</div>
                     <div class="section-time">
                         <span>5 minutes</span>
-                        <span id="status-5">📋</span>
+                        <span id="status-5" style="font-size: 9pt;">●</span>
                     </div>
                 </div>
                 <div class="section-body">
@@ -536,7 +651,7 @@
                     <div class="section-title">6. IDS (Identify, Discuss, Solve)</div>
                     <div class="section-time">
                         <span>60 minutes</span>
-                        <span id="status-6">📋</span>
+                        <span id="status-6" style="font-size: 9pt;">●</span>
                     </div>
                 </div>
                 <div class="section-body">
@@ -551,8 +666,8 @@
                                 </div>
                             </div>
                             <div class="issue-actions">
-                                <button class="btn-discuss" onclick="discussIssue({{ issue.id }})">💬 Discuss</button>
-                                <button class="btn-resolve" onclick="resolveIssue({{ issue.id }})">✅ Resolve</button>
+                                <button class="btn-discuss" onclick="discussIssue({{ issue.id }})">Discuss</button>
+                                <button class="btn-resolve" onclick="resolveIssue({{ issue.id }})">Resolve</button>
                             </div>
                         </div>
                         {% endfor %}
@@ -569,7 +684,7 @@
                     <div class="section-title">7. New To-Do List</div>
                     <div class="section-time">
                         <span>5 minutes</span>
-                        <span id="status-7">📋</span>
+                        <span id="status-7" style="font-size: 9pt;">●</span>
                     </div>
                 </div>
                 <div class="section-body">
@@ -611,7 +726,7 @@
                     <div class="section-title">8. Conclude</div>
                     <div class="section-time">
                         <span>5 minutes</span>
-                        <span id="status-8">📋</span>
+                        <span id="status-8" style="font-size: 9pt;">●</span>
                     </div>
                 </div>
                 <div class="section-body">
@@ -620,8 +735,8 @@
                     <textarea class="cascading-messages" id="cascadingMessages" placeholder="Messages to share with the team..."></textarea>
                     
                     <div class="rating-section">
-                        <h4 style="font-size: 14pt; margin-bottom: 10px;">Rate this meeting</h4>
-                        <p style="color: var(--gray); margin-bottom: 10px;">Was this meeting a Level 10?</p>
+                        <h4>Meeting Effectiveness</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 10pt;">Rate the meeting effectiveness</p>
                         <div class="rating-stars" id="ratingStars">
                             <span class="star" onclick="rateMeeting(1)">★</span>
                             <span class="star" onclick="rateMeeting(2)">★</span>
@@ -634,17 +749,17 @@
                             <span class="star" onclick="rateMeeting(9)">★</span>
                             <span class="star" onclick="rateMeeting(10)">★</span>
                         </div>
-                        <p id="ratingText" style="font-size: 12pt; font-weight: bold;"></p>
+                        <p id="ratingText" style="font-size: 11pt; font-weight: 500; color: var(--text-primary); margin-top: 12px;"></p>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="action-buttons">
-            <button class="btn-secondary" onclick="window.history.back()">← Back to Dashboard</button>
+            <button class="btn-secondary" onclick="window.history.back()">Back to Dashboard</button>
             <div>
-                <button class="btn-secondary" onclick="window.print()">🖨 Print</button>
-                <button class="btn-primary" onclick="completeMeeting()">✅ Complete Meeting</button>
+                <button class="btn-secondary" onclick="window.print()">Print</button>
+                <button class="btn-primary" onclick="completeMeeting()">Complete Meeting</button>
             </div>
         </div>
     </div>
@@ -663,8 +778,13 @@
         
         function startTimer() {
             if (timerInterval) return;
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('pauseBtn').style.display = 'inline-block';
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+            pauseBtn.style.background = 'var(--enterprise-gray)';
+            pauseBtn.style.color = 'white';
+            pauseBtn.style.borderColor = 'var(--enterprise-gray)';
             
             timerInterval = setInterval(() => {
                 if (!isPaused && timeRemaining > 0) {
@@ -710,7 +830,9 @@
             const currentEl = document.getElementById(`section-${currentSection}`);
             currentEl.classList.remove('active');
             currentEl.classList.add('complete');
-            document.getElementById(`status-${currentSection}`).textContent = '✅';
+            document.getElementById(`status-${currentSection}`).textContent = '✓';
+            document.getElementById(`status-${currentSection}`).style.color = 'var(--enterprise-dark)';
+            document.getElementById(`status-${currentSection}`).style.fontWeight = 'bold';
             
             // Move to next section
             currentSection++;
@@ -809,7 +931,7 @@
                 }
             });
             
-            const ratingText = rating === 10 ? '🎉 Level 10!' : rating >= 8 ? '👍 Great meeting!' : rating >= 6 ? '👌 Good meeting' : '⚠️ Needs improvement';
+            const ratingText = rating === 10 ? 'Excellent' : rating >= 8 ? 'Very Good' : rating >= 6 ? 'Good' : rating >= 4 ? 'Adequate' : 'Needs Improvement';
             document.getElementById('ratingText').textContent = ratingText;
         }
         
@@ -829,7 +951,7 @@
                 })
             });
             
-            alert('✅ Meeting completed!');
+            alert('Meeting completed successfully');
             window.location.href = '/';
         }
         
