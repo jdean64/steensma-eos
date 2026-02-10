@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision/Traction Organizer (V/TO) - EOS Platform</title>
+    <style>
+        :root {
+            --primary-color: #2c5282;
+            --border-color: #333;
+            --bg-light: #f7fafc;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            background: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .header h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .header .subtitle {
+            font-size: 12pt;
+            color: #666;
+        }
+        
+        .vto-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .vto-table td {
+            border: 2px solid var(--border-color);
+            padding: 12px;
+            vertical-align: top;
+        }
+        
+        .section-header {
+            font-weight: bold;
+            font-size: 12pt;
+            text-transform: uppercase;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        
+        .section-content {
+            font-size: 10pt;
+            line-height: 1.5;
+        }
+        
+        .section-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .section-content li {
+            margin-bottom: 4px;
+        }
+        
+        .section-content li:before {
+            content: "• ";
+            font-weight: bold;
+        }
+        
+        .three-year {
+            background-color: var(--bg-light);
+        }
+        
+        .metric-line {
+            margin-bottom: 6px;
+        }
+        
+        .metric-label {
+            font-weight: bold;
+            display: inline-block;
+            min-width: 100px;
+        }
+        
+        .vision-section {
+            margin-top: 12px;
+        }
+        
+        .vision-section h4 {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        
+        .vision-list li {
+            margin-bottom: 6px;
+        }
+        
+        /* Executive Table (1-Year, Rocks, Issues) */
+        .exec-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .exec-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 13pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .exec-table td {
+            border: 2px solid var(--border-color);
+            padding: 12px;
+            vertical-align: top;
+            width: 33.33%;
+        }
+        
+        .editable {
+            cursor: text;
+            padding: 4px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        
+        .editable:hover {
+            background-color: #fffacd;
+        }
+        
+        .edit-mode {
+            background-color: #fffacd;
+            border: 1px dashed #ffa500;
+            outline: none;
+        }
+        
+        .action-buttons {
+            text-align: right;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10pt;
+            margin-left: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #718096;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .edit-toggle {
+            font-size: 10pt;
+            color: #666;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                padding: 0;
+                font-size: 10pt;
+            }
+            
+            .action-buttons {
+                display: none !important;
+            }
+            
+            .container {
+                max-width: 100%;
+            }
+            
+            .vto-table, .exec-table {
+                page-break-inside: avoid;
+            }
+            
+            .editable:hover {
+                background-color: transparent;
+            }
+            
+            .header {
+                margin-bottom: 15px;
+            }
+        }
+        
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+        
+        /* View modes */
+        body.view-mode .editable:hover {
+            background-color: transparent;
+            cursor: default;
+        }
+    </style>
+</head>
+<body class="view-mode">
+    <div class="container">
+        <div class="action-buttons">
+            <div class="edit-toggle">
+                <label><input type="checkbox" id="editMode"> Enable Editing</label>
+            </div>
+            <div>
+                <button class="btn btn-secondary" onclick="window.history.back()">← Back</button>
+                <button class="btn btn-primary" onclick="window.print()">🖨 Print</button>
+                <button class="btn btn-primary" id="saveBtn" style="display:none;">💾 Save Changes</button>
+            </div>
+        </div>
+        
+        <div class="header">
+            <h1>Vision/Traction Organizer (V/TO)</h1>
+            <div class="subtitle">Plainwell EOS - 2026 Q1</div>
+        </div>
+        
+        <!-- Main Vision Table -->
+        <table class="vto-table">
+            <tr>
+                <td style="width: 20%;">
+                    <div class="section-header">CORE VALUES</div>
+                </td>
+                <td style="width: 35%;">
+                    <div class="section-content">
+                        <ul id="coreValues">
+                            {% for value in core_values %}
+                            <li class="editable" data-table="core_values" data-id="{{ value.id }}" data-field="value_text">{{ value.value_text }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </td>
+                <td style="width: 45%;" class="three-year" rowspan="5">
+                    <div class="section-header">3 YEAR PICTURE</div>
+                    <div class="section-content">
+                        <div class="metric-line">
+                            <span class="metric-label">Future Date:</span>
+                            <span class="editable" data-table="three_year_picture" data-id="{{ three_year.id }}" data-field="future_date">{{ three_year.future_date }}</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="metric-label">Revenue:</span>
+                            <span class="editable" data-table="three_year_picture" data-id="{{ three_year.id }}" data-field="revenue">{{ three_year.revenue }}</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="metric-label">Profit:</span>
+                            <span class="editable" data-table="three_year_picture" data-id="{{ three_year.id }}" data-field="profit">{{ three_year.profit }}</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="metric-label">Measurables:</span>
+                            <span class="editable" data-table="three_year_picture" data-id="{{ three_year.id }}" data-field="measurables">{{ three_year.measurables }}</span>
+                        </div>
+                        <div class="vision-section">
+                            <h4>What does it look like?</h4>
+                            <div class="vision-list">
+                                <div class="editable" data-table="three_year_picture" data-id="{{ three_year.id }}" data-field="what_does_it_look_like" style="white-space: pre-line;">{{ three_year.what_does_it_look_like }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="section-header">CORE FOCUS™</div>
+                </td>
+                <td>
+                    <div class="section-content">
+                        <div class="metric-line">
+                            <span class="metric-label">Passion:</span>
+                            <span class="editable" data-table="core_focus" data-id="{{ core_focus.id }}" data-field="passion">{{ core_focus.passion }}</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="metric-label">Our Niche:</span>
+                            <span class="editable" data-table="core_focus" data-id="{{ core_focus.id }}" data-field="niche">{{ core_focus.niche }}</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="metric-label">#1 Cash Flow Driver:</span>
+                            <span class="editable" data-table="core_focus" data-id="{{ core_focus.id }}" data-field="cash_flow_driver">{{ core_focus.cash_flow_driver }}</span>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="section-header">CORE TARGET™</div>
+                </td>
+                <td colspan="1">
+                    <div class="section-content">
+                        <div class="editable" data-table="core_target" data-id="{{ core_target.id }}" data-field="target_text">{{ core_target.target_text }}</div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="section-header">MARKETING<br>STRATEGY</div>
+                </td>
+                <td>
+                    <div class="section-content">
+                        <div style="margin-bottom: 10px;">
+                            <strong>Uniques:</strong><br>
+                            <div class="editable" data-table="marketing_strategy" data-id="{{ marketing.id }}" data-field="uniques" style="white-space: pre-line; margin-top: 4px;">{{ marketing.uniques }}</div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Guarantee:</strong>
+                            <span class="editable" data-table="marketing_strategy" data-id="{{ marketing.id }}" data-field="guarantee">{{ marketing.guarantee }}</span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Proven Process:</strong>
+                            <span class="editable" data-table="marketing_strategy" data-id="{{ marketing.id }}" data-field="proven_process">{{ marketing.proven_process }}</span>
+                        </div>
+                        <div>
+                            <strong>Target Market/"The List":</strong>
+                            <span class="editable" data-table="marketing_strategy" data-id="{{ marketing.id }}" data-field="target_market">{{ marketing.target_market }}</span>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+        <!-- Execution Table -->
+        <table class="exec-table">
+            <tr>
+                <th>1 YEAR PLAN</th>
+                <th>ROCKS</th>
+                <th>ISSUES LIST</th>
+            </tr>
+            <tr>
+                <td>
+                    <div class="section-content">
+                        <div class="metric-line">
+                            <span class="metric-label">Future Date:</span>
+                            <span class="editable" data-table="one_year_plan" data-id="{{ one_year.id }}" data-field="future_date">{{ one_year.future_date }}</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="metric-label">Revenue:</span>
+                            <span class="editable" data-table="one_year_plan" data-id="{{ one_year.id }}" data-field="revenue">{{ one_year.revenue }}</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="metric-label">Profit:</span>
+                            <span class="editable" data-table="one_year_plan" data-id="{{ one_year.id }}" data-field="profit">{{ one_year.profit }}</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="metric-label">Measurables:</span>
+                            <span class="editable" data-table="one_year_plan" data-id="{{ one_year.id }}" data-field="measurables">{{ one_year.measurables }}</span>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <strong>Goals for the Year:</strong>
+                            <div class="editable" data-table="one_year_plan" data-id="{{ one_year.id }}" data-field="goals" style="white-space: pre-line; margin-top: 6px;">{{ one_year.goals }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="section-content">
+                        <div style="margin-bottom: 8px; text-align: right; font-size: 9pt; color: #666;">
+                            Q1 2026
+                        </div>
+                        <div id="rocksList">
+                            {% for rock in rocks %}
+                            <div style="margin-bottom: 10px; padding: 6px; background: #f9f9f9; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div style="flex: 1;">
+                                        <a href="/rocks" style="color: var(--primary-color); text-decoration: none;">{{ rock.description }}</a>
+                                    </div>
+                                    <div style="font-size: 9pt; color: #666; margin-left: 10px;">
+                                        {{ rock.owner }}
+                                    </div>
+                                </div>
+                                <div style="font-size: 9pt; color: #666; margin-top: 2px;">
+                                    Due: {{ rock.due_date }} • {{ rock.status }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            <a href="/rocks" class="btn btn-secondary" style="text-decoration: none; display: inline-block;">View All Rocks →</a>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="section-content">
+                        <div id="issuesList">
+                            {% for issue in issues %}
+                            <div style="margin-bottom: 10px; padding: 6px; background: #f9f9f9; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div style="flex: 1;">
+                                        <a href="/issues" style="color: var(--primary-color); text-decoration: none;">{{ issue.issue }}</a>
+                                    </div>
+                                    <div style="font-size: 9pt; color: #666; margin-left: 10px;">
+                                        {{ issue.owner }}
+                                    </div>
+                                </div>
+                                <div style="font-size: 9pt; color: #666; margin-top: 2px;">
+                                    Priority: {{ issue.priority }} • {{ issue.ids_stage }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            <a href="/issues" class="btn btn-secondary" style="text-decoration: none; display: inline-block;">View All Issues →</a>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <script>
+        // Edit mode toggle
+        const editModeCheckbox = document.getElementById('editMode');
+        const saveBtn = document.getElementById('saveBtn');
+        let changedFields = new Map();
+        
+        editModeCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                document.body.classList.remove('view-mode');
+                saveBtn.style.display = 'inline-block';
+                enableEditing();
+            } else {
+                document.body.classList.add('view-mode');
+                saveBtn.style.display = 'none';
+                disableEditing();
+            }
+        });
+        
+        function enableEditing() {
+            document.querySelectorAll('.editable').forEach(el => {
+                el.contentEditable = true;
+                el.addEventListener('input', trackChange);
+            });
+        }
+        
+        function disableEditing() {
+            document.querySelectorAll('.editable').forEach(el => {
+                el.contentEditable = false;
+                el.removeEventListener('input', trackChange);
+            });
+            changedFields.clear();
+        }
+        
+        function trackChange(e) {
+            const el = e.target;
+            const key = `${el.dataset.table}_${el.dataset.id}_${el.dataset.field}`;
+            changedFields.set(key, {
+                table: el.dataset.table,
+                id: el.dataset.id,
+                field: el.dataset.field,
+                value: el.textContent.trim()
+            });
+            saveBtn.style.background = '#e53e3e';  // Red to indicate unsaved changes
+        }
+        
+        saveBtn.addEventListener('click', async function() {
+            if (changedFields.size === 0) {
+                alert('No changes to save');
+                return;
+            }
+            
+            const changes = Array.from(changedFields.values());
+            console.log('Saving changes:', changes);
+            
+            try {
+                const response = await fetch('/api/vto/update', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({changes: changes, changed_by: 'web_user'})
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ Changes saved successfully!');
+                    changedFields.clear();
+                    saveBtn.style.background = '';
+                } else {
+                    alert('❌ Error saving changes: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Network error: ' + error.message);
+            }
+        });
+        
+        // Keyboard shortcut: Ctrl+S to save
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                if (editModeCheckbox.checked) {
+                    saveBtn.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

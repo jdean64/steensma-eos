@@ -692,6 +692,117 @@ def get_issues_from_db():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
+@app.route('/vto')
+def vto_page():
+    """Display Vision/Traction Organizer"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get Core Values
+        cursor.execute('SELECT id, value_text, sort_order FROM vto_core_values ORDER BY sort_order')
+        core_values = [{'id': row[0], 'value_text': row[1]} for row in cursor.fetchall()]
+        
+        # Get Core Focus
+        cursor.execute('SELECT id, passion, niche, cash_flow_driver FROM vto_core_focus LIMIT 1')
+        core_focus_row = cursor.fetchone()
+        core_focus = {'id': core_focus_row[0], 'passion': core_focus_row[1], 'niche': core_focus_row[2], 'cash_flow_driver': core_focus_row[3]} if core_focus_row else {}
+        
+        # Get Core Target
+        cursor.execute('SELECT id, target_text, target_date FROM vto_core_target LIMIT 1')
+        core_target_row = cursor.fetchone()
+        core_target = {'id': core_target_row[0], 'target_text': core_target_row[1], 'target_date': core_target_row[2]} if core_target_row else {}
+        
+        # Get Marketing Strategy
+        cursor.execute('SELECT id, uniques, guarantee, proven_process, target_market FROM vto_marketing_strategy LIMIT 1')
+        marketing_row = cursor.fetchone()
+        marketing = {'id': marketing_row[0], 'uniques': marketing_row[1], 'guarantee': marketing_row[2], 'proven_process': marketing_row[3], 'target_market': marketing_row[4]} if marketing_row else {}
+        
+        # Get 3-Year Picture
+        cursor.execute('SELECT id, future_date, revenue, profit, measurables, what_does_it_look_like FROM vto_three_year_picture LIMIT 1')
+        three_year_row = cursor.fetchone()
+        three_year = {'id': three_year_row[0], 'future_date': three_year_row[1], 'revenue': three_year_row[2], 'profit': three_year_row[3], 'measurables': three_year_row[4], 'what_does_it_look_like': three_year_row[5]} if three_year_row else {}
+        
+        # Get 1-Year Plan
+        cursor.execute('SELECT id, future_date, revenue, profit, measurables, goals FROM vto_one_year_plan LIMIT 1')
+        one_year_row = cursor.fetchone()
+        one_year = {'id': one_year_row[0], 'future_date': one_year_row[1], 'revenue': one_year_row[2], 'profit': one_year_row[3], 'measurables': one_year_row[4], 'goals': one_year_row[5]} if one_year_row else {}
+        
+        # Get current quarter rocks (limit to 5 for VTO overview)
+        cursor.execute('SELECT id, description, owner, status, due_date FROM rocks WHERE is_active = 1 ORDER BY due_date LIMIT 5')
+        rocks = [{'id': row[0], 'description': row[1], 'owner': row[2], 'status': row[3], 'due_date': row[4]} for row in cursor.fetchall()]
+        
+        # Get current issues (limit to 5 for VTO overview)
+        cursor.execute('SELECT id, issue, priority, owner, ids_stage FROM issues WHERE is_active = 1 ORDER BY CASE priority WHEN "HIGH" THEN 1 WHEN "MEDIUM" THEN 2 ELSE 3 END LIMIT 5')
+        issues = [{'id': row[0], 'issue': row[1], 'priority': row[2], 'owner': row[3], 'ids_stage': row[4]} for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return render_template('vto.html',
+            core_values=core_values,
+            core_focus=core_focus,
+            core_target=core_target,
+            marketing=marketing,
+            three_year=three_year,
+            one_year=one_year,
+            rocks=rocks,
+            issues=issues
+        )
+    except Exception as e:
+        return f"Error loading VTO: {str(e)}", 500
+
+@app.route('/api/vto/update', methods=['PUT'])
+def update_vto():
+    """Update VTO fields with lifecycle tracking"""
+    try:
+        data = request.get_json()
+        changes = data.get('changes', [])
+        changed_by = data.get('changed_by', 'web_user')
+        
+        if not changes:
+            return jsonify({'success': False, 'error': 'No changes provided'}), 400
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        for change in changes:
+            table = change['table']
+            record_id = change['id']
+            field = change['field']
+            new_value = change['value']
+            
+            # Get old value for history
+            cursor.execute(f'SELECT {field} FROM {table} WHERE id = ?', (record_id,))
+            old_value = cursor.fetchone()[0] if cursor.fetchone() else None
+            
+            # Update the field
+            cursor.execute(f'''
+                UPDATE {table} 
+                SET {field} = ?, 
+                    updated_at = CURRENT_TIMESTAMP,
+                    updated_by = ?
+                WHERE id = ?
+            ''', (new_value, changed_by, record_id))
+            
+            # Log to history table
+            history_table = f'{table}_history'
+            cursor.execute(f'''
+                INSERT INTO {history_table} 
+                ({"core_value_id" if "core_values" in table else "core_focus_id" if "core_focus" in table else "core_target_id" if "core_target" in table else "marketing_strategy_id" if "marketing" in table else "three_year_picture_id" if "three_year" in table else "one_year_plan_id"}, 
+                 field_changed, old_value, new_value, changed_by, change_note)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (record_id, field, old_value, new_value, changed_by, f'Updated {field} from web interface'))
+            
+            # Log to audit log
+            log_change(cursor, table, record_id, 'UPDATE', changed_by, {field: {'old': old_value, 'new': new_value}})
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'updated': len(changes)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 if __name__ == '__main__':
     # Create archive directory if it doesn't exist
     os.makedirs(ARCHIVE_DIR, exist_ok=True)
