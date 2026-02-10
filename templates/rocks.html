@@ -4,81 +4,153 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quarterly Rocks - EOS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --enterprise-dark: #1a1a1a;
+            --enterprise-gray: #4a4a4a;
+            --enterprise-light: #f5f5f5;
+            --enterprise-border: #d0d0d0;
+            --text-primary: #2a2a2a;
+            --text-secondary: #6a6a6a;
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--enterprise-light);
             min-height: 100vh;
             padding: 20px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
         }
+        
         .container { max-width: 1200px; margin: 0 auto; }
+        
         .header {
-            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            background: var(--enterprise-dark);
             color: white;
-            padding: 30px 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            margin-bottom: 30px;
+            padding: 24px 32px;
+            border-radius: 2px;
+            margin-bottom: 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            border: 1px solid var(--enterprise-border);
         }
-        .header h1 { font-size: 32px; font-weight: 700; }
+        
+        .header h1 { 
+            font-size: 24px; 
+            font-weight: 600; 
+            letter-spacing: -0.02em;
+        }
+        
         .back-button {
             background: white;
-            color: #3b82f6;
-            padding: 12px 24px;
-            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 8px 20px;
+            border-radius: 2px;
             text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid var(--enterprise-border);
+            transition: all 0.15s ease;
         }
-        .back-button:hover { transform: translateY(-2px); }
+        
+        .back-button:hover { 
+            background: var(--enterprise-light);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
         .rock-item {
             background: white;
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 2px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid var(--enterprise-border);
         }
+        
         .rock-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--enterprise-border);
         }
-        .rock-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+        
+        .rock-title { 
+            font-size: 16px; 
+            font-weight: 600; 
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        
         .status-badge {
-            padding: 6px 14px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid;
         }
-        .status-complete { background: #d1fae5; color: #065f46; }
-        .status-on-track { background: #dbeafe; color: #1e40af; }
-        .status-at-risk { background: #fef3c7; color: #92400e; }
-        .status-blocked { background: #fee2e2; color: #991b1b; }
+        
+        .status-complete { 
+            background: var(--enterprise-light); 
+            color: var(--text-primary); 
+            border-color: var(--enterprise-gray);
+        }
+        .status-on-track { 
+            background: white; 
+            color: var(--text-primary);
+            border-color: var(--enterprise-border);
+        }
+        .status-at-risk { 
+            background: var(--enterprise-gray); 
+            color: white;
+            border-color: var(--enterprise-gray);
+        }
+        .status-blocked { 
+            background: var(--enterprise-dark); 
+            color: white;
+            border-color: var(--enterprise-dark);
+        }
+        
         .rock-meta {
             display: flex;
-            gap: 20px;
-            font-size: 14px;
-            color: #64748b;
+            gap: 24px;
+            font-size: 13px;
+            color: var(--text-secondary);
         }
-        .meta-item { display: flex; align-items: center; gap: 8px; }
+        
+        .meta-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px;
+        }
+        
+        .meta-label {
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+        
         .progress-bar {
             width: 100%;
-            height: 8px;
-            background: #e2e8f0;
-            border-radius: 4px;
-            margin-top: 15px;
+            height: 6px;
+            background: var(--enterprise-light);
+            border-radius: 0;
+            margin-top: 16px;
             overflow: hidden;
+            border: 1px solid var(--enterprise-border);
         }
+        
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #1e40af);
+            background: var(--enterprise-gray);
             transition: width 0.3s ease;
         }
     </style>
@@ -86,11 +158,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 Quarterly Rocks</h1>
+            <h1>QUARTERLY ROCKS</h1>
             <a href="/" class="back-button">← Back to Dashboard</a>
         </div>
         <div id="rocksContainer">
-            <div style="text-align: center; color: white; padding: 40px;">Loading rocks...</div>
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px; background: white; border: 1px solid var(--enterprise-border);">Loading rocks...</div>
         </div>
     </div>
     
@@ -102,14 +174,14 @@
                 displayRocks(data.rocks.rocks);
             } catch (error) {
                 document.getElementById('rocksContainer').innerHTML = 
-                    '<div style="text-align: center; color: white; padding: 40px;">⚠️ Error loading rocks</div>';
+                    '<div style="text-align: center; color: var(--text-secondary); padding: 40px; background: white; border: 1px solid var(--enterprise-border);">Error loading rocks</div>';
             }
         }
         
         function displayRocks(rocks) {
             if (!rocks || rocks.length === 0) {
                 document.getElementById('rocksContainer').innerHTML = 
-                    '<div style="text-align: center; color: white; padding: 40px;">No rocks defined</div>';
+                    '<div style="text-align: center; color: var(--text-secondary); padding: 40px; background: white; border: 1px solid var(--enterprise-border);">No rocks defined</div>';
                 return;
             }
             
@@ -123,9 +195,18 @@
                             <div class="status-badge ${statusClass}">${rock.status}</div>
                         </div>
                         <div class="rock-meta">
-                            <div class="meta-item">👤 <strong>${rock.owner}</strong></div>
-                            <div class="meta-item">📅 Due: ${rock.due_date}</div>
-                            <div class="meta-item">📊 Progress: ${progress}%</div>
+                            <div class="meta-item">
+                                <span class="meta-label">Owner</span>
+                                <strong>${rock.owner}</strong>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Due</span>
+                                ${rock.due_date}
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Progress</span>
+                                ${progress}%
+                            </div>
                         </div>
                         <div class="progress-bar">
                             <div class="progress-fill" style="width: ${progress}%"></div>

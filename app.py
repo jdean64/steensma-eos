@@ -692,6 +692,53 @@ def get_issues_from_db():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
+@app.route('/')
+def landing_page():
+    """Dashboard landing page"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get rocks summary
+        cursor.execute('''
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN status IN ('COMPLETE', 'ON TRACK') THEN 1 ELSE 0 END) as on_track,
+                   SUM(CASE WHEN status IN ('AT RISK', 'BLOCKED') THEN 1 ELSE 0 END) as at_risk
+            FROM rocks WHERE is_active = 1
+        ''')
+        rocks_row = cursor.fetchone()
+        rocks_summary = {'total': rocks_row[0], 'on_track': rocks_row[1], 'at_risk': rocks_row[2]}
+        
+        # Get issues summary
+        cursor.execute('''
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN priority = 'HIGH' THEN 1 ELSE 0 END) as high
+            FROM issues WHERE is_active = 1
+        ''')
+        issues_row = cursor.fetchone()
+        issues_summary = {'total': issues_row[0], 'high': issues_row[1]}
+        
+        # Get next meeting
+        cursor.execute('SELECT meeting_date FROM l10_meetings WHERE status != "COMPLETED" ORDER BY meeting_date LIMIT 1')
+        next_meeting_row = cursor.fetchone()
+        next_meeting_date = next_meeting_row[0] if next_meeting_row else 'Not Scheduled'
+        
+        # Get pending to-dos count
+        cursor.execute('SELECT COUNT(*) FROM todos WHERE status != "COMPLETE" AND is_active = 1')
+        todos_count = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return render_template('landing.html',
+            current_date=datetime.now().strftime('%B %d, %Y'),
+            rocks_summary=rocks_summary,
+            issues_summary=issues_summary,
+            next_meeting_date=next_meeting_date,
+            todos_count=todos_count
+        )
+    except Exception as e:
+        return f"Error loading dashboard: {str(e)}", 500
+
 @app.route('/vto')
 def vto_page():
     """Display Vision/Traction Organizer"""

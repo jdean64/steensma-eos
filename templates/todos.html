@@ -4,153 +4,244 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To-Do List - EOS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --enterprise-dark: #1a1a1a;
+            --enterprise-gray: #4a4a4a;
+            --enterprise-light: #f5f5f5;
+            --enterprise-border: #d0d0d0;
+            --text-primary: #2a2a2a;
+            --text-secondary: #6a6a6a;
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--enterprise-light);
             min-height: 100vh;
             padding: 20px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
         }
+        
         .container { max-width: 1200px; margin: 0 auto; }
+        
         .header {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+            background: var(--enterprise-dark);
             color: white;
-            padding: 30px 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            margin-bottom: 30px;
+            padding: 24px 32px;
+            border-radius: 2px;
+            margin-bottom: 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            border: 1px solid var(--enterprise-border);
         }
-        .header h1 { font-size: 32px; font-weight: 700; }
+        
+        .header h1 { 
+            font-size: 24px; 
+            font-weight: 600; 
+            letter-spacing: -0.02em;
+        }
+        
         .summary {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
         }
+        
         .summary-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 2px;
             padding: 20px;
-            flex: 1;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            text-align: center;
+            border: 1px solid var(--enterprise-border);
         }
-        .summary-card h3 { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
-        .summary-card .value { font-size: 32px; font-weight: 700; color: #111827; }
-        .summary-card.urgent .value { color: #ef4444; }
-        .summary-card.soon .value { color: #f59e0b; }
+        
+        .summary-card h3 { 
+            font-size: 11px; 
+            color: var(--text-secondary); 
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .summary-card .value { 
+            font-size: 32px; 
+            font-weight: 600; 
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
         .back-button {
             background: white;
-            color: #f59e0b;
-            padding: 12px 24px;
-            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 8px 20px;
+            border-radius: 2px;
             text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid var(--enterprise-border);
+            transition: all 0.15s ease;
         }
-        .back-button:hover { transform: translateY(-2px); }
+        
+        .back-button:hover { 
+            background: var(--enterprise-light);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
         .section {
             background: white;
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 2px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid var(--enterprise-border);
         }
+        
         .section h2 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e5e7eb;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--enterprise-border);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 14px;
         }
+        
         .todo-item {
-            padding: 15px;
-            border-bottom: 1px solid #f3f4f6;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--enterprise-light);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
         }
+        
         .todo-item:last-child { border-bottom: none; }
-        .todo-item:hover { background: #f9fafb; }
+        .todo-item:hover { background: var(--enterprise-light); margin: 0 -12px; padding: 16px 12px; }
+        
         .todo-checkbox {
-            width: 24px;
-            height: 24px;
-            border: 2px solid #d1d5db;
-            border-radius: 6px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--enterprise-border);
+            border-radius: 2px;
             flex-shrink: 0;
         }
+        
         .todo-content {
             flex: 1;
         }
+        
         .todo-text {
-            font-size: 16px;
-            color: #111827;
-            margin-bottom: 5px;
+            font-size: 15px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-weight: 500;
         }
+        
         .todo-meta {
             display: flex;
-            gap: 15px;
-            color: #6b7280;
-            font-size: 14px;
+            gap: 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
         }
-        .todo-meta span { display: flex; align-items: center; gap: 5px; }
+        
+        .todo-meta span { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px;
+        }
+        
+        .meta-label {
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+        
         .due-badge {
             padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
+            border-radius: 2px;
+            font-size: 11px;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid;
         }
-        .due-overdue { background: #fee2e2; color: #dc2626; }
-        .due-today { background: #fef3c7; color: #d97706; }
-        .due-this-week { background: #dbeafe; color: #2563eb; }
-        .due-later { background: #f3f4f6; color: #6b7280; }
+        
+        .due-overdue { 
+            background: var(--enterprise-dark); 
+            color: white; 
+            border-color: var(--enterprise-dark);
+        }
+        .due-today { 
+            background: var(--enterprise-gray); 
+            color: white; 
+            border-color: var(--enterprise-gray);
+        }
+        .due-this-week { 
+            background: white; 
+            color: var(--text-primary); 
+            border-color: var(--enterprise-border);
+        }
+        .due-later { 
+            background: var(--enterprise-light); 
+            color: var(--text-secondary); 
+            border-color: var(--enterprise-border);
+        }
+        
         .empty-state {
             text-align: center;
             padding: 40px;
-            color: #10b981;
+            color: var(--text-secondary);
         }
-        .empty-state h3 { font-size: 20px; margin-bottom: 8px; }
+        
+        .empty-state h3 { 
+            font-size: 18px; 
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>✅ To-Do List</h1>
+            <h1>TO-DO LIST</h1>
             <a href="/" class="back-button">← Back to Dashboard</a>
         </div>
 
         <div class="summary">
-            <div class="summary-card urgent">
-                <h3>OVERDUE</h3>
+            <div class="summary-card">
+                <h3>Overdue</h3>
                 <div class="value" id="overdueCount">-</div>
             </div>
-            <div class="summary-card soon">
-                <h3>THIS WEEK</h3>
+            <div class="summary-card">
+                <h3>This Week</h3>
                 <div class="value" id="thisWeekCount">-</div>
             </div>
             <div class="summary-card">
-                <h3>TOTAL OPEN</h3>
+                <h3>Total Open</h3>
                 <div class="value" id="totalCount">-</div>
             </div>
         </div>
 
         <div class="section" id="overdueSection" style="display: none;">
-            <h2>🚨 Overdue</h2>
+            <h2>Overdue</h2>
             <div id="overdueList"></div>
         </div>
 
         <div class="section" id="thisWeekSection" style="display: none;">
-            <h2>📅 Due This Week</h2>
+            <h2>Due This Week</h2>
             <div id="thisWeekList"></div>
         </div>
 
         <div class="section" id="upcomingSection" style="display: none;">
-            <h2>📆 Upcoming</h2>
+            <h2>Upcoming</h2>
             <div id="upcomingList"></div>
         </div>
     </div>
@@ -226,8 +317,14 @@
                     <div class="todo-content">
                         <div class="todo-text">${todo.task}</div>
                         <div class="todo-meta">
-                            <span>👤 ${todo.owner}</span>
-                            <span>📅 Due: ${todo.due_date}</span>
+                            <span>
+                                <span class="meta-label">Owner</span>
+                                ${todo.owner}
+                            </span>
+                            <span>
+                                <span class="meta-label">Due</span>
+                                ${todo.due_date}
+                            </span>
                             <span class="due-badge ${badgeClass}">${statusText}</span>
                         </div>
                     </div>

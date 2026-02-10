@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EOS Strategic - Steensma Plainwell</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #295B2A 0%, #4A7C4E 100%);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .logo-container {
+            width: 90px;
+            height: 90px;
+            background: white;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-text {
+            font-size: 48px;
+            font-weight: 800;
+        }
+
+        .header-title h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header-title p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .date-display {
+            text-align: right;
+        }
+
+        .date-display .date {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .date-display .time {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #64748b;
+        }
+
+        .card-stats {
+            margin-top: 15px;
+        }
+
+        .primary-stat {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .secondary-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #f1f5f9;
+        }
+
+        .secondary-stat {
+            flex: 1;
+        }
+
+        .secondary-stat .value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .secondary-stat .label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        /* Card-specific colors */
+        .card-rocks .card-icon {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+        }
+        .card-rocks .primary-stat {
+            color: #3b82f6;
+        }
+
+        .card-scorecard .card-icon {
+            background: linear-gradient(135deg, #10b981, #047857);
+            color: white;
+        }
+        .card-scorecard .primary-stat {
+            color: #10b981;
+        }
+
+        .card-issues .card-icon {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: white;
+        }
+        .card-issues .primary-stat {
+            color: #ef4444;
+        }
+
+        .card-todos .card-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        .card-todos .primary-stat {
+            color: #f59e0b;
+        }
+
+        .card-vision .card-icon {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            color: white;
+        }
+        .card-vision .primary-stat {
+            color: #8b5cf6;
+        }
+
+        .card-people .card-icon {
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            color: white;
+        }
+        .card-people .primary-stat {
+            color: #ec4899;
+        }
+
+        /* Footer */
+        .footer {
+            background: white;
+            padding: 20px 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-left {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .footer-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: #295B2A;
+        }
+
+        .last-updated {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="logo-text">🎯</div>
+                </div>
+                <div class="header-title">
+                    <h1>EOS Strategic Platform</h1>
+                    <p>Steensma Plainwell - Quarterly Rocks, Vision, Scorecard & Issues</p>
+                </div>
+            </div>
+            <div class="date-display">
+                <div class="date" id="currentDate">Loading...</div>
+                <div class="time" id="currentTime">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="cards-grid" id="cardsGrid">
+            <div class="loading">Loading EOS metrics...</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-left">
+                <a href="https://shop.coresteensma.com" class="footer-link">Shop Dashboard</a>
+                <a href="https://havyn.coresteensma.com" class="footer-link">Mission Control</a>
+            </div>
+            <div class="last-updated" id="lastUpdated">Last updated: --</div>
+        </div>
+    </div>
+
+    <script>
+        // Update time display
+        function updateTime() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Load EOS summary data
+        async function loadSummary() {
+            try {
+                const response = await fetch('/api/summary');
+                const data = await response.json();
+                
+                renderCards(data);
+                
+                const updateTime = new Date(data.timestamp);
+                document.getElementById('lastUpdated').textContent = 
+                    `Last updated: ${updateTime.toLocaleTimeString('en-US')}`;
+                
+            } catch (error) {
+                console.error('Error loading summary:', error);
+                document.getElementById('cardsGrid').innerHTML = 
+                    '<div class="loading">⚠️ Error loading data. Please refresh.</div>';
+            }
+        }
+
+        function renderCards(data) {
+            const cardsHTML = `
+                <!-- Rocks Card -->
+                <a href="/rocks" class="metric-card card-rocks">
+                    <div class="card-header">
+                        <div class="card-icon">🎯</div>
+                        <div class="card-title">Quarterly Rocks</div>
+                    </div>
+                    <div class="card-stats">
+                        <div class="primary-stat">${data.rocks.on_track}/${data.rocks.total}</div>
+                        <div class="stat-label">On Track</div>
+                        <div class="secondary-stats">
+                            <div class="secondary-stat">
+                                <div class="value">${data.rocks.completion_pct}%</div>
+                                <div class="label">Complete</div>
+                            </div>
+                            <div class="secondary-stat">
+                                <div class="value">${data.rocks.total - data.rocks.on_track}</div>
+                                <div class="label">At Risk</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Scorecard Card -->
+                <a href="/scorecard" class="metric-card card-scorecard">
+                    <div class="card-header">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Scorecard</div>
+                    </div>
+                    <div class="card-stats">
+                        <div class="primary-stat">${data.scorecard.green}/${data.scorecard.total}</div>
+                        <div class="stat-label">Metrics Green</div>
+                        <div class="secondary-stats">
+                            <div class="secondary-stat">
+                                <div class="value status-badge status-yellow">${data.scorecard.yellow}</div>
+                                <div class="label">Yellow</div>
+                            </div>
+                            <div class="secondary-stat">
+                                <div class="value status-badge status-red">${data.scorecard.red}</div>
+                                <div class="label">Red</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Issues Card -->
+                <a href="/issues" class="metric-card card-issues">
+                    <div class="card-header">
+                        <div class="card-icon">⚠️</div>
+                        <div class="card-title">Issues List</div>
+                    </div>
+                    <div class="card-stats">
+                        <div class="primary-stat">${data.issues.total}</div>
+                        <div class="stat-label">Open Issues</div>
+                        <div class="secondary-stats">
+                            <div class="secondary-stat">
+                                <div class="value">${data.issues.high}</div>
+                                <div class="label">High Priority</div>
+                            </div>
+                            <div class="secondary-stat">
+                                <div class="value">${data.issues.total - data.issues.high}</div>
+                                <div class="label">Med/Low</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- To-Dos Card -->
+                <a href="/todos" class="metric-card card-todos">
+                    <div class="card-header">
+                        <div class="card-icon">✅</div>
+                        <div class="card-title">To-Dos</div>
+                    </div>
+                    <div class="card-stats">
+                        <div class="primary-stat">${data.todos.this_week}</div>
+                        <div class="stat-label">Due This Week</div>
+                        <div class="secondary-stats">
+                            <div class="secondary-stat">
+                                <div class="value">${data.todos.total}</div>
+                                <div class="label">Total Open</div>
+                            </div>
+                            <div class="secondary-stat">
+                                <div class="value status-badge status-red">${data.todos.overdue}</div>
+                                <div class="label">Overdue</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Vision Card -->
+                <a href="/vision" class="metric-card card-vision">
+                    <div class="card-header">
+                        <div class="card-icon">🔮</div>
+                        <div class="card-title">Vision</div>
+                    </div>
+                    <div class="card-stats">
+                        <div class="primary-stat">${data.vision.quarter}</div>
+                        <div class="stat-label">Current Quarter</div>
+                        <div class="secondary-stats">
+                            <div class="secondary-stat">
+                                <div class="value">VTO</div>
+                                <div class="label">Active</div>
+                            </div>
+                            <div class="secondary-stat">
+                                <div class="value">L10</div>
+                                <div class="label">Meeting</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- People Card -->
+                <a href="/accountability" class="metric-card card-people">
+                    <div class="card-header">
+                        <div class="card-icon">👥</div>
+                        <div class="card-title">People</div>
+                    </div>
+                    <div class="card-stats">
+                        <div class="primary-stat">${data.people.filled}</div>
+                        <div class="stat-label">Seats Filled</div>
+                        <div class="secondary-stats">
+                            <div class="secondary-stat">
+                                <div class="value">${data.people.open}</div>
+                                <div class="label">Open Roles</div>
+                            </div>
+                            <div class="secondary-stat">
+                                <div class="value">${data.people.filled + data.people.open}</div>
+                                <div class="label">Total Seats</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            `;
+
+            document.getElementById('cardsGrid').innerHTML = cardsHTML;
+        }
+
+        // Load data on page load
+        loadSummary();
+
+        // Refresh every 5 minutes
+        setInterval(loadSummary, 300000);
+    </script>
+</body>
+</html>

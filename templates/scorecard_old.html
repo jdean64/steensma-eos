@@ -4,180 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scorecard - EOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --enterprise-dark: #1a1a1a;
-            --enterprise-gray: #4a4a4a;
-            --enterprise-light: #f5f5f5;
-            --enterprise-border: #d0d0d0;
-            --text-primary: #2a2a2a;
-            --text-secondary: #6a6a6a;
-        }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
-            background: var(--enterprise-light);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            color: var(--text-primary);
-            letter-spacing: -0.01em;
         }
-        
         .container { max-width: 1400px; margin: 0 auto; }
-        
         .header {
-            background: var(--enterprise-dark);
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
-            padding: 24px 32px;
-            border-radius: 2px;
-            margin-bottom: 24px;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid var(--enterprise-border);
         }
-        
-        .header h1 { 
-            font-size: 24px; 
-            font-weight: 600; 
-            letter-spacing: -0.02em;
-        }
-        
+        .header h1 { font-size: 32px; font-weight: 700; }
         .summary {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        
         .summary-card {
             background: white;
-            border-radius: 2px;
+            border-radius: 12px;
             padding: 20px;
-            border: 1px solid var(--enterprise-border);
+            flex: 1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        
-        .summary-card h3 { 
-            font-size: 11px; 
-            color: var(--text-secondary); 
-            margin-bottom: 8px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .summary-card .value { 
-            font-size: 32px; 
-            font-weight: 600; 
-            color: var(--text-primary);
-            letter-spacing: -0.02em;
-        }
-        
+        .summary-card h3 { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+        .summary-card .value { font-size: 32px; font-weight: 700; }
+        .summary-card.green .value { color: #10b981; }
+        .summary-card.yellow .value { color: #f59e0b; }
+        .summary-card.red .value { color: #ef4444; }
         .back-button {
             background: white;
-            color: var(--text-primary);
-            padding: 8px 20px;
-            border-radius: 2px;
+            color: #10b981;
+            padding: 12px 24px;
+            border-radius: 8px;
             text-decoration: none;
-            font-weight: 500;
-            font-size: 14px;
-            border: 1px solid var(--enterprise-border);
-            transition: all 0.15s ease;
+            font-weight: 600;
+            transition: all 0.3s;
         }
-        
-        .back-button:hover { 
-            background: var(--enterprise-light);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
+        .back-button:hover { transform: translateY(-2px); }
         .scorecard-table {
             background: white;
-            border-radius: 2px;
-            padding: 0;
-            border: 1px solid var(--enterprise-border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             overflow-x: auto;
         }
-        
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        
         th {
-            background: var(--enterprise-light);
+            background: #f9fafb;
             padding: 12px;
             text-align: left;
             font-weight: 600;
-            color: var(--text-primary);
-            border-bottom: 1px solid var(--enterprise-border);
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
         }
-        
-        th.week { 
-            text-align: center; 
-            min-width: 50px;
-        }
-        
+        th.week { text-align: center; min-width: 50px; font-size: 12px; }
         td {
             padding: 12px;
-            border-bottom: 1px solid var(--enterprise-light);
+            border-bottom: 1px solid #f3f4f6;
         }
-        
         td.week-cell {
             text-align: center;
             font-weight: 600;
-            font-size: 13px;
         }
-        
-        .status-green { color: var(--text-primary); }
-        .status-yellow { color: var(--enterprise-gray); }
-        .status-red { color: var(--text-secondary); }
-        
-        .metric-name { 
-            font-weight: 600; 
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-        
-        .metric-owner { 
-            color: var(--text-secondary); 
-            font-size: 13px;
-        }
-        
-        .metric-goal { 
-            color: var(--text-secondary); 
-            font-size: 13px;
-        }
-        
-        tr:hover { background: var(--enterprise-light); }
+        .status-green { color: #10b981; }
+        .status-yellow { color: #f59e0b; }
+        .status-red { color: #ef4444; }
+        .metric-name { font-weight: 600; color: #111827; }
+        .metric-owner { color: #6b7280; font-size: 14px; }
+        .metric-goal { color: #9ca3af; font-size: 13px; }
+        tr:hover { background: #f9fafb; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>WEEKLY SCORECARD</h1>
+            <h1>📊 Weekly Scorecard</h1>
             <a href="/" class="back-button">← Back to Dashboard</a>
         </div>
 
         <div class="summary">
-            <div class="summary-card">
-                <h3>Green Metrics</h3>
+            <div class="summary-card green">
+                <h3>GREEN METRICS</h3>
                 <div class="value" id="greenCount">-</div>
             </div>
-            <div class="summary-card">
-                <h3>Yellow Metrics</h3>
+            <div class="summary-card yellow">
+                <h3>YELLOW METRICS</h3>
                 <div class="value" id="yellowCount">-</div>
             </div>
-            <div class="summary-card">
-                <h3>Red Metrics</h3>
+            <div class="summary-card red">
+                <h3>RED METRICS</h3>
                 <div class="value" id="redCount">-</div>
             </div>
             <div class="summary-card">
-                <h3>Total Metrics</h3>
+                <h3>TOTAL METRICS</h3>
                 <div class="value" id="totalCount">-</div>
             </div>
         </div>

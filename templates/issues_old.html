@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issues List - EOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 32px; font-weight: 700; }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .summary-card h3 { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+        .summary-card .value { font-size: 32px; font-weight: 700; color: #111827; }
+        .summary-card.high .value { color: #ef4444; }
+        .back-button {
+            background: white;
+            color: #ef4444;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-button:hover { transform: translateY(-2px); }
+        .issue-item {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 5px solid #e5e7eb;
+        }
+        .issue-item.priority-high { border-left-color: #ef4444; }
+        .issue-item.priority-medium { border-left-color: #f59e0b; }
+        .issue-item.priority-low { border-left-color: #10b981; }
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .issue-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            flex: 1;
+        }
+        .priority-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 15px;
+        }
+        .priority-high { background: #fee2e2; color: #dc2626; }
+        .priority-medium { background: #fef3c7; color: #d97706; }
+        .priority-low { background: #d1fae5; color: #059669; }
+        .issue-meta {
+            display: flex;
+            gap: 25px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .issue-meta span { display: flex; align-items: center; gap: 5px; }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-open { background: #fee2e2; color: #dc2626; }
+        .status-in-progress { background: #fef3c7; color: #d97706; }
+        .empty-state {
+            background: white;
+            border-radius: 16px;
+            padding: 60px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .empty-state h2 { color: #10b981; font-size: 24px; margin-bottom: 10px; }
+        .empty-state p { color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Issues List (IDS)</h1>
+            <a href="/" class="back-button">← Back to Dashboard</a>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card high">
+                <h3>HIGH PRIORITY</h3>
+                <div class="value" id="highCount">-</div>
+            </div>
+            <div class="summary-card">
+                <h3>MEDIUM PRIORITY</h3>
+                <div class="value" id="mediumCount">-</div>
+            </div>
+            <div class="summary-card">
+                <h3>LOW PRIORITY</h3>
+                <div class="value" id="lowCount">-</div>
+            </div>
+            <div class="summary-card">
+                <h3>TOTAL OPEN</h3>
+                <div class="value" id="totalCount">-</div>
+            </div>
+        </div>
+
+        <div id="issuesList"></div>
+    </div>
+
+    <script>
+        async function loadIssues() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (data.issues) {
+                    displayIssues(data.issues);
+                }
+            } catch (error) {
+                console.error('Error loading issues:', error);
+            }
+        }
+
+        function displayIssues(issues) {
+            // Update summary
+            document.getElementById('highCount').textContent = issues.summary.high;
+            document.getElementById('mediumCount').textContent = issues.summary.medium;
+            document.getElementById('lowCount').textContent = issues.summary.low;
+            document.getElementById('totalCount').textContent = issues.summary.total;
+
+            const container = document.getElementById('issuesList');
+            
+            if (issues.issues.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>✅ No Open Issues!</h2>
+                        <p>Great job! Your Issues List is clear.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            issues.issues.forEach(issue => {
+                const priorityClass = `priority-${issue.priority.toLowerCase()}`;
+                const statusClass = `status-${issue.status.toLowerCase().replace(' ', '-')}`;
+                
+                const div = document.createElement('div');
+                div.className = `issue-item ${priorityClass}`;
+                div.innerHTML = `
+                    <div class="issue-header">
+                        <div class="issue-text">${issue.issue}</div>
+                        <span class="priority-badge ${priorityClass}">${issue.priority}</span>
+                    </div>
+                    <div class="issue-meta">
+                        <span>👤 ${issue.owner}</span>
+                        <span>📅 Added: ${issue.date_added}</span>
+                        <span class="status-badge ${statusClass}">${issue.status}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        loadIssues();
+        setInterval(loadIssues, 300000); // Refresh every 5 minutes
+    </script>
+</body>
+</html>
