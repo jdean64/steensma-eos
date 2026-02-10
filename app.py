@@ -3,13 +3,19 @@ Steensma EOS Strategic Platform
 Vision/Traction Organizer, Rocks, Scorecard, Issues, To-Dos, Meetings
 """
 import os
-from flask import Flask, render_template, jsonify
+import sqlite3
+from flask import Flask, render_template, jsonify, request
 from datetime import datetime, timedelta
+from pathlib import Path
 import pandas as pd
+import json
 import warnings
 warnings.filterwarnings('ignore')
 
 app = Flask(__name__)
+
+# Database configuration
+DATABASE_PATH = Path(__file__).parent / 'eos_data.db'
 
 # Configuration
 DATASHEETS_DIR = os.path.join(os.path.dirname(__file__), 'datasheets')
@@ -393,16 +399,298 @@ def health_check():
     try:
         # Verify we can access data directory
         files_exist = os.path.exists(DATASHEETS_DIR)
+        db_exists = DATABASE_PATH.exists()
         return jsonify({
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
-            'datasheets_accessible': files_exist
+            'datasheets_accessible': files_exist,
+            'database_accessible': db_exists
         }), 200
     except Exception as e:
         return jsonify({
             'status': 'unhealthy',
             'error': str(e)
         }), 503
+
+# =============================================================================
+# EDITING API ENDPOINTS
+# =============================================================================
+
+def log_change(table_name, record_id, action, changed_by, changes, ip_address=None):
+    """Log all changes to audit_log table"""
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        INSERT INTO audit_log (table_name, record_id, action, changed_by, changes, ip_address)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (table_name, record_id, action, changed_by, json.dumps(changes), ip_address))
+    
+    conn.commit()
+    conn.close()
+
+@app.route('/api/rocks/<int:rock_id>', methods=['PUT'])
+def update_rock_api(rock_id):
+    """Update a rock field"""
+    data = request.json
+    field = data.get('field')
+    value = data.get('value')
+    changed_by = data.get('changed_by', 'System')
+    
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get current value
+        cursor.execute(f'SELECT {field} FROM rocks WHERE id = ?', (rock_id,))
+        result = cursor.fetchone()
+        old_value = result[0] if result else None
+        
+        # Update the field
+        cursor.execute(f'''
+            UPDATE rocks 
+            SET {field} = ?, updated_at = ?, updated_by = ?
+            WHERE id = ?
+        ''', (value, datetime.now().isoformat(), changed_by, rock_id))
+        
+        # Log to history
+        cursor.execute('''
+            INSERT INTO rocks_history (rock_id, field_changed, old_value, new_value, changed_by)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (rock_id, field, str(old_value), str(value), changed_by))
+        
+        conn.commit()
+        conn.close()
+        
+        # Log to audit
+        log_change('rocks', rock_id, 'UPDATE', changed_by, {
+            'field': field,
+            'old_value': old_value,
+            'new_value': value
+        })
+        
+        return jsonify({'success': True, 'message': 'Rock updated'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/rocks/<int:rock_id>/history', methods=['GET'])
+def get_rock_history_api(rock_id):
+    """Get rock change history"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT field_changed, old_value, new_value, changed_by, changed_at, change_note
+            FROM rocks_history
+            WHERE rock_id = ?
+            ORDER BY changed_at DESC
+        ''', (rock_id,))
+        
+        history = []
+        for row in cursor.fetchall():
+            history.append({
+                'field': row[0],
+                'old_value': row[1],
+                'new_value': row[2],
+                'changed_by': row[3],
+                'changed_at': row[4],
+                'note': row[5]
+            })
+        
+        conn.close()
+        return jsonify({'success': True, 'history': history})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/issues/<int:issue_id>/ids', methods=['POST'])
+def ids_workflow_api(issue_id):
+    """Move issue through IDS workflow"""
+    data = request.json
+    stage = data.get('stage')  # IDENTIFY, DISCUSS, or SOLVE
+    changed_by = data.get('changed_by', 'System')
+    notes = data.get('notes', '')
+    solution = data.get('solution', '')
+    
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get current stage
+        cursor.execute('SELECT ids_stage FROM issues WHERE id = ?', (issue_id,))
+        result = cursor.fetchone()
+        old_stage = result[0] if result else None
+        
+        updates = [stage, datetime.now().isoformat()]
+        query = 'UPDATE issues SET ids_stage = ?, updated_at = ?'
+        
+        if notes:
+            query += ', discussion_notes = ?'
+            updates.append(notes)
+        
+        if solution:
+            query += ', solution = ?'
+            updates.append(solution)
+        
+        if stage == 'SOLVE':
+            query += ', status = ?, resolved_at = ?'
+            updates.extend(['RESOLVED', datetime.now().isoformat()])
+        
+        query += ' WHERE id = ?'
+        updates.append(issue_id)
+        
+        cursor.execute(query, updates)
+        
+        # Log to history
+        cursor.execute('''
+            INSERT INTO issues_history (issue_id, field_changed, old_value, new_value, changed_by, change_note)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (issue_id, 'ids_stage', old_stage, stage, changed_by, notes))
+        
+        conn.commit()
+        conn.close()
+        
+        # Log to audit
+        log_change('issues', issue_id, 'IDS_WORKFLOW', changed_by, {
+            'old_stage': old_stage,
+            'new_stage': stage,
+            'notes': notes,
+            'solution': solution
+        })
+        
+        return jsonify({'success': True, 'message': f'Issue moved to {stage} stage'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/issues/<int:issue_id>/history', methods=['GET'])
+def get_issue_history_api(issue_id):
+    """Get issue IDS workflow history"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT field_changed, old_value, new_value, changed_by, changed_at, change_note
+            FROM issues_history
+            WHERE issue_id = ?
+            ORDER BY changed_at ASC
+        ''', (issue_id,))
+        
+        history = []
+        for row in cursor.fetchall():
+            history.append({
+                'field': row[0],
+                'old_value': row[1],
+                'new_value': row[2],
+                'changed_by': row[3],
+                'changed_at': row[4],
+                'note': row[5]
+            })
+        
+        conn.close()
+        return jsonify({'success': True, 'history': history})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/rocks/db', methods=['GET'])
+def get_rocks_from_db():
+    """Get all rocks from database"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, description, owner, status, due_date, progress, quarter, updated_at, updated_by
+            FROM rocks
+            WHERE is_active = 1
+            ORDER BY due_date
+        ''')
+        
+        rocks = []
+        for row in cursor.fetchall():
+            rocks.append({
+                'id': row[0],
+                'description': row[1],
+                'owner': row[2],
+                'status': row[3],
+                'due_date': row[4],
+                'progress': row[5],
+                'quarter': row[6],
+                'updated_at': row[7],
+                'updated_by': row[8]
+            })
+        
+        conn.close()
+        
+        # Calculate summary
+        total = len(rocks)
+        complete = len([r for r in rocks if r['status'] == 'COMPLETE'])
+        on_track = len([r for r in rocks if r['status'] in ['COMPLETE', 'ON TRACK']])
+        at_risk = len([r for r in rocks if r['status'] in ['AT RISK', 'BLOCKED']])
+        
+        return jsonify({
+            'success': True,
+            'rocks': rocks,
+            'summary': {
+                'total': total,
+                'complete': complete,
+                'on_track': on_track,
+                'at_risk': at_risk,
+                'completion_pct': round((on_track / total * 100) if total > 0 else 0, 1)
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/issues/db', methods=['GET'])
+def get_issues_from_db():
+    """Get all issues from database"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, issue, priority, owner, date_added, status, ids_stage, discussion_notes, solution
+            FROM issues
+            WHERE is_active = 1
+            ORDER BY 
+                CASE priority 
+                    WHEN 'HIGH' THEN 1 
+                    WHEN 'MEDIUM' THEN 2 
+                    WHEN 'LOW' THEN 3 
+                END,
+                date_added
+        ''')
+        
+        issues = []
+        for row in cursor.fetchall():
+            issues.append({
+                'id': row[0],
+                'issue': row[1],
+                'priority': row[2],
+                'owner': row[3],
+                'date_added': row[4],
+                'status': row[5],
+                'ids_stage': row[6],
+                'discussion_notes': row[7],
+                'solution': row[8]
+            })
+        
+        conn.close()
+        
+        # Calculate summary
+        high = len([i for i in issues if i['priority'] == 'HIGH'])
+        
+        return jsonify({
+            'success': True,
+            'issues': issues,
+            'summary': {
+                'total': len(issues),
+                'high': high
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 if __name__ == '__main__':
     # Create archive directory if it doesn't exist
