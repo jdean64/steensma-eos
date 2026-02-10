@@ -256,11 +256,6 @@ def parse_accountability_chart(filepath):
         print(f"Error parsing accountability chart: {e}")
         return {'seats': [], 'summary': {'total': 0, 'filled': 0, 'open': 0}}
 
-@app.route('/')
-def index():
-    """Main EOS landing page with 6 metric cards"""
-    return render_template('landing.html')
-
 @app.route('/rocks')
 def rocks():
     """Detailed Rocks page"""
