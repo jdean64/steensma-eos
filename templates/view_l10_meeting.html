@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L10 Meeting - {{ meeting.meeting_date }} - EOS Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #2a2a2a;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: #1a1a1a;
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 40px;
+        }
+        
+        .meeting-controls {
+            background: white;
+            border-radius: 8px;
+            padding: 24px 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .meeting-meta {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+        
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .meta-label {
+            font-size: 12px;
+            color: #6a6a6a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .meta-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-top: 4px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-success {
+            background: #00aa55;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #008844;
+        }
+        
+        .btn-primary {
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2d2d2d;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #2a2a2a;
+            border: 1px solid #d0d0d0;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #1a1a1a;
+        }
+        
+        .agenda-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .agenda-section {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+        
+        .agenda-section.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .agenda-section.active {
+            border: 2px solid #00aa55;
+            box-shadow: 0 4px 16px rgba(0,170,85,0.2);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-time {
+            font-size: 12px;
+            color: #6a6a6a;
+            background: #f0f0f0;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        
+        .section-content {
+            font-size: 14px;
+            color: #4a4a4a;
+            line-height: 1.8;
+        }
+        
+        .section-notes {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            margin-top: 12px;
+        }
+        
+        .section-notes:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+        
+        .items-list {
+            list-style: none;
+            margin-top: 12px;
+        }
+        
+        .item {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .item:last-child {
+            border-bottom: none;
+        }
+        
+        .item-title {
+            flex: 1;
+        }
+        
+        .item-meta {
+            font-size: 12px;
+            color: #6a6a6a;
+            margin-left: 12px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-high {
+            background: #fee;
+            color: #c33;
+        }
+        
+        .badge-medium {
+            background: #fff4e6;
+            color: #cc7700;
+        }
+        
+        .badge-low {
+            background: #f0f0f0;
+            color: #6a6a6a;
+        }
+        
+        .badge-on-track {
+            background: #e8f8f0;
+            color: #00aa55;
+        }
+        
+        .badge-off-track {
+            background: #fee;
+            color: #c33;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 32px 20px;
+            color: #8a8a8a;
+            font-size: 13px;
+        }
+        
+        .progress-indicator {
+            height: 4px;
+            background: #e8e8e8;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #00aa55;
+            transition: width 0.3s;
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+        
+        .timer {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-scheduled {
+            background: #e8f4fd;
+            color: #0066cc;
+        }
+        
+        .status-in-progress {
+            background: #fff4e6;
+            color: #cc7700;
+        }
+        
+        .status-completed {
+            background: #e8f8f0;
+            color: #00aa55;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📋 L10 Meeting - {{ meeting.meeting_date }} - {{ meeting.division_name }}</h1>
+            <div class="header-actions">
+                <a href="{{ url_for('l10_meetings', division_id=division_id) }}" class="btn btn-secondary">← Back</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="meeting-controls">
+            <div class="meeting-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Status</span>
+                    <span class="meta-value">
+                        <span class="status-badge status-{{ meeting.status.lower()|replace(' ', '-') }}">
+                            {{ meeting.status }}
+                        </span>
+                    </span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Time</span>
+                    <span class="meta-value">{{ meeting.meeting_time or '9:00 AM' }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Duration</span>
+                    <span class="meta-value">{{ meeting.duration_minutes or 90 }} min</span>
+                </div>
+                {% if meeting.facilitator_name %}
+                <div class="meta-item">
+                    <span class="meta-label">Facilitator</span>
+                    <span class="meta-value">{{ meeting.facilitator_name }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if can_edit %}
+            <div style="display: flex; gap: 12px;">
+                {% if meeting.status == 'SCHEDULED' %}
+                <form method="POST" action="{{ url_for('start_l10_meeting', division_id=division_id, meeting_id=meeting.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-success">▶️ Start Meeting</button>
+                </form>
+                {% elif meeting.status == 'IN_PROGRESS' %}
+                <form method="POST" action="{{ url_for('complete_l10_meeting', division_id=division_id, meeting_id=meeting.id) }}" style="display: inline;" onsubmit="return confirm('Mark this meeting as complete?');">
+                    <button type="submit" class="btn btn-success">✓ Complete Meeting</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="agenda-grid">
+            <!-- Segue -->
+            <div class="agenda-section">
+                <div class="section-header">
+                    <h3 class="section-title">🌟 Segue</h3>
+                    <span class="section-time">5 min</span>
+                </div>
+                <div class="section-content">
+                    <p style="margin-bottom: 12px;">Share good news (personal &amp; business)</p>
+                    <textarea class="section-notes" placeholder="What good news do team members want to share?">{{ meeting.segue_good_news or '' }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Scorecard Review -->
+            <div class="agenda-section">
+                <div class="section-header">
+                    <h3 class="section-title">📊 Scorecard Review</h3>
+                    <span class="section-time">5 min</span>
+                </div>
+                <div class="section-content">
+                    <p style="margin-bottom: 12px;">Review 5-15 weekly numbers</p>
+                    <textarea class="section-notes" placeholder="Are we on track? Any issues to discuss?">{{ meeting.scorecard_review or '' }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Rock Review -->
+            <div class="agenda-section">
+                <div class="section-header">
+                    <h3 class="section-title">🎯 Rock Review</h3>
+                    <span class="section-time">5 min</span>
+                </div>
+                <div class="section-content">
+                    <p style="margin-bottom: 8px; font-size: 13px; color: #6a6a6a;">Current 90-day priorities:</p>
+                    {% if rocks %}
+                    <ul class="items-list">
+                        {% for rock in rocks %}
+                        <li class="item">
+                            <span class="item-title">{{ rock.rock }}</span>
+                            <span class="badge badge-{{ rock.status.lower()|replace(' ', '-') if rock.status else 'on-track' }}">
+                                {{ rock.status or 'On Track' }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="empty-state">No rocks defined</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Headlines -->
+            <div class="agenda-section">
+                <div class="section-header">
+                    <h3 class="section-title">📰 Headlines</h3>
+                    <span class="section-time">5 min</span>
+                </div>
+                <div class="section-content">
+                    <p style="margin-bottom: 12px;">Customer/Employee updates (good & bad)</p>
+                    <textarea class="section-notes" placeholder="What's happening with customers & employees?">{{ meeting.customer_employee_headlines or '' }}</textarea>
+                </div>
+            </div>
+            
+            <!-- To-Do Review -->
+            <div class="agenda-section">
+                <div class="section-header">
+                    <h3 class="section-title">✅ To-Do List Review</h3>
+                    <span class="section-time">5 min</span>
+                </div>
+                <div class="section-content">
+                    <p style="margin-bottom: 8px; font-size: 13px; color: #6a6a6a;">Review last week's action items:</p>
+                    {% if todos %}
+                    <ul class="items-list">
+                        {% for todo in todos %}
+                        <li class="item">
+                            <span class="item-title">{{ todo.todo }}</span>
+                            <span class="item-meta">
+                                {{ todo.owner_full_name or todo.owner_name or 'Unassigned' }}
+                                {% if todo.due_date %}
+                                • Due: {{ todo.due_date }}
+                                {% endif %}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="empty-state">No open to-dos</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- IDS (Main Focus) -->
+            <div class="agenda-section full-width">
+                <div class="section-header">
+                    <h3 class="section-title">🔥 IDS (Identify, Discuss, Solve)</h3>
+                    <span class="section-time">60 min</span>
+                </div>
+                <div class="section-content">
+                    <p style="margin-bottom: 12px; font-size: 14px;">Work through your issues list using the IDS process</p>
+                    
+                    {% if issues %}
+                    <ul class="items-list">
+                        {% for issue in issues %}
+                        <li class="item">
+                            <span class="item-title">
+                                <span class="badge badge-{{ issue.priority.lower() if issue.priority else 'medium' }}">{{ issue.priority or 'MEDIUM' }}</span>
+                                {{ issue.issue }}
+                            </span>
+                            <span class="item-meta">
+                                {{ issue.category }} 
+                                {% if issue.owner_full_name %}
+                                • {{ issue.owner_full_name }}
+                                {% endif %}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div style="margin-top: 16px; text-align: center;">
+                        <a href="{{ url_for('division_issues', division_id=division_id) }}" class="btn btn-secondary">Manage Issues →</a>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        No open issues! 🎉<br>
+                        <a href="{{ url_for('add_issue', division_id=division_id) }}" class="btn btn-primary" style="margin-top: 12px;">Add Issue</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Conclude -->
+            <div class="agenda-section full-width">
+                <div class="section-header">
+                    <h3 class="section-title">🏁 Conclude</h3>
+                    <span class="section-time">5 min</span>
+                </div>
+                <div class="section-content">
+                    <p style="margin-bottom: 12px;">Recap to-dos, cascading messages, and rate the meeting</p>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+                        <div>
+                            <label style="font-size: 13px; margin-bottom: 6px; display: block; color: #6a6a6a;">Key takeaways & action items:</label>
+                            <textarea class="section-notes" style="margin-top: 0;" placeholder="What are the key takeaways from this meeting?"></textarea>
+                        </div>
+                        <div>
+                            <label style="font-size: 13px; margin-bottom: 6px; display: block; color: #6a6a6a;">Meeting Rating (1-10):</label>
+                            <input type="number" min="1" max="10" value="8" style="width: 100%; padding: 12px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 24px; text-align: center;">
+                            <div style="margin-top: 8px; font-size: 12px; color: #6a6a6a; text-align: center;">Did we stay on track?</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 32px; padding: 24px; background: white; border-radius: 8px; text-align: center;">
+            <p style="font-size: 14px; color: #6a6a6a; margin-bottom: 16px;">
+                ⚡ Keep your Level 10 at a "10" by staying disciplined with the agenda and time limits
+            </p>
+            {% if can_edit and meeting.status != 'COMPLETED' %}
+            <form method="POST" action="{{ url_for('complete_l10_meeting', division_id=division_id, meeting_id=meeting.id) }}" style="display: inline;" onsubmit="return confirm('Mark this meeting as complete? This will save all notes and timestamp the completion.');">
+                <button type="submit" class="btn btn-success">✓ Complete This L10 Meeting</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Issue - {{ division.display_name }} - EOS Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #2a2a2a;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: #1a1a1a;
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 40px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: #6a6a6a;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: #1a1a1a;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .form-subtitle {
+            color: #6a6a6a;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        label .required {
+            color: #c33;
+        }
+        
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 3px rgba(26,26,26,0.1);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .form-hint {
+            font-size: 12px;
+            color: #8a8a8a;
+            margin-top: 4px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e8e8e8;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2d2d2d;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #2a2a2a;
+            border: 1px solid #d0d0d0;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #1a1a1a;
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        
+        .alert-danger {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Add Issue - {{ division.display_name }}</h1>
+    </div>
+    
+    <div class="container">
+        <a href="{{ url_for('division_issues', division_id=division.id) }}" class="back-link">← Back to Issues</a>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="form-card">
+            <h2 class="form-title">Add New Issue</h2>
+            <p class="form-subtitle">Identify a problem to discuss and solve in your next L10</p>
+            
+            <form method="POST" action="{{ url_for('add_issue', division_id=division.id) }}">
+                <div class="form-group">
+                    <label for="issue">Issue Description <span class="required">*</span></label>
+                    <textarea id="issue" name="issue" required placeholder="Describe the issue clearly and concisely"></textarea>
+                    <div class="form-hint">What is the problem that needs to be solved?</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="category">Category <span class="required">*</span></label>
+                        <select id="category" name="category" required>
+                            <option value="">Select category...</option>
+                            <option value="SALES">Sales</option>
+                            <option value="SERVICE">Service</option>
+                            <option value="PROCESS">Process</option>
+                            <option value="PARTS">Parts</option>
+                            <option value="ADMINISTRATIVE">Administrative</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="priority">Priority <span class="required">*</span></label>
+                        <select id="priority" name="priority" required>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="owner_name">Owner</label>
+                    <input type="text" id="owner_name" name="owner_name" placeholder="Who is responsible for this issue?">
+                    <div class="form-hint">Optional: Assign an owner to take responsibility</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="discussion_notes">Discussion Notes</label>
+                    <textarea id="discussion_notes" name="discussion_notes" placeholder="Add context, background, or initial thoughts"></textarea>
+                    <div class="form-hint">Supporting information to help the team understand the issue</div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Issue</button>
+                    <a href="{{ url_for('division_issues', division_id=division.id) }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

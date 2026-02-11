@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision/Traction Organizer - EOS</title>
+    <style>
+        :root {
+            --enterprise-dark: #1a1a1a;
+            --enterprise-gray: #4a4a4a;
+            --enterprise-light: #f5f5f5;
+            --enterprise-border: #d0d0d0;
+            --text-primary: #2a2a2a;
+            --text-secondary: #6a6a6a;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--enterprise-light);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header {
+            background: var(--enterprise-dark);
+            color: white;
+            padding: 24px 32px;
+            border-radius: 2px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--enterprise-border);
+        }
+        
+        .header h1 { 
+            font-size: 24px; 
+            font-weight: 600; 
+            letter-spacing: -0.02em;
+        }
+        
+        .back-button {
+            background: white;
+            color: var(--text-primary);
+            padding: 8px 20px;
+            border-radius: 2px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid var(--enterprise-border);
+            transition: all 0.15s ease;
+        }
+        
+        .back-button:hover { 
+            background: var(--enterprise-light);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .vto-section {
+            background: white;
+            border-radius: 2px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid var(--enterprise-border);
+        }
+        .vto-section h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--enterprise-border);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 14px;
+        }
+        .vto-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        .vto-section p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        .vto-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        .vto-section li {
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .vto-section li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--text-primary);
+            font-weight: bold;
+        }
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .timeline-card {
+            background: white;
+            border-radius: 2px;
+            padding: 24px;
+            border: 1px solid var(--enterprise-border);
+            border-top: 3px solid var(--enterprise-dark);
+        }
+        .timeline-card h3 {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        .timeline-card .value {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        .core-values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+        .core-value-item {
+            background: var(--enterprise-light);
+            padding: 16px;
+            border-radius: 2px;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-align: center;
+            font-size: 14px;
+            border: 1px solid var(--enterprise-border);
+        }
+        .quarter-badge {
+            display: inline-block;
+            background: var(--enterprise-dark);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 2px;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>VISION/TRACTION ORGANIZER (VTO)</h1>
+            <a href="/" class="back-button">← Back to Dashboard</a>
+        </div>
+
+        <div class="vto-section">
+            <span class="quarter-badge" id="quarterBadge">Q1 2026</span>
+        </div>
+
+        <div class="timeline" id="timeline"></div>
+
+        <div class="vto-section" id="coreValuesSection"></div>
+        <div class="vto-section" id="nicheSection"></div>
+        <div class="vto-section" id="threeUniquesSection"></div>
+        <div class="vto-section" id="marketingSection"></div>
+        <div class="vto-section" id="issuesSection"></div>
+    </div>
+
+    <script>
+        async function loadVTO() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (data.vto) {
+                    displayVTO(data.vto);
+                }
+            } catch (error) {
+                console.error('Error loading VTO:', error);
+            }
+        }
+
+        function displayVTO(vto) {
+            // Update quarter badge
+            if (vto.quarter) {
+                document.getElementById('quarterBadge').textContent = vto.quarter;
+            }
+
+            // Display timeline
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+            
+            const timeframes = [
+                { label: '10-Year Target', value: vto.ten_year_target },
+                { label: '3-Year Picture', value: vto.three_year_picture },
+                { label: '1-Year Plan', value: vto.one_year_plan }
+            ];
+
+            timeframes.forEach(tf => {
+                if (tf.value) {
+                    const card = document.createElement('div');
+                    card.className = 'timeline-card';
+                    card.innerHTML = `
+                        <h3>${tf.label}</h3>
+                        <div class="value">${tf.value}</div>
+                    `;
+                    timeline.appendChild(card);
+                }
+            });
+
+            // Core Values
+            if (vto.core_values) {
+                const section = document.getElementById('coreValuesSection');
+                section.innerHTML = `
+                    <h2>Core Values</h2>
+                    <div class="core-values-grid">
+                        ${vto.core_values.split(',').map(value => 
+                            `<div class="core-value-item">${value.trim()}</div>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+
+            // Core Focus / Niche
+            if (vto.core_focus) {
+                const section = document.getElementById('nicheSection');
+                section.innerHTML = `
+                    <h2>Core Focus / Niche</h2>
+                    <p>${vto.core_focus}</p>
+                `;
+            }
+
+            // 3 Uniques
+            if (vto.three_uniques) {
+                const section = document.getElementById('threeUniquesSection');
+                section.innerHTML = `
+                    <h2>3 Uniques</h2>
+                    <p>${vto.three_uniques}</p>
+                `;
+            }
+
+            // Marketing Strategy
+            if (vto.marketing_strategy) {
+                const section = document.getElementById('marketingSection');
+                section.innerHTML = `
+                    <h2>Marketing Strategy</h2>
+                    <p>${vto.marketing_strategy}</p>
+                `;
+            }
+
+            // Issues List
+            if (vto.issues_list) {
+                const section = document.getElementById('issuesSection');
+                const issues = vto.issues_list.split(',');
+                section.innerHTML = `
+                    <h2>Key Issues to Solve</h2>
+                    <ul>
+                        ${issues.map(issue => `<li>${issue.trim()}</li>`).join('')}
+                    </ul>
+                `;
+            }
+        }
+
+        loadVTO();
+        setInterval(loadVTO, 300000); // Refresh every 5 minutes
+    </script>
+</body>
+</html>

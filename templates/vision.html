@@ -3,286 +3,409 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vision/Traction Organizer - EOS</title>
+    <title>Vision/VTO - {{ division.display_name }} - EOS Platform</title>
     <style>
-        :root {
-            --enterprise-dark: #1a1a1a;
-            --enterprise-gray: #4a4a4a;
-            --enterprise-light: #f5f5f5;
-            --enterprise-border: #d0d0d0;
-            --text-primary: #2a2a2a;
-            --text-secondary: #6a6a6a;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
-            background: var(--enterprise-light);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-            letter-spacing: -0.01em;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #2a2a2a;
+            line-height: 1.6;
         }
-        
-        .container { max-width: 1200px; margin: 0 auto; }
         
         .header {
-            background: var(--enterprise-dark);
+            background: #1a1a1a;
             color: white;
-            padding: 24px 32px;
-            border-radius: 2px;
-            margin-bottom: 24px;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header-left {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            border: 1px solid var(--enterprise-border);
+            gap: 16px;
         }
         
-        .header h1 { 
-            font-size: 24px; 
-            font-weight: 600; 
-            letter-spacing: -0.02em;
-        }
-        
-        .back-button {
-            background: white;
-            color: var(--text-primary);
-            padding: 8px 20px;
-            border-radius: 2px;
+        .back-link {
+            color: #b0b0b0;
             text-decoration: none;
-            font-weight: 500;
             font-size: 14px;
-            border: 1px solid var(--enterprise-border);
-            transition: all 0.15s ease;
+            transition: color 0.2s;
         }
         
-        .back-button:hover { 
-            background: var(--enterprise-light);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .back-link:hover {
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .user-info {
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+        
+        .btn-logout {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #4a4a4a;
+            color: white;
+            border-radius: 4px;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-logout:hover {
+            background: #2d2d2d;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 32px auto;
+            padding: 0 40px;
+        }
+        
+        .page-header {
+            margin-bottom: 32px;
+        }
+        
+        .page-title h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .page-title p {
+            font-size: 14px;
+            color: #6a6a6a;
+        }
+        
+        .vto-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
         }
         
         .vto-section {
             background: white;
-            border-radius: 2px;
+            border-radius: 8px;
             padding: 24px;
-            margin-bottom: 16px;
-            border: 1px solid var(--enterprise-border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5e5;
         }
-        .vto-section h2 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
+        
+        .vto-section.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 16px;
             padding-bottom: 12px;
-            border-bottom: 1px solid var(--enterprise-border);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 14px;
+            border-bottom: 2px solid #f0f0f0;
         }
-        .vto-section h3 {
-            font-size: 14px;
+        
+        .section-icon {
+            font-size: 24px;
+        }
+        
+        .section-title {
+            font-size: 18px;
             font-weight: 600;
-            color: var(--text-primary);
-            margin-top: 16px;
-            margin-bottom: 8px;
+            color: #1a1a1a;
         }
-        .vto-section p {
+        
+        .section-content {
             font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 8px;
+            color: #4a4a4a;
+            line-height: 1.8;
         }
-        .vto-section ul {
-            list-style: none;
-            padding: 0;
-        }
-        .vto-section li {
-            font-size: 14px;
-            color: var(--text-secondary);
-            padding: 8px 0;
-            padding-left: 20px;
-            position: relative;
-        }
-        .vto-section li::before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: var(--text-primary);
-            font-weight: bold;
-        }
-        .timeline {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        .timeline-card {
-            background: white;
-            border-radius: 2px;
-            padding: 24px;
-            border: 1px solid var(--enterprise-border);
-            border-top: 3px solid var(--enterprise-dark);
-        }
-        .timeline-card h3 {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-        }
-        .timeline-card .value {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
+        
         .core-values-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 12px;
         }
+        
         .core-value-item {
-            background: var(--enterprise-light);
-            padding: 16px;
-            border-radius: 2px;
-            font-weight: 500;
-            color: var(--text-primary);
+            background: #f8f8f8;
+            padding: 12px 16px;
+            border-radius: 6px;
             text-align: center;
-            font-size: 14px;
-            border: 1px solid var(--enterprise-border);
-        }
-        .quarter-badge {
-            display: inline-block;
-            background: var(--enterprise-dark);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 2px;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 13px;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .timeline-section {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 24px;
+        }
+        
+        .timeline-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .timeline-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #b0b0b0;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-value {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .subsection {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .subsection-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6a6a6a;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+        
+        .subsection-content {
+            font-size: 14px;
+            color: #4a4a4a;
+            line-height: 1.6;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6a6a6a;
+            font-size: 14px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #1a1a1a;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        @media (max-width: 768px) {
+            .timeline-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .vto-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>VISION/TRACTION ORGANIZER (VTO)</h1>
-            <a href="/" class="back-button">← Back to Dashboard</a>
+    <div class="header">
+        <div class="header-left">
+            <a href="/division/{{ division.id }}" class="back-link">← Back to {{ division.display_name }}</a>
+            <h1>Vision/Traction Organizer (VTO)</h1>
         </div>
-
-        <div class="vto-section">
-            <span class="quarter-badge" id="quarterBadge">Q1 2026</span>
+        <div class="header-right">
+            <span class="user-info">{{ user.full_name }} ({{ user.role }})</span>
+            <a href="/logout" class="btn-logout">Logout</a>
         </div>
-
-        <div class="timeline" id="timeline"></div>
-
-        <div class="vto-section" id="coreValuesSection"></div>
-        <div class="vto-section" id="nicheSection"></div>
-        <div class="vto-section" id="threeUniquesSection"></div>
-        <div class="vto-section" id="marketingSection"></div>
-        <div class="vto-section" id="issuesSection"></div>
     </div>
-
-    <script>
-        async function loadVTO() {
-            try {
-                const response = await fetch('/api/data');
-                const data = await response.json();
-                
-                if (data.vto) {
-                    displayVTO(data.vto);
-                }
-            } catch (error) {
-                console.error('Error loading VTO:', error);
-            }
-        }
-
-        function displayVTO(vto) {
-            // Update quarter badge
-            if (vto.quarter) {
-                document.getElementById('quarterBadge').textContent = vto.quarter;
-            }
-
-            // Display timeline
-            const timeline = document.getElementById('timeline');
-            timeline.innerHTML = '';
-            
-            const timeframes = [
-                { label: '10-Year Target', value: vto.ten_year_target },
-                { label: '3-Year Picture', value: vto.three_year_picture },
-                { label: '1-Year Plan', value: vto.one_year_plan }
-            ];
-
-            timeframes.forEach(tf => {
-                if (tf.value) {
-                    const card = document.createElement('div');
-                    card.className = 'timeline-card';
-                    card.innerHTML = `
-                        <h3>${tf.label}</h3>
-                        <div class="value">${tf.value}</div>
-                    `;
-                    timeline.appendChild(card);
-                }
-            });
-
-            // Core Values
-            if (vto.core_values) {
-                const section = document.getElementById('coreValuesSection');
-                section.innerHTML = `
-                    <h2>Core Values</h2>
-                    <div class="core-values-grid">
-                        ${vto.core_values.split(',').map(value => 
-                            `<div class="core-value-item">${value.trim()}</div>`
-                        ).join('')}
+    
+    <div class="container">
+        <div class="page-header">
+            <div class="page-title">
+                <h2>{{ division.display_name }} Vision</h2>
+                <p>{% if vto %}Last updated: {{ vto.updated_at }}{% else %}No VTO data available{% endif %}</p>
+            </div>
+        </div>
+        
+        {% if vto %}
+        <!-- Timeline Section -->
+        <div class="timeline-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 20px; font-weight: 600;">Strategic Timeline</h3>
+                <span class="badge">Q1 2026</span>
+            </div>
+            <div class="timeline-grid">
+                <div class="timeline-card">
+                    <div class="timeline-label">10-Year Target</div>
+                    <div class="timeline-value">{{ vto.ten_year_target if vto.ten_year_target else 'Not defined' }}</div>
+                </div>
+                <div class="timeline-card">
+                    <div class="timeline-label">3-Year Picture</div>
+                    <div class="timeline-value">
+                        <div>Revenue: {{ vto.three_year_revenue if vto.three_year_revenue else 'TBD' }}</div>
+                        <div style="margin-top: 4px;">Profit: {{ vto.three_year_profit if vto.three_year_profit else 'TBD' }}</div>
                     </div>
-                `;
-            }
-
-            // Core Focus / Niche
-            if (vto.core_focus) {
-                const section = document.getElementById('nicheSection');
-                section.innerHTML = `
-                    <h2>Core Focus / Niche</h2>
-                    <p>${vto.core_focus}</p>
-                `;
-            }
-
-            // 3 Uniques
-            if (vto.three_uniques) {
-                const section = document.getElementById('threeUniquesSection');
-                section.innerHTML = `
-                    <h2>3 Uniques</h2>
-                    <p>${vto.three_uniques}</p>
-                `;
-            }
-
-            // Marketing Strategy
-            if (vto.marketing_strategy) {
-                const section = document.getElementById('marketingSection');
-                section.innerHTML = `
-                    <h2>Marketing Strategy</h2>
-                    <p>${vto.marketing_strategy}</p>
-                `;
-            }
-
-            // Issues List
-            if (vto.issues_list) {
-                const section = document.getElementById('issuesSection');
-                const issues = vto.issues_list.split(',');
-                section.innerHTML = `
-                    <h2>Key Issues to Solve</h2>
-                    <ul>
-                        ${issues.map(issue => `<li>${issue.trim()}</li>`).join('')}
-                    </ul>
-                `;
-            }
-        }
-
-        loadVTO();
-        setInterval(loadVTO, 300000); // Refresh every 5 minutes
-    </script>
+                </div>
+                <div class="timeline-card">
+                    <div class="timeline-label">1-Year Plan (2026)</div>
+                    <div class="timeline-value">
+                        <div>Revenue: {{ vto.one_year_revenue if vto.one_year_revenue else 'TBD' }}</div>
+                        <div style="margin-top: 4px;">Profit: {{ vto.one_year_profit if vto.one_year_profit else 'TBD' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="vto-grid">
+            <!-- Core Values -->
+            <div class="vto-section">
+                <div class="section-header">
+                    <span class="section-icon">⭐</span>
+                    <h3 class="section-title">Core Values</h3>
+                </div>
+                <div class="core-values-grid">
+                    {% if core_values %}
+                        {% for value in core_values %}
+                        <div class="core-value-item">{{ value }}</div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-data">No core values defined</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Core Focus -->
+            <div class="vto-section">
+                <div class="section-header">
+                    <span class="section-icon">🎯</span>
+                    <h3 class="section-title">Core Focus</h3>
+                </div>
+                <div class="section-content">
+                    {% if vto.core_purpose %}
+                    <div class="subsection">
+                        <div class="subsection-title">Purpose/Passion</div>
+                        <div class="subsection-content">{{ vto.core_purpose }}</div>
+                    </div>
+                    {% endif %}
+                    {% if vto.core_niche %}
+                    <div class="subsection">
+                        <div class="subsection-title">Niche</div>
+                        <div class="subsection-content">{{ vto.core_niche }}</div>
+                    </div>
+                    {% endif %}
+                    {% if not vto.core_purpose and not vto.core_niche %}
+                    <div class="no-data">No core focus defined</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Marketing Strategy -->
+            <div class="vto-section full-width">
+                <div class="section-header">
+                    <span class="section-icon">📢</span>
+                    <h3 class="section-title">Marketing Strategy</h3>
+                </div>
+                <div class="vto-grid" style="margin: 0;">
+                    <div>
+                        <div class="subsection-title">Unique Value Proposition</div>
+                        <div class="subsection-content">{{ vto.unique_value_proposition if vto.unique_value_proposition else 'Not defined' }}</div>
+                    </div>
+                    <div>
+                        <div class="subsection-title">Proven Process</div>
+                        <div class="subsection-content">{{ vto.proven_process if vto.proven_process else 'Not defined' }}</div>
+                    </div>
+                    <div>
+                        <div class="subsection-title">Guarantee</div>
+                        <div class="subsection-content">{{ vto.guarantee if vto.guarantee else 'Not defined' }}</div>
+                    </div>
+                    <div>
+                        <div class="subsection-title">Target Market</div>
+                        <div class="subsection-content">{{ vto.target_market if vto.target_market else 'Not defined' }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3-Year Picture Details -->
+            <div class="vto-section">
+                <div class="section-header">
+                    <span class="section-icon">🔮</span>
+                    <h3 class="section-title">3-Year Picture</h3>
+                </div>
+                <div class="section-content">
+                    {% if vto.three_year_measurables %}
+                    <div class="subsection">
+                        <div class="subsection-title">Measurables</div>
+                        <div class="subsection-content">{{ vto.three_year_measurables }}</div>
+                    </div>
+                    {% endif %}
+                    {% if not vto.three_year_measurables %}
+                    <div class="no-data">No measurables defined</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 1-Year Goals -->
+            <div class="vto-section">
+                <div class="section-header">
+                    <span class="section-icon">🎯</span>
+                    <h3 class="section-title">1-Year Goals</h3>
+                </div>
+                <div class="section-content">
+                    {% if vto.one_year_goals %}
+                    <div class="subsection-content">{{ vto.one_year_goals|replace('\n', '<br>')|safe }}</div>
+                    {% else %}
+                    <div class="no-data">No goals defined</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- No VTO Data -->
+        <div class="vto-section full-width">
+            <div class="no-data">
+                <h3 style="margin-bottom: 8px;">No VTO Data Available</h3>
+                <p>Vision/Traction Organizer data has not been loaded for this division.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </body>
 </html>

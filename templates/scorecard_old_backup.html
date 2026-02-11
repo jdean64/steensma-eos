@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scorecard - EOS</title>
+    <style>
+        :root {
+            --enterprise-dark: #1a1a1a;
+            --enterprise-gray: #4a4a4a;
+            --enterprise-light: #f5f5f5;
+            --enterprise-border: #d0d0d0;
+            --text-primary: #2a2a2a;
+            --text-secondary: #6a6a6a;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--enterprise-light);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header {
+            background: var(--enterprise-dark);
+            color: white;
+            padding: 24px 32px;
+            border-radius: 2px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--enterprise-border);
+        }
+        
+        .header h1 { 
+            font-size: 24px; 
+            font-weight: 600; 
+            letter-spacing: -0.02em;
+        }
+        
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 2px;
+            padding: 20px;
+            border: 1px solid var(--enterprise-border);
+        }
+        
+        .summary-card h3 { 
+            font-size: 11px; 
+            color: var(--text-secondary); 
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .summary-card .value { 
+            font-size: 32px; 
+            font-weight: 600; 
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        .back-button {
+            background: white;
+            color: var(--text-primary);
+            padding: 8px 20px;
+            border-radius: 2px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid var(--enterprise-border);
+            transition: all 0.15s ease;
+        }
+        
+        .back-button:hover { 
+            background: var(--enterprise-light);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .scorecard-table {
+            background: white;
+            border-radius: 2px;
+            padding: 0;
+            border: 1px solid var(--enterprise-border);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: var(--enterprise-light);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--enterprise-border);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        th.week { 
+            text-align: center; 
+            min-width: 50px;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--enterprise-light);
+        }
+        
+        td.week-cell {
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .status-green { color: var(--text-primary); }
+        .status-yellow { color: var(--enterprise-gray); }
+        .status-red { color: var(--text-secondary); }
+        
+        .metric-name { 
+            font-weight: 600; 
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .metric-owner { 
+            color: var(--text-secondary); 
+            font-size: 13px;
+        }
+        
+        .metric-goal { 
+            color: var(--text-secondary); 
+            font-size: 13px;
+        }
+        
+        tr:hover { background: var(--enterprise-light); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WEEKLY SCORECARD</h1>
+            <a href="/" class="back-button">← Back to Dashboard</a>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card">
+                <h3>Green Metrics</h3>
+                <div class="value" id="greenCount">-</div>
+            </div>
+            <div class="summary-card">
+                <h3>Yellow Metrics</h3>
+                <div class="value" id="yellowCount">-</div>
+            </div>
+            <div class="summary-card">
+                <h3>Red Metrics</h3>
+                <div class="value" id="redCount">-</div>
+            </div>
+            <div class="summary-card">
+                <h3>Total Metrics</h3>
+                <div class="value" id="totalCount">-</div>
+            </div>
+        </div>
+
+        <div class="scorecard-table">
+            <table id="scorecardTable">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Owner</th>
+                        <th>Goal</th>
+                        <th class="week">W1</th>
+                        <th class="week">W2</th>
+                        <th class="week">W3</th>
+                        <th class="week">W4</th>
+                        <th class="week">W5</th>
+                        <th class="week">W6</th>
+                        <th class="week">W7</th>
+                        <th class="week">W8</th>
+                        <th class="week">W9</th>
+                        <th class="week">W10</th>
+                        <th class="week">W11</th>
+                        <th class="week">W12</th>
+                        <th class="week">W13</th>
+                    </tr>
+                </thead>
+                <tbody id="scorecardBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadScorecard() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (data.scorecard) {
+                    displayScorecard(data.scorecard);
+                }
+            } catch (error) {
+                console.error('Error loading scorecard:', error);
+            }
+        }
+
+        function displayScorecard(scorecard) {
+            // Update summary
+            document.getElementById('greenCount').textContent = scorecard.summary.green;
+            document.getElementById('yellowCount').textContent = scorecard.summary.yellow;
+            document.getElementById('redCount').textContent = scorecard.summary.red;
+            document.getElementById('totalCount').textContent = scorecard.summary.total;
+
+            // Display metrics
+            const tbody = document.getElementById('scorecardBody');
+            tbody.innerHTML = '';
+
+            scorecard.metrics.forEach(metric => {
+                const row = document.createElement('tr');
+                
+                let html = `
+                    <td>
+                        <div class="metric-name">${metric.metric}</div>
+                    </td>
+                    <td class="metric-owner">${metric.owner}</td>
+                    <td class="metric-goal">${metric.goal}</td>
+                `;
+
+                // Add 13 weeks of data
+                metric.weeks.forEach(week => {
+                    const statusClass = `status-${week.status.toLowerCase()}`;
+                    html += `<td class="week-cell ${statusClass}">${week.value || '-'}</td>`;
+                });
+
+                row.innerHTML = html;
+                tbody.appendChild(row);
+            });
+        }
+
+        loadScorecard();
+        setInterval(loadScorecard, 300000); // Refresh every 5 minutes
+    </script>
+</body>
+</html>

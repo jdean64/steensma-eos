@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ division.display_name }} - EOS Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #2a2a2a;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: #1a1a1a;
+            color: white;
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .back-link {
+            color: #b0b0b0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+        
+        .user-info {
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+        
+        .btn-logout {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #4a4a4a;
+            color: white;
+            border-radius: 4px;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+     
+        .btn-logout:hover {
+            background: #2d2d2d;
+            border-color: #6a6a6a;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 40px;
+        }
+        
+        .page-title {
+            margin-bottom: 32px;
+        }
+        
+        .page-title h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        
+        .page-title p {
+            font-size: 16px;
+            color: #6a6a6a;
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+        }
+        
+       .eos-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 32px;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+        }
+        
+        .eos-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border-color: #1a1a1a;
+        }
+        
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+            opacity: 0.9;
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        
+        .card-description {
+            font-size: 14px;
+            color: #6a6a6a;
+            margin-bottom: 20px;
+        }
+        
+        .card-metrics {
+            display: flex;
+            gap: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e8e8e8;
+        }
+        
+        .metric {
+            flex: 1;
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1.2;
+        }
+        
+        .metric-label {
+            font-size: 11px;
+            color: #8a8a8a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        
+        .status-green {
+            background: #2ecc71;
+        }
+        
+        .status-yellow {
+            background: #f39c12;
+        }
+        
+        .status-red {
+            background: #e74c3c;
+        }
+        
+        .permission-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 11px;
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .permission-badge.edit {
+            background: #1a1a1a;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Divisions</a>
+            <h1>{{ division.display_name }}</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                {{ user.full_name or user.username }}
+            </div>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="page-title">
+            <h2>EOS Strategic Dashboard</h2>
+            <p>{{ division.full_slug }}</p>
+        </div>
+        
+        <div class="cards-grid">
+            <!-- ROCKS -->
+            <a href="/division/{{ division.id }}/rocks" class="eos-card">
+                {% if can_edit %}
+                <span class="permission-badge edit">Edit</span>
+                {% else %}
+                <span class="permission-badge">View</span>
+                {% endif %}
+                
+                <div class="card-icon">🎯</div>
+                <div class="card-title">Rocks</div>
+                <div class="card-description">Quarterly priorities & goals</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{{ rocks_summary.total or 0 }}</div>
+                        <div class="metric-label">Total</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ rocks_summary.on_track or 0 }}</div>
+                        <div class="metric-label">On Track</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ rocks_summary.complete or 0 }}</div>
+                        <div class="metric-label">Complete</div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- SCORECARD -->
+            <a href="/division/{{ division.id }}/scorecard" class="eos-card">
+                {% if can_edit %}
+                <span class="permission-badge edit">Edit</span>
+                {% else %}
+                <span class="permission-badge">View</span>
+                {% endif %}
+                
+                <div class="card-icon">📊</div>
+                <div class="card-title">Scorecard</div>
+                <div class="card-description">Weekly measurables & metrics</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">
+                            {{ scorecard_summary.green or 0 }}
+                            <span class="status-badge status-green"></span>
+                        </div>
+                        <div class="metric-label">Green</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">
+                            {{ scorecard_summary.yellow or 0 }}
+                            <span class="status-badge status-yellow"></span>
+                        </div>
+                        <div class="metric-label">Yellow</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">
+                            {{ scorecard_summary.red or 0 }}
+                            <span class="status-badge status-red"></span>
+                        </div>
+                        <div class="metric-label">Red</div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- L10 MEETINGS -->
+            <a href="{{ url_for('l10_meetings', division_id=division.id) }}" class="eos-card">
+                {% if can_edit %}
+                <span class="permission-badge edit">Edit</span>
+                {% else %}
+                <span class="permission-badge">View</span>
+                {% endif %}
+                
+                <div class="card-icon">📆</div>
+                <div class="card-title">L10 Meetings</div>
+                <div class="card-description">Weekly 90-minute leadership meetings</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{{ l10_summary.upcoming or 0 }}</div>
+                        <div class="metric-label">Upcoming</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ l10_summary.total or 0 }}</div>
+                        <div class="metric-label">Total</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ "%.0f"|format(l10_summary.avg_duration or 90) }}</div>
+                        <div class="metric-label">Avg Min</div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- ISSUES -->
+            <a href="/division/{{ division.id }}/issues" class="eos-card">
+                {% if can_edit %}
+                <span class="permission-badge edit">Edit</span>
+                {% else %}
+                <span class="permission-badge">View</span>
+                {% endif %}
+                
+                <div class="card-icon">⚠️</div>
+                <div class="card-title">Issues</div>
+                <div class="card-description">Problems to identify, discuss & solve</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{{ issues_summary.total or 0 }}</div>
+                        <div class="metric-label">Total</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ issues_summary.open or 0 }}</div>
+                        <div class="metric-label">Open</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ issues_summary.high or 0 }}</div>
+                        <div class="metric-label">High Priority</div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- TO-DOS -->
+            <a href="/division/{{ division.id }}/todos" class="eos-card">
+                {% if can_edit %}
+                <span class="permission-badge edit">Edit</span>
+                {% else %}
+                <span class="permission-badge">View</span>
+                {% endif %}
+                
+                <div class="card-icon">✓</div>
+                <div class="card-title">To-Dos</div>
+                <div class="card-description">Action items with owners & due dates</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{{ todos_summary.total or 0 }}</div>
+                        <div class="metric-label">Total</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ todos_summary.open or 0 }}</div>
+                        <div class="metric-label">Open</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ todos_summary.complete or 0 }}</div>
+                        <div class="metric-label">Complete</div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- VISION / VTO -->
+            <a href="/division/{{ division.id }}/vision" class="eos-card">
+                {% if can_edit %}
+                <span class="permission-badge edit">Edit</span>
+                {% else %}
+                <span class="permission-badge">View</span>
+                {% endif %}
+                
+                <div class="card-icon">🔭</div>
+                <div class="card-title">Vision / VTO</div>
+                <div class="card-description">10-year target, 3-year picture, 1-year plan</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{% if vto_exists %}✓{% else %}—{% endif %}</div>
+                        <div class="metric-label">{% if vto_exists %}Configured{% else %}Not Set{% endif %}</div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- ACCOUNTABILITY CHART -->
+            <a href="/division/{{ division.id }}/accountability" class="eos-card">
+                {% if can_edit %}
+                <span class="permission-badge edit">Edit</span>
+                {% else %}
+                <span class="permission-badge">View</span>
+                {% endif %}
+                
+                <div class="card-icon">👥</div>
+                <div class="card-title">Accountability</div>
+                <div class="card-description">Who owns what & reporting structure</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{{ accountability_count or 0 }}</div>
+                        <div class="metric-label">Seats</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

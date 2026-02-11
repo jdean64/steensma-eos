@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Issue - {{ issue.division_name }} - EOS Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #2a2a2a;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: #1a1a1a;
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 40px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: #6a6a6a;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: #1a1a1a;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .form-subtitle {
+            color: #6a6a6a;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        label .required {
+            color: #c33;
+        }
+        
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 3px rgba(26,26,26,0.1);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .form-hint {
+            font-size: 12px;
+            color: #8a8a8a;
+            margin-top: 4px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e8e8e8;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2d2d2d;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #2a2a2a;
+            border: 1px solid #d0d0d0;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #1a1a1a;
+        }
+        
+        .btn-danger {
+            background: #c33;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .btn-danger:hover {
+            background: #a22;
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+        
+        .alert-danger {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+        
+        .history-section {
+            background: white;
+            border-radius: 8px;
+            padding: 32px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .history-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .history-item {
+            padding: 16px 0;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-meta {
+            font-size: 13px;
+            color: #6a6a6a;
+            margin-bottom: 8px;
+        }
+        
+        .history-change {
+            font-size: 14px;
+        }
+        
+        .history-change .field {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        .history-change .old-value {
+            text-decoration: line-through;
+            color: #c33;
+        }
+        
+        .history-change .new-value {
+            color: #3c3;
+            font-weight: 500;
+        }
+        
+        .ids-info {
+            background: #f8f8f8;
+            border-left: 4px solid #1a1a1a;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: #4a4a4a;
+        }
+        
+        .ids-info strong {
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Edit Issue - {{ issue.division_name }}</h1>
+    </div>
+    
+    <div class="container">
+        <a href="{{ url_for('division_issues', division_id=division_id) }}" class="back-link">← Back to Issues</a>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="form-card">
+            <h2 class="form-title">Edit Issue</h2>
+            <p class="form-subtitle">Move through the IDS process: Identify → Discuss → Solve</p>
+            
+            <div class="ids-info">
+                <strong>IDS Workflow:</strong> Start by identifying the issue clearly. Discuss it openly with your team to understand root causes. Finally, solve it with a concrete action plan.
+            </div>
+            
+            <form method="POST" action="{{ url_for('edit_issue', division_id=division_id, issue_id=issue.id) }}">
+                <div class="form-group">
+                    <label for="issue">Issue Description <span class="required">*</span></label>
+                    <textarea id="issue" name="issue" required placeholder="Describe the issue clearly and concisely">{{ issue.issue }}</textarea>
+                    <div class="form-hint">What is the problem that needs to be solved?</div>
+                </div>
+                
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label for="category">Category <span class="required">*</span></label>
+                        <select id="category" name="category" required>
+                            <option value="SALES" {% if issue.category == 'SALES' %}selected{% endif %}>Sales</option>
+                            <option value="SERVICE" {% if issue.category == 'SERVICE' %}selected{% endif %}>Service</option>
+                            <option value="PROCESS" {% if issue.category == 'PROCESS' %}selected{% endif %}>Process</option>
+                            <option value="PARTS" {% if issue.category == 'PARTS' %}selected{% endif %}>Parts</option>
+                            <option value="ADMINISTRATIVE" {% if issue.category == 'ADMINISTRATIVE' %}selected{% endif %}>Administrative</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="priority">Priority <span class="required">*</span></label>
+                        <select id="priority" name="priority" required>
+                            <option value="HIGH" {% if issue.priority == 'HIGH' %}selected{% endif %}>High</option>
+                            <option value="MEDIUM" {% if issue.priority == 'MEDIUM' %}selected{% endif %}>Medium</option>
+                            <option value="LOW" {% if issue.priority == 'LOW' %}selected{% endif %}>Low</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status">Status <span class="required">*</span></label>
+                        <select id="status" name="status" required>
+                            <option value="OPEN" {% if issue.status == 'OPEN' %}selected{% endif %}>Open</option>
+                            <option value="IN PROGRESS" {% if issue.status == 'IN PROGRESS' %}selected{% endif %}>In Progress</option>
+                            <option value="RESOLVED" {% if issue.status == 'RESOLVED' %}selected{% endif %}>Resolved</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="owner_name">Owner</label>
+                        <input type="text" id="owner_name" name="owner_name" value="{{ issue.owner_name or '' }}" placeholder="Who is responsible?">
+                        <div class="form-hint">Assign responsibility</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ids_stage">IDS Stage <span class="required">*</span></label>
+                        <select id="ids_stage" name="ids_stage" required>
+                            <option value="IDENTIFY" {% if issue.ids_stage == 'IDENTIFY' %}selected{% endif %}>Identify</option>
+                            <option value="DISCUSS" {% if issue.ids_stage == 'DISCUSS' %}selected{% endif %}>Discuss</option>
+                            <option value="SOLVE" {% if issue.ids_stage == 'SOLVE' %}selected{% endif %}>Solve</option>
+                        </select>
+                        <div class="form-hint">Track IDS progress</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="discussion_notes">Discussion Notes</label>
+                    <textarea id="discussion_notes" name="discussion_notes" placeholder="What was discussed? Root cause analysis?">{{ issue.discussion_notes or '' }}</textarea>
+                    <div class="form-hint">Document the discussion and root cause findings</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="solution">Solution & Action Plan</label>
+                    <textarea id="solution" name="solution" placeholder="What is the solution? What are the specific action items?">{{ issue.solution or '' }}</textarea>
+                    <div class="form-hint">Document the agreed solution and next steps</div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{{ url_for('division_issues', division_id=division_id) }}" class="btn btn-secondary">Cancel</a>
+                    
+                    <form method="POST" action="{{ url_for('delete_issue', division_id=division_id, issue_id=issue.id) }}" style="display: inline; margin-left: auto;" onsubmit="return confirm('Are you sure you want to delete this issue?');">
+                        <button type="submit" class="btn btn-danger">Delete Issue</button>
+                    </form>
+                </div>
+            </form>
+        </div>
+        
+        {% if history %}
+        <div class="history-section">
+            <h3 class="history-title">📜 Change History</h3>
+            
+            {% for change in history %}
+            <div class="history-item">
+                <div class="history-meta">
+                    <strong>{{ change.changed_by_name or 'System' }}</strong> • 
+                    {{ change.changed_at }}
+                </div>
+                <div class="history-change">
+                    <span class="field">{{ change.field_changed }}</span>: 
+                    <span class="old-value">{{ change.old_value }}</span> → 
+                    <span class="new-value">{{ change.new_value }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

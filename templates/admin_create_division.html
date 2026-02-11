@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Division - EOS Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #2a2a2a;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: #1a1a1a;
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .btn-logout {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #4a4a4a;
+            color: white;
+            border-radius: 4px;
+            font-size: 13px;
+            text-decoration: none;
+        }
+        
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 40px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: #6a6a6a;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .back-link:hover {
+            color: #1a1a1a;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .form-subtitle {
+            color: #6a6a6a;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+        
+        .info-box {
+            background: #f0f8ff;
+            border-left: 4px solid #1976d2;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+        
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        label .required {
+            color: #c33;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 3px rgba(26,26,26,0.1);
+        }
+        
+        .form-hint {
+            font-size: 12px;
+            color: #8a8a8a;
+            margin-top: 4px;
+        }
+        
+        .slug-preview {
+            font-family: 'SF Mono', 'Courier New', monospace;
+            font-size: 13px;
+            color: #1976d2;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f0f8ff;
+            border-radius: 4px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e8e8e8;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2d2d2d;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #2a2a2a;
+            border: 1px solid #d0d0d0;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #1a1a1a;
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        
+        .alert-danger {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Create New Division</h1>
+        <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+    </div>
+    
+    <div class="container">
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="form-card">
+            <h2 class="form-title">Create New Division</h2>
+            <p class="form-subtitle">Add a new business division or entity to Steensma Enterprises</p>
+            
+            <div class="info-box">
+                <strong>Examples:</strong>
+                Plainwell, Kalamazoo, Generator, Western, Dobos Lawn & Power, New Black Food Eaters
+            </div>
+            
+            <form method="POST" action="{{ url_for('admin_create_division') }}" id="division-form">
+                <div class="form-group">
+                    <label for="name">Division Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required placeholder="e.g., Plainwell, Dobos Lawn & Power" autofocus>
+                    <div class="form-hint">The official name of the division or business entity</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="slug">URL Slug <span class="required">*</span></label>
+                    <input type="text" id="slug" name="slug" required placeholder="e.g., plainwell, dobos-lawn">
+                    <div class="form-hint">Lowercase URL-friendly identifier (auto-generated)</div>
+                    <div class="slug-preview" id="slug-preview">steensma.<span id="slug-value">plainwell</span></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="display_name">Display Name</label>
+                    <input type="text" id="display_name" name="display_name" placeholder="Optional: e.g., Steensma Plainwell">
+                    <div class="form-hint">Optional: How it appears in dashboards (defaults to name)</div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Division</button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-generate slug from name
+        const nameInput = document.getElementById('name');
+        const slugInput = document.getElementById('slug');
+        const slugValue = document.getElementById('slug-value');
+        
+        nameInput.addEventListener('input', () => {
+            const name = nameInput.value;
+            const slug = name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+            slugInput.value = slug;
+            slugValue.textContent = slug || 'example';
+        });
+        
+        slugInput.addEventListener('input', () => {
+            slugValue.textContent = slugInput.value || 'example';
+        });
+    </script>
+</body>
+</html>
