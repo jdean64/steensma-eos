@@ -247,36 +247,38 @@
     </div>
 
     <script>
-        async function loadTodos() {
-            try {
-                const response = await fetch('/api/data');
-                const data = await response.json();
-                
-                if (data.todos) {
-                    displayTodos(data.todos);
-                }
-            } catch (error) {
-                console.error('Error loading todos:', error);
-            }
-        }
-
-        function displayTodos(todos) {
+        // Server-rendered data
+        const todosData = {{ todos | tojson }};
+        const summaryData = {{ summary | tojson }};
+        
+        function displayTodos() {
             // Update summary
-            document.getElementById('overdueCount').textContent = todos.summary.overdue;
-            document.getElementById('thisWeekCount').textContent = todos.summary.this_week;
-            document.getElementById('totalCount').textContent = todos.summary.total;
+            document.getElementById('overdueCount').textContent = summaryData.overdue;
+            document.getElementById('thisWeekCount').textContent = summaryData.total - summaryData.complete;
+            document.getElementById('totalCount').textContent = summaryData.open;
 
             // Categorize todos
             const overdue = [];
             const thisWeek = [];
             const upcoming = [];
+            
+            const now = new Date();
+            const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-            todos.todos.forEach(todo => {
-                if (todo.is_overdue) {
-                    overdue.push(todo);
-                } else if (todo.due_this_week) {
-                    thisWeek.push(todo);
+            todosData.forEach(todo => {
+                if (todo.is_completed) return; // Skip completed
+                
+                if (todo.due_date) {
+                    const dueDate = new Date(todo.due_date);
+                    if (dueDate < now) {
+                        overdue.push(todo);
+                    } else if (dueDate <= weekFromNow) {
+                        thisWeek.push(todo);
+                    } else {
+                        upcoming.push(todo);
+                    }
                 } else {
+                    // No due date - put in upcoming
                     upcoming.push(todo);
                 }
             });
@@ -304,18 +306,31 @@
                 div.className = 'todo-item';
                 
                 let statusText = '';
-                if (todo.is_overdue) {
-                    statusText = 'OVERDUE';
-                } else if (todo.due_this_week) {
-                    statusText = 'THIS WEEK';
+                let badgeClass = 'due-later';
+                if (todo.due_date) {
+                    const dueDate = new Date(todo.due_date);
+                    const now = new Date();
+                    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    
+                    if (dueDate < now) {
+                        statusText = 'OVERDUE';
+                        badgeClass = 'due-overdue';
+                    } else if (dueDate <= weekFromNow) {
+                        statusText = 'THIS WEEK';
+                        badgeClass = 'due-this-week';
+                    } else {
+                        statusText = 'UPCOMING';
+                        badgeClass = 'due-later';
+                    }
                 } else {
-                    statusText = 'UPCOMING';
+                    statusText = 'NO DUE DATE';
+                    badgeClass = 'due-later';
                 }
 
                 div.innerHTML = `
                     <div class="todo-checkbox"></div>
                     <div class="todo-content">
-                        <div class="todo-text">${todo.task}</div>
+                        <div class="todo-text">${todo.todo}</div>
                         <div class="todo-meta">
                             <span>
                                 <span class="meta-label">Owner</span>
@@ -323,7 +338,7 @@
                             </span>
                             <span>
                                 <span class="meta-label">Due</span>
-                                ${todo.due_date}
+                                ${todo.due_date || 'Not set'}
                             </span>
                             <span class="due-badge ${badgeClass}">${statusText}</span>
                         </div>
@@ -333,8 +348,8 @@
             });
         }
 
-        loadTodos();
-        setInterval(loadTodos, 300000); // Refresh every 5 minutes
+        // Initialize on page load
+        displayTodos();
     </script>
 </body>
 </html>

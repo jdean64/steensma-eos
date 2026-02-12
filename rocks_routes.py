@@ -4,7 +4,8 @@ Quarterly priorities and goals (90-day rocks)
 """
 
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
-from auth import login_required, division_access_required, division_edit_required, log_action, can_edit_division
+from auth import login_required, division_access_required, division_edit_required, can_edit_division
+from db_utils import log_to_audit
 import sqlite3
 from pathlib import Path
 from datetime import datetime
@@ -12,8 +13,8 @@ from datetime import datetime
 DATABASE_PATH = Path(__file__).parent / 'eos_data.db'
 
 def get_db():
-    """Get database connection"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    """Get database connection with timeout for concurrent access"""
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -112,34 +113,39 @@ def register_rocks_routes(app):
             conn = get_db()
             cursor = conn.cursor()
             
-            cursor.execute("""
-                INSERT INTO rocks (
-                    organization_id, division_id, description, owner, 
-                    due_date, quarter, year, priority, status, progress,
-                    created_by, is_active
+            try:
+                cursor.execute("""
+                    INSERT INTO rocks (
+                        organization_id, division_id, description, owner, 
+                        due_date, quarter, year, priority, status, progress,
+                        created_by, is_active
+                    )
+                    VALUES (
+                        (SELECT organization_id FROM divisions WHERE id = ?),
+                        ?, ?, ?, ?, ?, ?, ?, 'NOT STARTED', 0, ?, 1
+                    )
+                """, (division_id, division_id, description, owner, due_date, 
+                      quarter, year, priority, user['id']))
+                
+                rock_id = cursor.lastrowid
+                conn.commit()
+                
+                log_to_audit(
+                    user['id'], 'rocks', rock_id, 'CREATE',
+                    changes={'description': description, 'owner': owner, 'quarter': quarter},
+                    organization_id=1,
+                    division_id=division_id,
+                    ip_address=request.remote_addr
                 )
-                VALUES (
-                    (SELECT organization_id FROM divisions WHERE id = ?),
-                    ?, ?, ?, ?, ?, ?, ?, 'NOT STARTED', 0, ?, 1
-                )
-            """, (division_id, division_id, description, owner, due_date, 
-                  quarter, year, priority, user['id']))
-            
-            rock_id = cursor.lastrowid
-            
-            log_action(
-                user['id'], 'rocks', rock_id, 'CREATE',
-                changes={'description': description, 'owner': owner, 'quarter': quarter},
-                organization_id=1,
-                division_id=division_id,
-                ip_address=request.remote_addr
-            )
-            
-            conn.commit()
-            conn.close()
-            
-            flash(f'Rock added successfully', 'success')
-            return redirect(url_for('division_rocks', division_id=division_id))
+                
+                flash(f'Rock added successfully', 'success')
+                return redirect(url_for('division_rocks', division_id=division_id))
+            except Exception as e:
+                conn.rollback()
+                flash(f'Error adding rock: {str(e)}', 'danger')
+                return redirect(url_for('add_rock', division_id=division_id))
+            finally:
+                conn.close()
         
         # GET request - show form
         conn = get_db()
@@ -164,6 +170,135 @@ def register_rocks_routes(app):
                              division=division,
                              current_quarter=current_quarter,
                              current_year=current_year)
+    
+    @app.route('/division/<int:division_id>/rocks/<int:rock_id>/edit', methods=['GET', 'POST'])
+    @login_required
+    @division_edit_required('division_id')
+    def edit_rock(division_id, rock_id):
+        """Edit an existing rock"""
+        user = session.get('user')
+        
+        if request.method == 'POST':
+            description = request.form.get('description')
+            owner = request.form.get('owner')
+            status = request.form.get('status')
+            quarter = request.form.get('quarter')
+            year = request.form.get('year', type=int)
+            due_date = request.form.get('due_date') or None
+            priority = request.form.get('priority', type=int)
+            progress = request.form.get('progress', type=int, default=0)
+            
+            conn = get_db()
+            cursor = conn.cursor()
+            
+            # Get old values for history tracking
+            cursor.execute("SELECT * FROM rocks WHERE id = ? AND division_id = ?", (rock_id, division_id))
+            old_rock = dict(cursor.fetchone())
+            
+            # Update rock
+            cursor.execute("""
+                UPDATE rocks
+                SET description = ?, owner = ?, status = ?, quarter = ?, year = ?,
+                    due_date = ?, priority = ?, progress = ?,
+                    updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND division_id = ?
+            """, (description, owner, status, quarter, year, due_date, priority, progress,
+                  user['id'], rock_id, division_id))
+            
+            # Track changes in history
+            changes = {}
+            if old_rock['description'] != description:
+                changes['description'] = {'old': old_rock['description'], 'new': description}
+            if old_rock['status'] != status:
+                changes['status'] = {'old': old_rock['status'], 'new': status}
+            if old_rock['progress'] != progress:
+                changes['progress'] = {'old': old_rock['progress'], 'new': progress}
+            
+            if changes:
+                for field, change in changes.items():
+                    cursor.execute("""
+                        INSERT INTO rocks_history (rock_id, field_changed, old_value, new_value, changed_by)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (rock_id, field, str(change['old']), str(change['new']), user['id']))
+            
+            conn.commit()
+            conn.close()
+            
+            log_to_audit(
+                user['id'], 'rocks', rock_id, 'UPDATE',
+                changes=changes,
+                organization_id=1,
+                division_id=division_id,
+                ip_address=request.remote_addr
+            )
+            
+            flash('Rock updated successfully', 'success')
+            return redirect(url_for('division_rocks', division_id=division_id))
+        
+        # GET request - show edit form
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT r.*, d.display_name as division_name
+            FROM rocks r
+            JOIN divisions d ON r.division_id = d.id
+            WHERE r.id = ? AND r.division_id = ?
+        """, (rock_id, division_id))
+        
+        rock = cursor.fetchone()
+        if not rock:
+            flash('Rock not found', 'danger')
+            return redirect(url_for('division_rocks', division_id=division_id))
+        
+        rock = dict(rock)
+        
+        # Get rock history
+        cursor.execute("""
+            SELECT rh.*, u.full_name as changed_by_name
+            FROM rocks_history rh
+            LEFT JOIN users u ON rh.changed_by = u.id
+            WHERE rh.rock_id = ?
+            ORDER BY rh.changed_at DESC
+        """, (rock_id,))
+        
+        history = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return render_template('edit_rock.html',
+                             user=user,
+                             rock=rock,
+                             history=history,
+                             division_id=division_id)
+    
+    @app.route('/division/<int:division_id>/rocks/<int:rock_id>/delete', methods=['POST'])
+    @login_required
+    @division_edit_required('division_id')
+    def delete_rock(division_id, rock_id):
+        """Soft delete a rock (set is_active = 0)"""
+        user = session.get('user')
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE rocks
+            SET is_active = 0, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND division_id = ?
+        """, (user['id'], rock_id, division_id))
+        
+        conn.commit()
+        conn.close()
+        
+        log_to_audit(
+            user['id'], 'rocks', rock_id, 'DELETE',
+            organization_id=1,
+            division_id=division_id,
+            ip_address=request.remote_addr
+        )
+        
+        flash('Rock deleted successfully', 'success')
+        return redirect(url_for('division_rocks', division_id=division_id))
     
     @app.route('/api/division/<int:division_id>/rocks/<int:rock_id>', methods=['PUT'])
     @login_required
@@ -200,7 +335,7 @@ def register_rocks_routes(app):
             WHERE id = ? AND division_id = ?
         """, params)
         
-        log_action(
+        log_to_audit(
             user['id'], 'rocks', rock_id, 'UPDATE',
             changes=data,
             organization_id=1,

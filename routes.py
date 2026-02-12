@@ -17,8 +17,8 @@ from datetime import datetime
 DATABASE_PATH = Path(__file__).parent / 'eos_data.db'
 
 def get_db():
-    """Get database connection"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    """Get database connection with timeout for concurrent access"""
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn
 

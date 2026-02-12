@@ -45,7 +45,7 @@ def authenticate_user(username: str, password: str) -> dict:
     Authenticate a user by username and password
     Returns user dict with roles and permissions, or None if auth fails
     """
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -124,30 +124,6 @@ def can_access_organization(user: dict, organization_id: int) -> bool:
     
     return False
 
-def can_access_division(user: dict, division_id: int) -> bool:
-    """Check if user can access a division"""
-    if user.get('is_parent_admin'):
-        return True
-    
-    for role in user.get('roles', []):
-        if role.get('division_id') == division_id:
-            return True
-    
-    return False
-
-def can_edit_division(user: dict, division_id: int) -> bool:
-    """Check if user can edit a division"""
-    if user.get('is_parent_admin'):
-        return True
-    
-    for role in user.get('roles', []):
-        if role.get('division_id') == division_id:
-            # Can edit if DIVISION_ADMIN or USER_RW
-            if role.get('role_name') in ['DIVISION_ADMIN', 'USER_RW']:
-                return True
-    
-    return False
-
 def is_division_admin(user: dict, division_id: int) -> bool:
     """Check if user is admin of a specific division"""
     if user.get('is_parent_admin'):
@@ -159,11 +135,45 @@ def is_division_admin(user: dict, division_id: int) -> bool:
     
     return False
 
+def can_access_division(user: dict, division_id: int) -> bool:
+    """Check if user can view a specific division"""
+    if not user:
+        return False
+    
+    # Parent admins can access all divisions
+    if user.get('is_parent_admin'):
+        return True
+    
+    # Check if user has any role in this division
+    for role in user.get('roles', []):
+        if role.get('division_id') == division_id:
+            return True
+    
+    return False
+
+def can_edit_division(user: dict, division_id: int) -> bool:
+    """Check if user can edit a specific division"""
+    if not user:
+        return False
+    
+    # Parent admins can edit all divisions
+    if user.get('is_parent_admin'):
+        return True
+    
+    # Check if user has edit role in this division
+    for role in user.get('roles', []):
+        if role.get('division_id') == division_id:
+            role_name = role.get('role_name')
+            if role_name in ['DIVISION_ADMIN', 'USER_RW']:
+                return True
+    
+    return False
+
 def get_user_divisions(user: dict) -> list:
     """Get list of divisions the user has access to"""
     if user.get('is_parent_admin'):
         # Parent admins see all divisions
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("""
@@ -285,7 +295,7 @@ def division_edit_required(division_id_param='division_id'):
 
 def create_user(username: str, email: str, password: str, full_name: str = None) -> int:
     """Create a new user"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     cursor = conn.cursor()
     
     password_hash = hash_password(password)
@@ -304,7 +314,7 @@ def create_user(username: str, email: str, password: str, full_name: str = None)
 def assign_role(user_id: int, role_name: str, organization_id: int = None, 
                 division_id: int = None, assigned_by: int = None) -> int:
     """Assign a role to a user"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     cursor = conn.cursor()
     
     # Get role ID
@@ -331,7 +341,7 @@ def assign_role(user_id: int, role_name: str, organization_id: int = None,
 
 def get_user_by_id(user_id: int) -> dict:
     """Get user by ID with roles"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -383,7 +393,7 @@ def get_user_by_id(user_id: int) -> dict:
 def create_division(organization_id: int, name: str, slug: str, 
                    display_name: str = None, created_by: int = None) -> int:
     """Create a new division"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     cursor = conn.cursor()
     
     # Get organization slug
@@ -413,7 +423,7 @@ def create_division(organization_id: int, name: str, slug: str,
 
 def get_division_by_id(division_id: int) -> dict:
     """Get division by ID"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -431,7 +441,7 @@ def get_division_by_id(division_id: int) -> dict:
 
 def get_all_divisions(organization_id: int = None) -> list:
     """Get all divisions, optionally filtered by organization"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -461,7 +471,7 @@ def log_action(user_id: int, table_name: str, record_id: int, action: str,
                changes: dict = None, organization_id: int = None, 
                division_id: int = None, ip_address: str = None):
     """Log an action to the audit trail"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     cursor = conn.cursor()
     
     import json
