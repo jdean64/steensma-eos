@@ -488,3 +488,32 @@ def log_action(user_id: int, table_name: str, record_id: int, action: str,
     
     conn.commit()
     conn.close()
+
+# =====================================================
+# SSO / SAML SUPPORT
+# =====================================================
+
+def is_saml_enabled():
+    """Check if SAML authentication is configured"""
+    saml_settings_file = Path(__file__).parent / 'saml_settings.json'
+    return saml_settings_file.exists()
+
+def get_authentication_methods():
+    """
+    Get available authentication methods for the login page
+    Returns dict with enabled methods
+    """
+    methods = {
+        'password': True,  # Always available
+        'saml': is_saml_enabled()
+    }
+    
+    # Get SSO portal URL if available
+    if methods['saml']:
+        try:
+            from saml_auth import get_sso_portal_url
+            methods['sso_portal_url'] = get_sso_portal_url()
+        except:
+            methods['sso_portal_url'] = ''
+    
+    return methods

@@ -39,8 +39,10 @@ from todos_routes import register_todos_routes
 from vision_routes import register_vision_routes
 from accountability_routes import register_accountability_routes
 from pdf_routes import register_pdf_routes
+from saml_routes import register_saml_routes
 
 register_auth_routes(app)
+register_saml_routes(app)  # AWS IAM Identity Center SSO
 register_dashboard_routes(app)
 register_admin_routes(app)
 register_api_routes(app)

@@ -8,7 +8,7 @@ from auth import (
     authenticate_user, login_required, parent_admin_required,
     division_access_required, division_edit_required,
     get_user_divisions, can_edit_division, can_access_division,
-    create_division, log_action
+    create_division, log_action, is_saml_enabled, get_authentication_methods
 )
 import sqlite3
 from pathlib import Path
@@ -32,6 +32,9 @@ def register_auth_routes(app):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         """Login page"""
+        # Get available authentication methods
+        auth_methods = get_authentication_methods()
+        
         if request.method == 'POST':
             username = request.form.get('username')
             password = request.form.get('password')
@@ -40,6 +43,7 @@ def register_auth_routes(app):
             
             if user:
                 session['user'] = user
+                session['auth_method'] = 'password'
                 session.permanent = True
                 
                 # Log login
@@ -58,17 +62,24 @@ def register_auth_routes(app):
             else:
                 flash('Invalid username or password', 'danger')
         
-        return render_template('login.html')
+        return render_template('login.html', auth_methods=auth_methods)
     
     @app.route('/logout')
     def logout():
-        """Logout"""
+        """Logout - handles both password and SAML sessions"""
         if 'user' in session:
             user = session['user']
+            auth_method = session.get('auth_method', 'password')
+            
             log_action(
                 user['id'], 'users', user['id'], 'LOGOUT',
+                changes={'auth_method': auth_method},
                 ip_address=request.remote_addr
             )
+            
+            # If user authenticated via SAML, redirect to SAML logout
+            if auth_method == 'saml' and is_saml_enabled():
+                return redirect(url_for('saml_logout_route'))
         
         session.clear()
         flash('You have been logged out', 'info')
