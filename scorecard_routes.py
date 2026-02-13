@@ -72,3 +72,21 @@ def register_scorecard_routes(app):
                              metrics=metrics,
                              summary=summary,
                              can_edit=can_edit)
+    
+    @app.route('/api/division/<int:division_id>/gross_profit')
+    @login_required
+    @division_access_required('division_id')
+    def get_gross_profit_data(division_id):
+        """API endpoint to fetch gross profit data from Site Lead file"""
+        try:
+            from financial_parser import parse_site_lead_statement
+            data = parse_site_lead_statement()
+            return jsonify(data)
+        except Exception as e:
+            return jsonify({
+                'error': str(e),
+                'new_equipment': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
+                'parts': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
+                'labor': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
+                'gross_profit': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0}
+            }), 200

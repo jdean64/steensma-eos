@@ -321,6 +321,191 @@
             background: #e8f8f0;
             color: #00aa55;
         }
+        
+        /* Print Styles for L10 Meeting */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 9pt;
+                line-height: 1.4;
+            }
+            
+            /* Hide interactive elements and controls */
+            .header-actions,
+            .meeting-controls,
+            .btn,
+            button,
+            form,
+            .section-notes,
+            textarea,
+            input {
+                display: none !important;
+            }
+            
+            .header {
+                background: white !important;
+                color: #1a1a1a !important;
+                padding: 8pt 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                position: static !important;
+                border-bottom: 2pt solid #1a1a1a;
+                page-break-after: avoid;
+            }
+            
+            .header h1 {
+                font-size: 14pt !important;
+                color: #1a1a1a !important;
+                font-weight: 700;
+            }
+            
+            .container {
+                max-width: 100%;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            /* Two-column grid becomes single column for print */
+            .agenda-grid {
+                display: block !important;
+                margin-top: 10pt;
+            }
+            
+            .agenda-section {
+                page-break-inside: avoid;
+                margin-bottom: 8pt;
+                padding: 8pt 10pt !important;
+                border: 1pt solid #1a1a1a !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: white !important;
+            }
+            
+            .agenda-section.active {
+                border: 2pt solid #1a1a1a !important;
+                box-shadow: none !important;
+            }
+            
+            .agenda-section.full-width {
+                grid-column: auto !important;
+                width: 100%;
+            }
+            
+            .section-header {
+                margin-bottom: 6pt;
+                page-break-after: avoid;
+            }
+            
+            .section-title {
+                font-size: 11pt !important;
+                font-weight: 700;
+            }
+            
+            .section-time {
+                font-size: 8pt !important;
+                background: #e8e8e8 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                padding: 2pt 6pt !important;
+            }
+            
+            .section-content {
+                font-size: 9pt !important;
+                line-height: 1.5 !important;
+            }
+            
+            .section-content p {
+                margin-bottom: 6pt;
+            }
+            
+            /* Items lists formatting */
+            .items-list {
+                margin-top: 6pt;
+            }
+            
+            .items-list li {
+                page-break-inside: avoid;
+                margin-bottom: 4pt;
+                font-size: 9pt;
+            }
+            
+            .item-bullet {
+                min-width: 16pt;
+            }
+            
+            .item-owner {
+                font-size: 8pt !important;
+                background: #f0f0f0 !important;
+                padding: 1pt 4pt !important;
+            }
+            
+            /* Status badges */
+            .status-badge {
+                padding: 2pt 6pt !important;
+                font-size: 8pt !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Table formatting if any */
+            table {
+                page-break-inside: avoid;
+                border-collapse: collapse;
+                width: 100%;
+            }
+            
+            table td,
+            table th {
+                border: 1pt solid #1a1a1a !important;
+                padding: 4pt 6pt !important;
+                font-size: 9pt;
+            }
+            
+            table th {
+                background: #e8e8e8 !important;
+                font-weight: 700;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Scorecard specific */
+            .scorecard-table {
+                width: 100%;
+                margin-top: 6pt;
+            }
+            
+            /* Headlines and notes */
+            .headlines-list,
+            .notes-content {
+                font-size: 9pt;
+                line-height: 1.5;
+            }
+            
+            /* Ensure no orphans */
+            h1, h2, h3, h4, h5, h6 {
+                page-break-after: avoid;
+            }
+            
+            /* Rock and Todo items */
+            .rock-item,
+            .todo-item {
+                page-break-inside: avoid;
+                margin-bottom: 4pt;
+            }
+        }
+        
+        @page {
+            size: letter portrait;
+            margin: 0.5in 0.5in 0.75in 0.5in;
+        }
     </style>
 </head>
 <body>
@@ -328,6 +513,7 @@
         <div class="header-content">
             <h1>📋 L10 Meeting - {{ meeting.meeting_date }} - {{ meeting.division_name }}</h1>
             <div class="header-actions">
+                <a href="/division/{{ division_id }}/l10/{{ meeting.id }}/pdf" class="btn btn-primary">🖨️ Download L10 PDF</a>
                 <a href="{{ url_for('l10_meetings', division_id=division_id) }}" class="btn btn-secondary">← Back</a>
             </div>
         </div>

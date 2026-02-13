@@ -1,0 +1,730 @@
+"""
+PDF Generator for EOS Platform
+Generates VTO and L10 Meeting PDFs with professional table layout and shading
+"""
+
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from datetime import datetime
+from pathlib import Path
+import json
+
+# Paths
+STATIC_DIR = Path(__file__).parent / 'static'
+LOGO_PATH = STATIC_DIR / 'dealer-logo.png'
+
+# Color scheme
+HEADER_BG = colors.HexColor('#1a1a1a')  # Dark header
+SECTION_BG = colors.HexColor('#e8e8e8')  # Light gray section headers
+CELL_BG = colors.HexColor('#f8f8f8')    # Very light gray for cells
+BORDER_COLOR = colors.HexColor('#999999')  # Border gray
+
+
+def generate_vto_pdf(division_id, db_connection):
+    """
+    Generate a 2-page landscape VTO PDF with professional table layout
+    Page 1: VISION (Core Values, Core Focus, Core Target, Marketing Strategy, 3-Year Picture)
+    Page 2: TRACTION (1-Year Plan, Rocks, Issues List)
+    """
+    buffer = BytesIO()
+    
+    # Create PDF with landscape orientation
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        leftMargin=0.5*inch,
+        rightMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
+    
+    width, height = landscape(letter)
+    content_width = width - inch  # Available width for content
+    
+    # Fetch data from database
+    cursor = db_connection.cursor()
+    
+    # Get division info
+    cursor.execute("SELECT name FROM divisions WHERE id = ?", (division_id,))
+    division = cursor.fetchone()
+    division_name = division[0] if division else "Unknown Division"
+    
+    # Get VTO data
+    cursor.execute("SELECT * FROM vto_core_values ORDER BY sort_order")
+    core_values = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM vto_core_focus ORDER BY id DESC LIMIT 1")
+    core_focus = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM vto_core_target ORDER BY id DESC LIMIT 1")
+    core_target = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM vto_marketing_strategy ORDER BY id DESC LIMIT 1")
+    marketing = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM vto_three_year_picture ORDER BY id DESC LIMIT 1")
+    three_year = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM vto_one_year_plan ORDER BY id DESC LIMIT 1")
+    one_year = cursor.fetchone()
+    
+    cursor.execute("""
+        SELECT description, owner, due_date 
+        FROM rocks 
+        WHERE division_id = ? AND is_active = 1
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (division_id,))
+    rocks = cursor.fetchall()
+    
+    cursor.execute("""
+        SELECT issue, owner, status
+        FROM issues
+        WHERE division_id = ? AND is_active = 1 AND status != 'SOLVED'
+        ORDER BY created_at DESC
+        LIMIT 15
+    """, (division_id,))
+    issues = cursor.fetchall()
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.white,
+        alignment=TA_CENTER,
+        spaceAfter=6
+    )
+    
+    section_title_style = ParagraphStyle(
+        'SectionTitle',
+        parent=styles['Heading2'],
+        fontSize=11,
+        textColor=colors.black,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold',
+        spaceAfter=3
+    )
+    
+    content_style = ParagraphStyle(
+        'Content',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=11
+    )
+    
+    small_style = ParagraphStyle(
+        'Small',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10
+    )
+    
+    story = []
+    
+    # ===== PAGE 1: VISION =====
+    
+    # Logo and Header
+    if LOGO_PATH.exists():
+        logo = Image(str(LOGO_PATH), width=1.2*inch, height=0.4*inch)
+        story.append(logo)
+        story.append(Spacer(1, 0.05*inch))
+    
+    # Title Header Table
+    header_data = [
+        [Paragraph("STEENSMA EOS<br/>VISION/TRACTION ORGANIZER™", title_style)],
+        [Paragraph(f"{division_name} - {datetime.now().strftime('%Y Q%m')}", content_style)]
+    ]
+    
+    header_table = Table(header_data, colWidths=[content_width])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HEADER_BG),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR)
+    ]))
+    
+    story.append(header_table)
+    story.append(Spacer(1, 0.08*inch))
+    
+    # VISION Section Header
+    vision_header = Table([[Paragraph("VISION", section_title_style)]], colWidths=[content_width])
+    vision_header.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), SECTION_BG),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('BOX', (0, 0), (-1, -1), 1.5, BORDER_COLOR)
+    ]))
+    story.append(vision_header)
+    story.append(Spacer(1, 0.05*inch))
+    
+    # Build Core Values list
+    core_values_text = ""
+    for i, cv in enumerate(core_values[:10], 1):
+        value_text = cv[1] if len(cv) > 1 else ""
+        if value_text:
+            core_values_text += f"{i}. {value_text}<br/>"
+    
+    # Build Core Focus text
+    core_focus_text = ""
+    if core_focus:
+        passion = core_focus[1] if len(core_focus) > 1 else ""
+        niche = core_focus[2] if len(core_focus) > 2 else ""
+        cash_driver = core_focus[3] if len(core_focus) > 3 else ""
+        
+        if passion:
+            core_focus_text += f"<b>Passion:</b> {passion}<br/><br/>"
+        if niche:
+            core_focus_text += f"<b>Niche:</b> {niche}<br/><br/>"
+        if cash_driver:
+            core_focus_text += f"<b>Cash Flow Driver:</b> {cash_driver}"
+    
+    # Build Core Target text
+    core_target_text = ""
+    if core_target:
+        target_text = core_target[1] if len(core_target) > 1 else ""
+        target_date = core_target[2] if len(core_target) > 2 else ""
+        
+        if target_date:
+            core_target_text += f"<b>Target Date:</b> {target_date}<br/><br/>"
+        if target_text:
+            core_target_text += target_text
+    
+    # Build 3-Year Picture text
+    three_year_text = ""
+    if three_year:
+        future_date = three_year[1] if len(three_year) > 1 else ""
+        revenue = three_year[2] if len(three_year) > 2 else ""
+        profit = three_year[3] if len(three_year) > 3 else ""
+        measurables = three_year[4] if len(three_year) > 4 else ""
+        what_looks_like = three_year[5] if len(three_year) > 5 else ""
+        
+        if future_date:
+            three_year_text += f"<b>Future Date:</b> {future_date}<br/>"
+        if revenue:
+            three_year_text += f"<b>Revenue:</b> {revenue}<br/>"
+        if profit:
+            three_year_text += f"<b>Profit:</b> {profit}<br/>"
+        if measurables:
+            three_year_text += f"<b>Measurables:</b> {measurables}<br/><br/>"
+        
+        if what_looks_like:
+            three_year_text += "<b>What does it look like?</b><br/>"
+            # Split into bullet points if it contains bullet markers or newlines
+            if '\n' in what_looks_like or '•' in what_looks_like:
+                points = [p.strip() for p in what_looks_like.replace('•', '').split('\n') if p.strip()]
+                for point in points:
+                    three_year_text += f"• {point}<br/>"
+            else:
+                three_year_text += what_looks_like
+    
+    # Top Row: Core Values | Core Focus | 3-Year Picture
+    top_row_data = [
+        [
+            Paragraph("<b>CORE VALUES</b>", section_title_style),
+            Paragraph("<b>CORE FOCUS™</b>", section_title_style),
+            Paragraph("<b>3 YEAR PICTURE</b>", section_title_style)
+        ],
+        [
+            Paragraph(core_values_text or "No core values defined", small_style),
+            Paragraph(core_focus_text or "No core focus defined", small_style),
+            Paragraph(three_year_text or "No 3-year picture defined", small_style)
+        ]
+    ]
+    
+    col_widths = [content_width * 0.28, content_width * 0.30, content_width * 0.42]
+    top_table = Table(top_row_data, colWidths=col_widths, rowHeights=[0.25*inch, None])
+    top_table.setStyle(TableStyle([
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), SECTION_BG),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        
+        # Content row styling
+        ('BACKGROUND', (0, 1), (-1, 1), CELL_BG),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        
+        # Borders
+        ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.black)
+    ]))
+    
+    story.append(top_table)
+    story.append(Spacer(1, 0.08*inch))
+    
+    # Second Row: Core Target | Marketing Strategy
+    # Build Marketing Strategy text
+    marketing_text = ""
+    if marketing:
+        uniques = marketing[1] if len(marketing) > 1 else ""
+        guarantee = marketing[2] if len(marketing) > 2 else ""
+        proven_process = marketing[3] if len(marketing) > 3 else ""
+        target_market = marketing[4] if len(marketing) > 4 else ""
+        
+        if uniques:
+            marketing_text += f"<b>Uniques:</b><br/>{uniques}<br/><br/>"
+        if guarantee:
+            marketing_text += f"<b>Guarantee:</b> {guarantee}<br/><br/>"
+        if proven_process:
+            marketing_text += f"<b>Proven Process:</b> {proven_process}<br/><br/>"
+        if target_market:
+            marketing_text += f"<b>Target Market:</b> {target_market}"
+    
+    second_row_data = [
+        [
+            Paragraph("<b>CORE TARGET™</b>", section_title_style),
+            Paragraph("<b>MARKETING STRATEGY</b>", section_title_style)
+        ],
+        [
+            Paragraph(core_target_text or "No core target defined", small_style),
+            Paragraph(marketing_text or "No marketing strategy defined", small_style)
+        ]
+    ]
+    
+    second_table = Table(second_row_data, colWidths=[content_width * 0.35, content_width * 0.65], rowHeights=[0.25*inch, None])
+    second_table.setStyle(TableStyle([
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), SECTION_BG),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        
+        # Content row styling
+        ('BACKGROUND', (0, 1), (-1, 1), CELL_BG),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        
+        # Borders
+        ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.black)
+    ]))
+    
+    story.append(second_table)
+    story.append(Spacer(1, 0.05*inch))
+    
+    # Footer
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=7, textColor=colors.grey, alignment=TA_CENTER)
+    story.append(Paragraph("© 2003-2007. Gino Wickman. All Rights Reserved.", footer_style))
+    
+    # ===== PAGE 2: TRACTION =====
+    story.append(PageBreak())
+    
+    # Header for Page 2
+    header_data_2 = [
+        [Paragraph("STEENSMA EOS<br/>VISION/TRACTION ORGANIZER™", title_style)],
+        [Paragraph(f"{division_name} - {datetime.now().strftime('%Y Q%m')}", content_style)]
+    ]
+    
+    header_table_2 = Table(header_data_2, colWidths=[content_width])
+    header_table_2.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HEADER_BG),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR)
+    ]))
+    
+    story.append(header_table_2)
+    story.append(Spacer(1, 0.2*inch))
+    
+    # TRACTION Section Header
+    traction_header = Table([[Paragraph("TRACTION", section_title_style)]], colWidths=[content_width])
+    traction_header.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), SECTION_BG),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('BOX', (0, 0), (-1, -1), 1.5, BORDER_COLOR)
+    ]))
+    story.append(traction_header)
+    story.append(Spacer(1, 0.08*inch))
+    
+    # Build 1-Year Plan text
+    one_year_text = ""
+    if one_year:
+        future_date = one_year[1] if len(one_year) > 1 else ""
+        revenue = one_year[2] if len(one_year) > 2 else ""
+        profit = one_year[3] if len(one_year) > 3 else ""
+        measurables = one_year[4] if len(one_year) > 4 else ""
+        goals = one_year[5] if len(one_year) > 5 else ""
+        
+        if future_date:
+            one_year_text += f"<b>Future Date:</b> {future_date}<br/>"
+        if revenue:
+            one_year_text += f"<b>Revenue:</b> {revenue}<br/>"
+        if profit:
+            one_year_text += f"<b>Profit:</b> {profit}<br/>"
+        if measurables:
+            one_year_text += f"<b>Measurables:</b> {measurables}<br/><br/>"
+        
+        if goals:
+            one_year_text += "<b>Goals for the Year:</b><br/>"
+            # Parse goals (might be JSON or text)
+            goals_list = []
+            try:
+                if goals.strip().startswith('['):
+                    goals_list = json.loads(goals)
+                else:
+                    goals_list = [g.strip() for g in goals.split('\n') if g.strip()]
+            except:
+                goals_list = [goals]
+            
+            for i, goal in enumerate(goals_list[:8], 1):
+                one_year_text += f"{i}. {goal}<br/><br/>"
+    
+    # Build Rocks text
+    rocks_text = f"<b>Future Date:</b> {datetime.now().strftime('%m/%d/%Y')}<br/><br/>"
+    rocks_text += "<b>Rocks for the Quarter:</b><br/><br/>"
+    if rocks:
+        for i, rock in enumerate(rocks[:10], 1):
+            description = rock[0][:70] if rock[0] else ""
+            owner = rock[1][:20] if len(rock) > 1 and rock[1] else ""
+            rocks_text += f"{i}. {description}<br/><i>Owner: {owner}</i><br/><br/>"
+    else:
+        rocks_text += "<i>No rocks defined</i>"
+    
+    # Build Issues text
+    issues_text = ""
+    if issues:
+        for i, issue in enumerate(issues[:15], 1):
+            issue_text = issue[0][:60] if issue[0] else ""
+            issues_text += f"{i}. {issue_text}<br/><br/>"
+    else:
+        issues_text = "<i>No active issues</i>"
+    
+    # Page 2 Main Content: 1-Year Plan | Rocks | Issues List
+    page2_data = [
+        [
+            Paragraph("<b>1 YEAR PLAN</b>", section_title_style),
+            Paragraph("<b>ROCKS</b>", section_title_style),
+            Paragraph("<b>ISSUES LIST</b>", section_title_style)
+        ],
+        [
+            Paragraph(one_year_text or "No 1-year plan defined", small_style),
+            Paragraph(rocks_text, small_style),
+            Paragraph(issues_text, small_style)
+        ]
+    ]
+    
+    page2_col_widths = [content_width * 0.35, content_width * 0.35, content_width * 0.30]
+    page2_table = Table(page2_data, colWidths=page2_col_widths, rowHeights=[0.35*inch, None])
+    page2_table.setStyle(TableStyle([
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), SECTION_BG),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        
+        # Content row styling
+        ('BACKGROUND', (0, 1), (-1, 1), CELL_BG),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+        
+        # Borders
+        ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.black)
+    ]))
+    
+    story.append(page2_table)
+    story.append(Spacer(1, 0.2*inch))
+    
+    # Footer
+    story.append(Paragraph("© 2003-2007. Gino Wickman. All Rights Reserved.", footer_style))
+    
+    # Build PDF
+    doc.build(story)
+    
+    buffer.seek(0)
+    return buffer
+
+
+def generate_l10_pdf(meeting_id, db_connection):
+    """
+    Generate L10 Meeting PDF with professional table layout
+    """
+    buffer = BytesIO()
+    
+    # Create PDF with portrait orientation
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=0.5*inch,
+        rightMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
+    
+    width, height = letter
+    content_width = width - inch
+    
+    # Fetch meeting data
+    cursor = db_connection.cursor()
+    
+    cursor.execute("""
+        SELECT l10.*, d.name as division_name
+        FROM l10_meetings l10
+        JOIN divisions d ON l10.division_id = d.id
+        WHERE l10.id = ?
+    """, (meeting_id,))
+    meeting = cursor.fetchone()
+    
+    if not meeting:
+        # Return empty PDF with error message
+        story = [Paragraph("Meeting not found", getSampleStyleSheet()['Heading1'])]
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+    
+    # Get meeting details
+    meeting_date = meeting[3] if len(meeting) > 3 else ""
+    division_name = meeting[-1] if len(meeting) > 0 else "Unknown"
+    
+    # Get agenda items
+    cursor.execute("""
+        SELECT section_name, time_allocated, status, notes
+        FROM l10_agenda_items
+        WHERE meeting_id = ?
+        ORDER BY sort_order
+    """, (meeting_id,))
+    agenda_items = cursor.fetchall()
+    
+    # Get scorecard data
+    cursor.execute("""
+        SELECT metric, goal, week_1, status
+        FROM scorecard_metrics
+        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
+        ORDER BY metric
+        LIMIT 10
+    """, (meeting_id,))
+    scorecard = cursor.fetchall()
+    
+    # Get rocks
+    cursor.execute("""
+        SELECT description, owner, status, progress
+        FROM rocks
+        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
+        AND is_active = 1
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (meeting_id,))
+    rocks = cursor.fetchall()
+    
+    # Get todos
+    cursor.execute("""
+        SELECT task, owner, due_date, status
+        FROM todos
+        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
+        AND is_active = 1
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (meeting_id,))
+    todos = cursor.fetchall()
+    
+    # Get issues discussed
+    issues_json = meeting[16] if len(meeting) > 16 else "[]"
+    try:
+        issues_discussed = json.loads(issues_json) if issues_json else []
+    except:
+        issues_discussed = []
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.white,
+        alignment=TA_CENTER,
+        spaceAfter=6
+    )
+    
+    section_title_style = ParagraphStyle(
+        'SectionTitle',
+        parent=styles['Heading2'],
+        fontSize=11,
+        textColor=colors.black,
+        alignment=TA_LEFT,
+        fontName='Helvetica-Bold',
+        spaceAfter=3
+    )
+    
+    content_style = ParagraphStyle(
+        'Content',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=13
+    )
+    
+    small_style = ParagraphStyle(
+        'Small',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=12
+    )
+    
+    story = []
+    
+    # Logo and Header
+    if LOGO_PATH.exists():
+        logo = Image(str(LOGO_PATH), width=1.2*inch, height=0.4*inch)
+        story.append(logo)
+        story.append(Spacer(1, 0.05*inch))
+    
+    # Title Header
+    header_data = [
+        [Paragraph("STEENSMA EOS<br/>LEVEL 10 MEETING™", title_style)],
+        [Paragraph(f"{division_name} - {meeting_date}", content_style)]
+    ]
+    
+    header_table = Table(header_data, colWidths=[content_width])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HEADER_BG),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR)
+    ]))
+    
+    story.append(header_table)
+    story.append(Spacer(1, 0.08*inch))
+    
+    # Build sections content
+    segue_text = meeting[12] if len(meeting) > 12 else "No good news shared"
+    headlines_text = meeting[14] if len(meeting) > 14 else "No headlines"
+    
+    # Scorecard table
+    scorecard_text = ""
+    if scorecard:
+        scorecard_text = "<b>Metric | Goal | Week 1 | Status</b><br/><br/>"
+        for sc in scorecard[:5]:
+            metric = sc[0][:30] if sc[0] else ""
+            goal = str(sc[1])[:12] if len(sc) > 1 and sc[1] else ""
+            week1 = str(sc[2])[:12] if len(sc) > 2 and sc[2] else ""
+            status = sc[3][:12] if len(sc) > 3 else ""
+            scorecard_text += f"{metric} | {goal} | {week1} | {status}<br/><br/>"
+    else:
+        scorecard_text = "<i>No scorecard data</i>"
+    
+    # Rocks review
+    rocks_text = ""
+    if rocks:
+        for i, rock in enumerate(rocks[:5], 1):
+            description = rock[0][:60] if rock[0] else ""
+            owner = rock[1][:20] if len(rock) > 1 and rock[1] else ""
+            progress = rock[3] if len(rock) > 3 else 0
+            rocks_text += f"{i}. {description}<br/>   Owner: {owner} | Progress: {progress}%<br/><br/>"
+    else:
+        rocks_text = "<i>No rocks</i>"
+    
+    # Todos
+    todos_text = ""
+    if todos:
+        for i, todo in enumerate(todos[:7], 1):
+            task = todo[0][:55] if todo[0] else ""
+            owner = todo[1][:20] if len(todo) > 1 and todo[1] else ""
+            due_date = todo[2] if len(todo) > 2 and todo[2] else ""
+            due_str = f" | Due: {due_date}" if due_date else ""
+            todos_text += f"{i}. {task}<br/>   Owner: {owner}{due_str}<br/><br/>"
+    else:
+        todos_text = "<i>No to-dos</i>"
+    
+    # IDS Issues
+    ids_text = ""
+    if issues_discussed:
+        for i, issue in enumerate(issues_discussed[:5], 1):
+            issue_text = issue if isinstance(issue, str) else str(issue)
+            ids_text += f"{i}. {issue_text[:70]}<br/><br/>"
+    else:
+        ids_text = "<i>No issues discussed</i>"
+    
+    # Create sections table
+    sections_data = [
+        [Paragraph("<b>SEGUE (5 min)</b> - Good News", section_title_style)],
+        [Paragraph(segue_text, small_style)],
+        [Paragraph("<b>SCORECARD REVIEW (5 min)</b>", section_title_style)],
+        [Paragraph(scorecard_text, small_style)],
+        [Paragraph("<b>ROCK REVIEW (5 min)</b>", section_title_style)],
+        [Paragraph(rocks_text, small_style)],
+        [Paragraph("<b>CUSTOMER/EMPLOYEE HEADLINES (5 min)</b>", section_title_style)],
+        [Paragraph(headlines_text, small_style)],
+        [Paragraph("<b>TO-DO LIST (5 min)</b>", section_title_style)],
+        [Paragraph(todos_text, small_style)],
+        [Paragraph("<b>IDS - IDENTIFY, DISCUSS, SOLVE (60 min)</b>", section_title_style)],
+        [Paragraph(ids_text, small_style)],
+        [Paragraph("<b>CONCLUDE (5 min)</b>", section_title_style)],
+        [Paragraph("• Recap To-Dos<br/>• Cascading Messages<br/>• Rate Meeting 1-10", small_style)]
+    ]
+    
+    sections_table = Table(sections_data, colWidths=[content_width])
+    sections_table.setStyle(TableStyle([
+        # Section headers
+        ('BACKGROUND', (0, 0), (0, 0), SECTION_BG),
+        ('BACKGROUND', (0, 2), (0, 2), SECTION_BG),
+        ('BACKGROUND', (0, 4), (0, 4), SECTION_BG),
+        ('BACKGROUND', (0, 6), (0, 6), SECTION_BG),
+        ('BACKGROUND', (0, 8), (0, 8), SECTION_BG),
+        ('BACKGROUND', (0, 10), (0, 10), SECTION_BG),
+        ('BACKGROUND', (0, 12), (0, 12), SECTION_BG),
+        
+        # Content cells
+        ('BACKGROUND', (0, 1), (0, 1), CELL_BG),
+        ('BACKGROUND', (0, 3), (0, 3), CELL_BG),
+        ('BACKGROUND', (0, 5), (0, 5), CELL_BG),
+        ('BACKGROUND', (0, 7), (0, 7), CELL_BG),
+        ('BACKGROUND', (0, 9), (0, 9), CELL_BG),
+        ('BACKGROUND', (0, 11), (0, 11), CELL_BG),
+        ('BACKGROUND', (0, 13), (0, 13), CELL_BG),
+        
+        # Padding and alignment
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        
+        # Borders
+        ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.black)
+    ]))
+    
+    story.append(sections_table)
+    story.append(Spacer(1, 0.05*inch))
+    
+    # Footer
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=7, textColor=colors.grey, alignment=TA_CENTER)
+    story.append(Paragraph("© EOS Worldwide. All Rights Reserved.", footer_style))
+    
+    # Build PDF
+    doc.build(story)
+    
+    buffer.seek(0)
+    return buffer

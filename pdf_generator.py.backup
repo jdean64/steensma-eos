@@ -1,0 +1,638 @@
+"""
+PDF Generator for EOS Platform
+Generates VTO and L10 Meeting PDFs matching the reference format with professional table layout
+"""
+
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from io import BytesIO
+from datetime import datetime
+from pathlib import Path
+import json
+
+# Paths
+STATIC_DIR = Path(__file__).parent / 'static'
+LOGO_PATH = STATIC_DIR / 'steensma-logo.png'
+
+
+def generate_vto_pdf(division_id, db_connection):
+    """
+    Generate a 2-page landscape VTO PDF matching the reference format
+    Page 1: VISION (Core Values, Core Focus, Core Target, Marketing Strategy, 3-Year Picture)
+    Page 2: TRACTION (1-Year Plan, Rocks, Issues List)
+    """
+    buffer = BytesIO()
+    
+    # Create PDF with landscape orientation
+    pdf = canvas.Canvas(buffer, pagesize=landscape(letter))
+    width, height = landscape(letter)  # 792 x 612 pts
+    
+    # Fetch data from database
+    cursor = db_connection.cursor()
+    
+    # Get division info
+    cursor.execute("SELECT name FROM divisions WHERE id = ?", (division_id,))
+    division = cursor.fetchone()
+    division_name = division[0] if division else "Unknown Division"
+    
+    # Get VTO data
+    cursor.execute("SELECT * FROM vto_core_values ORDER BY sort_order")
+    core_values = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM vto_core_focus ORDER BY id DESC LIMIT 1")
+    core_focus = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM vto_core_target ORDER BY id DESC LIMIT 1")
+    core_target = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM vto_marketing_strategy ORDER BY id DESC LIMIT 1")
+    marketing = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM vto_three_year_picture ORDER BY id DESC LIMIT 1")
+    three_year = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM vto_one_year_plan ORDER BY id DESC LIMIT 1")
+    one_year = cursor.fetchone()
+    
+    cursor.execute("""
+        SELECT description, owner, due_date 
+        FROM rocks 
+        WHERE division_id = ? AND is_active = 1
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (division_id,))
+    rocks = cursor.fetchall()
+    
+    cursor.execute("""
+        SELECT issue, owner, status
+        FROM issues
+        WHERE division_id = ? AND is_active = 1 AND status != 'SOLVED'
+        ORDER BY created_at DESC
+        LIMIT 15
+    """, (division_id,))
+    issues = cursor.fetchall()
+    
+    # ===== PAGE 1: VISION =====
+    
+    # Header
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width/2, height - 30, "THE VISION/TRACTION ORGANIZER™")
+    
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width/2, height - 45, f"ORGANIZATION NAME: {division_name} - {datetime.now().strftime('%Y Q%m')}")
+    
+    # Draw "VISION" title
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawCentredString(width/2, height - 70, "VISION")
+    
+    # Layout columns
+    left_margin = 50
+    col1_width = 180  # Core Values
+    col2_width = 200  # Core Focus
+    col3_width = 300  # 3-Year Picture
+    
+    y_start = height - 100
+    
+    # === CORE VALUES ===
+    x = left_margin
+    y = y_start
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "CORE VALUES")
+    y -= 20
+    
+    pdf.setFont("Helvetica", 9)
+    for i, cv in enumerate(core_values[:10], 1):
+        value_text = cv[1] if len(cv) > 1 else ""
+        if value_text:
+            # Wrap text if too long
+            if len(value_text) > 35:
+                lines = [value_text[i:i+35] for i in range(0, len(value_text), 35)]
+                for line in lines:
+                    pdf.drawString(x, y, f"{i}. {line}" if line == lines[0] else f"   {line}")
+                    y -= 12
+            else:
+                pdf.drawString(x, y, f"{i}. {value_text}")
+                y -= 12
+    
+    # === CORE FOCUS ===
+    x = left_margin + col1_width + 20
+    y = y_start
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "CORE FOCUS™")
+    y -= 20
+    
+    pdf.setFont("Helvetica", 9)
+    if core_focus:
+        passion = core_focus[1] if len(core_focus) > 1 else ""
+        niche = core_focus[2] if len(core_focus) > 2 else ""
+        cash_driver = core_focus[3] if len(core_focus) > 3 else ""
+        
+        if passion:
+            pdf.drawString(x, y, f"Passion: {passion[:40]}")
+            y -= 12
+        if niche:
+            pdf.drawString(x, y, f"Niche: {niche[:40]}")
+            y -= 12
+        if cash_driver:
+            pdf.drawString(x, y, f"Cash Flow Driver: {cash_driver[:40]}")
+            y -= 12
+    
+    # === CORE TARGET ===
+    y -= 20
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "CORE TARGET™")
+    y -= 15
+    
+    pdf.setFont("Helvetica", 8)
+    if core_target:
+        target_text = core_target[1] if len(core_target) > 1 else ""
+        target_date = core_target[2] if len(core_target) > 2 else ""
+        
+        if target_text:
+            # Wrap text
+            words = target_text.split()
+            lines = []
+            current_line = []
+            for word in words:
+                current_line.append(word)
+                if len(' '.join(current_line)) > 45:
+                    if len(current_line) > 1:
+                        current_line.pop()
+                        lines.append(' '.join(current_line))
+                        current_line = [word]
+            if current_line:
+                lines.append(' '.join(current_line))
+            
+            for line in lines[:5]:
+                pdf.drawString(x, y, line)
+                y -= 10
+    
+    # === 3-YEAR PICTURE ===
+    x = left_margin + col1_width + col2_width + 40
+    y = y_start
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "3 YEAR PICTURE")
+    y -= 20
+    
+    pdf.setFont("Helvetica", 9)
+    if three_year:
+        future_date = three_year[1] if len(three_year) > 1 else ""
+        revenue = three_year[2] if len(three_year) > 2 else ""
+        profit = three_year[3] if len(three_year) > 3 else ""
+        measurables = three_year[4] if len(three_year) > 4 else ""
+        what_looks_like = three_year[5] if len(three_year) > 5 else ""
+        
+        if future_date:
+            pdf.drawString(x, y, f"Future Date: {future_date}")
+            y -= 12
+        if revenue:
+            pdf.drawString(x, y, f"Revenue: {revenue}")
+            y -= 12
+        if profit:
+            pdf.drawString(x, y, f"Profit: {profit}")
+            y -= 12
+        if measurables:
+            pdf.drawString(x, y, f"Measurables: {measurables[:50]}")
+            y -= 12
+        
+        if what_looks_like:
+            y -= 8
+            pdf.setFont("Helvetica-Bold", 9)
+            pdf.drawString(x, y, "What does it look like?")
+            y -= 12
+            pdf.setFont("Helvetica", 8)
+            
+            # Wrap text
+            words = what_looks_like.split()
+            lines = []
+            current_line = []
+            for word in words:
+                current_line.append(word)
+                if len(' '.join(current_line)) > 50:
+                    if len(current_line) > 1:
+                        current_line.pop()
+                        lines.append(' '.join(current_line))
+                        current_line = [word]
+            if current_line:
+                lines.append(' '.join(current_line))
+            
+            for line in lines[:8]:
+                pdf.drawString(x + 5, y, f"• {line}")
+                y -= 10
+    
+    # === MARKETING STRATEGY (bottom section) ===
+    y = 180
+    x = left_margin
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "MARKETING STRATEGY")
+    y -= 20
+    
+    pdf.setFont("Helvetica", 9)
+    if marketing:
+        guarantee = marketing[2] if len(marketing) > 2 else ""
+        proven_process = marketing[3] if len(marketing) > 3 else ""
+        target_market = marketing[4] if len(marketing) > 4 else ""
+        
+        if guarantee:
+            pdf.drawString(x, y, f"Guarantee: {guarantee[:80]}")
+            y -= 12
+        if proven_process:
+            pdf.drawString(x, y, f"Proven Process: {proven_process[:80]}")
+            y -= 12
+        if target_market:
+            pdf.drawString(x, y - 5, f"Target Market: ")
+            y -= 15
+            # Wrap target market text
+            words = target_market.split()
+            lines = []
+            current_line = []
+            for word in words:
+                current_line.append(word)
+                if len(' '.join(current_line)) > 120:
+                    if len(current_line) > 1:
+                        current_line.pop()
+                        lines.append(' '.join(current_line))
+                        current_line = [word]
+            if current_line:
+                lines.append(' '.join(current_line))
+            
+            for line in lines[:3]:
+                pdf.drawString(x, y, line)
+                y -= 10
+    
+    # Footer
+    pdf.setFont("Helvetica", 8)
+    pdf.drawString(50, 20, "© 2003-2007. Gino Wickman. All Rights Reserved.")
+    
+    # ===== PAGE 2: TRACTION =====
+    pdf.showPage()
+    
+    # Header
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width/2, height - 30, "THE VISION/TRACTION ORGANIZER™")
+    
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width/2, height - 45, f"ORGANIZATION NAME: {division_name} - {datetime.now().strftime('%Y Q%m')}")
+    
+    # Draw "TRACTION" title
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawCentredString(width/2, height - 70, "TRACTION")
+    
+    y = height - 100
+    
+    # === 1 YEAR PLAN ===
+    x = left_margin
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "1 YEAR PLAN")
+    y -= 20
+    
+    pdf.setFont("Helvetica", 9)
+    if one_year:
+        future_date = one_year[1] if len(one_year) > 1 else ""
+        revenue = one_year[2] if len(one_year) > 2 else ""
+        profit = one_year[3] if len(one_year) > 3 else ""
+        measurables = one_year[4] if len(one_year) > 4 else ""
+        goals = one_year[5] if len(one_year) > 5 else ""
+        
+        if future_date:
+            pdf.drawString(x, y, f"Future Date: {future_date}")
+            y -= 12
+        if revenue:
+            pdf.drawString(x, y, f"Revenue: {revenue}")
+            y -= 12
+        if profit:
+            pdf.drawString(x, y, f"Profit: {profit}")
+            y -= 12
+        if measurables:
+            pdf.drawString(x, y, f"Measurables: {measurables[:60]}")
+            y -= 12
+        
+        if goals:
+            y -= 8
+            pdf.setFont("Helvetica-Bold", 9)
+            pdf.drawString(x, y, "Goals for the Year:")
+            y -= 12
+            pdf.setFont("Helvetica", 8)
+            
+            # Parse goals (might be JSON or text)
+            goals_list = []
+            try:
+                if goals.strip().startswith('['):
+                    goals_list = json.loads(goals)
+                else:
+                    goals_list = [g.strip() for g in goals.split('\n') if g.strip()]
+            except:
+                goals_list = [goals]
+            
+            for i, goal in enumerate(goals_list[:8], 1):
+                if len(goal) > 70:
+                    goal = goal[:67] + "..."
+                pdf.drawString(x + 5, y, f"{i}. {goal}")
+                y -= 10
+    
+    # === ROCKS ===
+    x = left_margin + 250
+    y = height - 100
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "ROCKS")
+    y -= 20
+    
+    pdf.setFont("Helvetica", 8)
+    pdf.drawString(x, y, f"Future Date: {datetime.now().strftime('%m/%d/%Y')}")
+    y -= 15
+    
+    pdf.setFont("Helvetica-Bold", 8)
+    pdf.drawString(x, y, "Rocks for the Quarter:")
+    pdf.drawString(x + 220, y, "Who")
+    y -= 12
+    
+    pdf.setFont("Helvetica", 8)
+    for i, rock in enumerate(rocks[:10], 1):
+        description = rock[0][:55] if rock[0] else ""
+        owner = rock[1][:15] if len(rock) > 1 and rock[1] else ""
+        pdf.drawString(x, y, f"{i}. {description}")
+        pdf.drawString(x + 220, y, owner)
+        y -= 11
+    
+    # === ISSUES LIST ===
+    x = left_margin + 520
+    y = height - 100
+    
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "ISSUES LIST")
+    y -= 20
+    
+    pdf.setFont("Helvetica", 8)
+    for i, issue in enumerate(issues[:15], 1):
+        issue_text = issue[0][:30] if issue[0] else ""
+        pdf.drawString(x, y, f"{i}. {issue_text}")
+        y -= 11
+    
+    # Footer
+    pdf.setFont("Helvetica", 8)
+    pdf.drawString(50, 20, "© 2003-2007. Gino Wickman. All Rights Reserved.")
+    
+    pdf.showPage()
+    pdf.save()
+    
+    buffer.seek(0)
+    return buffer
+
+
+def generate_l10_pdf(meeting_id, db_connection):
+    """
+    Generate L10 Meeting PDF matching the reference format
+    """
+    buffer = BytesIO()
+    
+    # Create PDF with portrait orientation
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter  # 612 x 792 pts
+    
+    # Fetch meeting data
+    cursor = db_connection.cursor()
+    
+    cursor.execute("""
+        SELECT l10.*, d.name as division_name
+        FROM l10_meetings l10
+        JOIN divisions d ON l10.division_id = d.id
+        WHERE l10.id = ?
+    """, (meeting_id,))
+    meeting = cursor.fetchone()
+    
+    if not meeting:
+        # Return empty PDF with error message
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(100, height - 100, "Meeting not found")
+        pdf.showPage()
+        pdf.save()
+        buffer.seek(0)
+        return buffer
+    
+    # Get meeting details
+    meeting_date = meeting[3] if len(meeting) > 3 else ""
+    division_name = meeting[-1] if len(meeting) > 0 else "Unknown"
+    
+    # Get agenda items
+    cursor.execute("""
+        SELECT section_name, time_allocated, status, notes
+        FROM l10_agenda_items
+        WHERE meeting_id = ?
+        ORDER BY sort_order
+    """, (meeting_id,))
+    agenda_items = cursor.fetchall()
+    
+    # Get scorecard data for this meeting
+    cursor.execute("""
+        SELECT metric, goal, week_1, status
+        FROM scorecard_metrics
+        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
+        ORDER BY metric
+        LIMIT 10
+    """, (meeting_id,))
+    scorecard = cursor.fetchall()
+    
+    # Get rocks for this division
+    cursor.execute("""
+        SELECT description, owner, status, progress
+        FROM rocks
+        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
+        AND is_active = 1
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (meeting_id,))
+    rocks = cursor.fetchall()
+    
+    # Get todos
+    cursor.execute("""
+        SELECT task, owner, due_date, status
+        FROM todos
+        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
+        AND is_active = 1
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (meeting_id,))
+    todos = cursor.fetchall()
+    
+    # Get issues discussed
+    issues_json = meeting[16] if len(meeting) > 16 else "[]"
+    try:
+        issues_discussed = json.loads(issues_json) if issues_json else []
+    except:
+        issues_discussed = []
+    
+    # ===== PAGE 1 =====
+    
+    # Header
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width/2, height - 30, "LEVEL 10 MEETING™")
+    
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width/2, height - 45, f"{division_name} - {meeting_date}")
+    
+    y = height - 80
+    x = 50
+    
+    # Segue section
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "SEGUE (5 min) - Good News")
+    y -= 15
+    
+    pdf.setFont("Helvetica", 9)
+    segue = meeting[12] if len(meeting) > 12 else ""
+    if segue:
+        words = segue.split()
+        lines = []
+        current_line = []
+        for word in words:
+            current_line.append(word)
+            if len(' '.join(current_line)) > 90:
+                if len(current_line) > 1:
+                    current_line.pop()
+                    lines.append(' '.join(current_line))
+                    current_line = [word]
+        if current_line:
+            lines.append(' '.join(current_line))
+        
+        for line in lines[:3]:
+            pdf.drawString(x + 10, y, line)
+            y -= 11
+    
+    y -= 10
+    
+    # Scorecard section
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "SCORECARD REVIEW (5 min)")
+    y -= 15
+    
+    pdf.setFont("Helvetica", 8)
+    if scorecard:
+        pdf.drawString(x + 10, y, "Metric")
+        pdf.drawString(x + 200, y, "Goal")
+        pdf.drawString(x + 280, y, "Week 1")
+        pdf.drawString(x + 360, y, "Status")
+        y -= 12
+        
+        for sc in scorecard[:5]:
+            metric = sc[0][:30] if sc[0] else ""
+            goal = str(sc[1])[:10] if len(sc) > 1 and sc[1] else ""
+            week1 = str(sc[2])[:10] if len(sc) > 2 and sc[2] else ""
+            status = sc[3][:10] if len(sc) > 3 else ""
+            
+            pdf.drawString(x + 10, y, metric)
+            pdf.drawString(x + 200, y, goal)
+            pdf.drawString(x + 280, y, week1)
+            pdf.drawString(x + 360, y, status)
+            y -= 11
+    
+    y -= 10
+    
+    # Rock Review section
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "ROCK REVIEW (5 min)")
+    y -= 15
+    
+    pdf.setFont("Helvetica", 8)
+    if rocks:
+        for i, rock in enumerate(rocks[:5], 1):
+            description = rock[0][:60] if rock[0] else ""
+            owner = rock[1][:15] if len(rock) > 1 and rock[1] else ""
+            progress = rock[3] if len(rock) > 3 else 0
+            
+            pdf.drawString(x + 10, y, f"{i}. {description} - {owner} ({progress}%)")
+            y -= 11
+    
+    y -= 10
+    
+    # Customer/Employee Headlines
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "CUSTOMER/EMPLOYEE HEADLINES (5 min)")
+    y -= 15
+    
+    pdf.setFont("Helvetica", 9)
+    headlines = meeting[14] if len(meeting) > 14 else ""
+    if headlines:
+        words = headlines.split()
+        lines = []
+        current_line = []
+        for word in words:
+            current_line.append(word)
+            if len(' '.join(current_line)) > 90:
+                if len(current_line) > 1:
+                    current_line.pop()
+                    lines.append(' '.join(current_line))
+                    current_line = [word]
+        if current_line:
+            lines.append(' '.join(current_line))
+        
+        for line in lines[:3]:
+            pdf.drawString(x + 10, y, line)
+            y -= 11
+    
+    y -= 10
+    
+    # To-Do List
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "TO-DO LIST (5 min)")
+    y -= 15
+    
+    pdf.setFont("Helvetica", 8)
+    if todos:
+        for i, todo in enumerate(todos[:7], 1):
+            description = todo[0][:50] if todo[0] else ""
+            owner = todo[1][:15] if len(todo) > 1 and todo[1] else ""
+            
+            pdf.drawString(x + 10, y, f"{i}. {description} - {owner}")
+            y -= 11
+    
+    y -= 10
+    
+    # IDS Section
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "IDS - IDENTIFY, DISCUSS, SOLVE (60 min)")
+    y -= 15
+    
+    pdf.setFont("Helvetica", 9)
+    if issues_discussed:
+        for i, issue in enumerate(issues_discussed[:5], 1):
+            issue_text = issue if isinstance(issue, str) else str(issue)
+            if len(issue_text) > 70:
+                issue_text = issue_text[:67] + "..."
+            pdf.drawString(x + 10, y, f"{i}. {issue_text}")
+            y -= 11
+    
+    y -= 10
+    
+    # Conclude
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(x, y, "CONCLUDE (5 min)")
+    y -= 15
+    
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(x + 10, y, "• Recap To-Dos")
+    y -= 11
+    pdf.drawString(x + 10, y, "• Cascading Messages")
+    y -= 11
+    pdf.drawString(x + 10, y, "• Rate Meeting 1-10")
+    
+    # Footer
+    pdf.setFont("Helvetica", 8)
+    pdf.drawString(50, 20, "© EOS Worldwide. All Rights Reserved.")
+    
+    pdf.showPage()
+    pdf.save()
+    
+    buffer.seek(0)
+    return buffer

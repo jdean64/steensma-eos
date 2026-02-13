@@ -1,0 +1,27 @@
+PDF Generator Changes Applied (Feb 13, 2026):
+
+LOGO:
+- Changed from steensma-logo.png to dealer-logo.png
+- Reduced size: 1.5" x 0.5" → 1.2" x 0.4"
+
+PAGE 1 (VISION) - TIGHTENED:
+- All Spacer gaps reduced: 0.15" → 0.08", 0.1" → 0.05"
+- Logo spacer: 0.1" → 0.05"
+- Table header row heights: 0.3" → 0.25"
+- Content padding reduced: 8pt → 6pt (all sides)
+- Section header padding: 6pt → 4pt
+
+PAGE 2 (TRACTION) - EXPANDED:
+- Spacers increased: 0.08" → 0.2" after main table
+- Section header padding: 6pt → 8pt
+- Table row heights: 0.3" → 0.35"
+- Content padding increased: 8pt → 12pt vertical, 10pt horizontal
+- Font size: 10pt → 11pt for headers
+- Double line breaks <br/><br/> added between:
+  * Goals (each goal)
+  * Rocks (after each rock + owner)
+  * Issues (after each issue)
+
+RESULT:
+- Page 1: More compact, fits within single page
+- Page 2: More breathing room, visual depth for content
