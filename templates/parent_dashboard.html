@@ -227,6 +227,67 @@
             color: #2a2a5a;
             border: 1px solid #ccf;
         }
+        .corporate-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #1a1a1a;
+            border-radius: 8px;
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .corporate-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border-color: #1a1a1a;
+        }
+
+        .corporate-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .corporate-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .corporate-badge {
+            padding: 4px 12px;
+            background: #1a1a1a;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .corporate-metrics {
+            display: flex;
+            gap: 32px;
+        }
+
+        .corporate-metric-label {
+            font-size: 11px;
+            color: #8a8a8a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .corporate-metric-value {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -269,7 +330,30 @@
             </a>
         </div>
         {% endif %}
-        
+
+        {% if corporate_summary %}
+        <a href="{{ url_for('corporate_dashboard') }}" class="corporate-card">
+            <div class="corporate-card-header">
+                <div class="corporate-card-title">{{ organization.display_name }} -- Corporate</div>
+                <span class="corporate-badge">Corporate</span>
+            </div>
+            <div class="corporate-metrics">
+                <div>
+                    <div class="corporate-metric-label">Vision / VTO</div>
+                    <div class="corporate-metric-value">{{ 'Configured' if corporate_summary.vto_exists else 'Not Set' }}</div>
+                </div>
+                <div>
+                    <div class="corporate-metric-label">Leadership Seats</div>
+                    <div class="corporate-metric-value">{{ corporate_summary.seats }}</div>
+                </div>
+                <div>
+                    <div class="corporate-metric-label">Financial Rollup</div>
+                    <div class="corporate-metric-value">All Divisions</div>
+                </div>
+            </div>
+        </a>
+        {% endif %}
+
         <div class="divisions-grid">
             {% for division in divisions %}
             <a href="{{ url_for('division_dashboard', division_id=division.id) }}" class="division-card">

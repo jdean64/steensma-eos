@@ -66,7 +66,7 @@ def register_scorecard_routes(app):
         gross_profit = None
         try:
             from financial_parser import parse_site_lead_statement
-            gross_profit = parse_site_lead_statement()
+            gross_profit = parse_site_lead_statement(division_name=division['name'])
         except Exception:
             pass
 
@@ -245,8 +245,15 @@ def register_scorecard_routes(app):
     def get_gross_profit_data(division_id):
         """API endpoint to fetch gross profit data from Site Lead file"""
         try:
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM divisions WHERE id = ?", (division_id,))
+            row = cursor.fetchone()
+            conn.close()
+            division_name = row['name'] if row else None
+
             from financial_parser import parse_site_lead_statement
-            data = parse_site_lead_statement()
+            data = parse_site_lead_statement(division_name=division_name)
             return jsonify(data)
         except Exception as e:
             return jsonify({

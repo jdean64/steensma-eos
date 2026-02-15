@@ -26,23 +26,74 @@ def parse_money(value):
     except:
         return 0.0
 
-def find_site_lead_file():
-    """Find the most recent Site Lead Statement text file"""
+def _extract_numbers(line):
+    """Extract dollar amounts from a line using regex (handles thousands commas)"""
+    # Match patterns like: 76,134.30 or (2,198.50) or 0.00 or -1,234.56
+    matches = re.findall(r'[\(\-]?\d[\d,]*\.\d{2}\)?', line)
+    return [parse_money(m) for m in matches]
+
+def _is_data_line(line):
+    """Check if a line looks like numeric financial data"""
+    numbers = _extract_numbers(line)
+    return len(numbers) >= 4
+
+def _extract_values(lines, i, key, data):
+    """Extract 4 numeric values from the line after (or before) a label line"""
+    # Try next line first
+    if i + 1 < len(lines):
+        numbers = _extract_numbers(lines[i + 1])
+        if len(numbers) >= 4:
+            data[key]['month'] = numbers[0]
+            data[key]['ytd'] = numbers[1]
+            data[key]['py_month'] = numbers[2]
+            data[key]['py_ytd'] = numbers[3]
+            return True
+    # Try previous line (some statements have data before label)
+    if i - 1 >= 0:
+        numbers = _extract_numbers(lines[i - 1])
+        if len(numbers) >= 4:
+            data[key]['month'] = numbers[0]
+            data[key]['ytd'] = numbers[1]
+            data[key]['py_month'] = numbers[2]
+            data[key]['py_ytd'] = numbers[3]
+            return True
+    return False
+
+def find_site_lead_file(division_name=None):
+    """Find the Site Lead Statement text file for a specific division"""
     if not DATASHEETS_DIR.exists():
         return None
-    
+
     txt_files = [
         DATASHEETS_DIR / f
         for f in os.listdir(DATASHEETS_DIR)
         if f.lower().endswith('.txt')
     ]
-    
+
     if not txt_files:
         return None
-    
-    # Sort by modification time (most recent first)
+
+    # Division-specific file matching - collect all matches, return newest
+    if division_name:
+        name_lower = division_name.lower()
+        matches = []
+        for path in txt_files:
+            fname = path.name.lower()
+            if name_lower == 'kalamazoo' and ('kz ' in fname or 'kazoo' in fname) and 'site lead' in fname:
+                matches.append(path)
+            elif name_lower == 'generator' and 'gen ' in fname and 'site lead' in fname:
+                matches.append(path)
+            elif name_lower == 'plainwell':
+                if 'site lead' in fname and 'kz' not in fname and 'gen' not in fname:
+                    matches.append(path)
+        if matches:
+            # Return the most recently modified matching file
+            matches.sort(key=os.path.getmtime, reverse=True)
+            return str(matches[0])
+
+    # Fallback: sort by modification time (most recent first)
     txt_files_sorted = sorted(txt_files, key=os.path.getmtime, reverse=True)
-    
+
     # Check first few files for Site Lead content
     for path in txt_files_sorted[:5]:
         try:
@@ -52,17 +103,17 @@ def find_site_lead_file():
                 return str(path)
         except Exception:
             continue
-    
+
     return None
 
-def parse_site_lead_statement(filepath=None):
+def parse_site_lead_statement(filepath=None, division_name=None):
     """
     Parse Site Lead Statement file to extract gross profit data
     Returns: dict with new_equipment, parts, labor sales (month and YTD)
     """
     if filepath is None:
-        filepath = find_site_lead_file()
-    
+        filepath = find_site_lead_file(division_name)
+
     if not filepath or not os.path.exists(filepath):
         return {
             'new_equipment': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
@@ -71,78 +122,59 @@ def parse_site_lead_statement(filepath=None):
             'gross_profit': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
             'file_date': None
         }
-    
+
     try:
         with open(filepath, 'r') as f:
             lines = [line.strip() for line in f.readlines()]
-        
+
         data = {
             'new_equipment': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
             'parts': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
             'labor': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
             'gross_profit': {'month': 0.0, 'ytd': 0.0, 'py_month': 0.0, 'py_ytd': 0.0},
-            'file_date': os.path.getmtime(filepath)
+            'file_date': os.path.getmtime(filepath),
+            'file_name': os.path.basename(filepath)
         }
-        
+
         # State tracking
         in_gross_profit = False
-        
+
         for i, line in enumerate(lines):
             # Start of GROSS PROFIT section
             if line.upper() == 'GROSS PROFIT':
                 in_gross_profit = True
                 continue
-            
-            # End of GROSS PROFIT section (when we hit COST OF G GOODS SOLD)
+
+            # End of GROSS PROFIT section (when we hit COST OF GOODS SOLD)
             if 'COST OF GOODS SOLD' in line.upper():
                 in_gross_profit = False
                 continue
-            
+
             if in_gross_profit:
+                upper = line.upper()
                 # NEW EQUIPMENT SALES line
-                if 'NEW EQUIPMENT SALES' in line.upper():
-                    # Next line contains the values: month,ytd,py_month,py_ytd
-                    if i + 1 < len(lines):
-                        values = lines[i + 1].split(',')
-                        if len(values) >= 4:
-                            data['new_equipment']['month'] = parse_money(values[0])
-                            data['new_equipment']['ytd'] = parse_money(values[1])
-                            data['new_equipment']['py_month'] = parse_money(values[2])
-                            data['new_equipment']['py_ytd'] = parse_money(values[3])
-                
-                # PARTS SALES line
-                elif 'PARTS SALES' in line.upper() and 'EQUIPMENT' not in line.upper():
-                    if i + 1 < len(lines):
-                        values = lines[i + 1].split(',')
-                        if len(values) >= 4:
-                            data['parts']['month'] = parse_money(values[0])
-                            data['parts']['ytd'] = parse_money(values[1])
-                            data['parts']['py_month'] = parse_money(values[2])
-                            data['parts']['py_ytd'] = parse_money(values[3])
-                
+                if 'NEW EQUIPMENT SALES' in upper:
+                    _extract_values(lines, i, 'new_equipment', data)
+
+                # PARTS SALES line (but not SERVICE PARTS SALES)
+                elif upper.strip() == 'PARTS SALES' or upper.startswith('PARTS SALES'):
+                    _extract_values(lines, i, 'parts', data)
+
                 # SERVICE LABOR SALES line
-                elif 'SERVICE LABOR SALES' in line.upper() or 'LABOR SALES' in line.upper():
-                    if i + 1 < len(lines):
-                        values = lines[i + 1].split(',')
-                        if len(values) >= 4:
-                            data['labor']['month'] = parse_money(values[0])
-                            data['labor']['ytd'] = parse_money(values[1])
-                            data['labor']['py_month'] = parse_money(values[2])
-                            data['labor']['py_ytd'] = parse_money(values[3])
-            
+                elif 'SERVICE LABOR SALES' in upper:
+                    _extract_values(lines, i, 'labor', data)
+
             # Look for Total GROSS PROFIT line (after COST OF GOODS SOLD section)
             if 'Total GROSS PROFIT' in line:
-                values = line.split(',')
-                # Remove text portion
-                values = [v for v in values if any(c.isdigit() or c in '$()-.' for c in v)]
-                if len(values) >= 4:
-                    data['gross_profit']['month'] = parse_money(values[0])
-                    data['gross_profit']['ytd'] = parse_money(values[1])
-                    data['gross_profit']['py_month'] = parse_money(values[2])
-                    data['gross_profit']['py_ytd'] = parse_money(values[3])
-        
+                numbers = _extract_numbers(line)
+                if len(numbers) >= 4:
+                    data['gross_profit']['month'] = numbers[0]
+                    data['gross_profit']['ytd'] = numbers[1]
+                    data['gross_profit']['py_month'] = numbers[2]
+                    data['gross_profit']['py_ytd'] = numbers[3]
+
         return data
-    
+
     except Exception as e:
         print(f"Error parsing site lead statement: {e}")
         import traceback

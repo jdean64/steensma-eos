@@ -97,10 +97,10 @@
         td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
         tr:hover { background: #f8f9fa; }
         .week-cell {
-            text-align: right; font-variant-numeric: tabular-nums; min-width: 60px;
+            text-align: right; font-variant-numeric: tabular-nums; min-width: 75px;
         }
         .week-cell input {
-            width: 60px; border: 1px solid transparent; background: transparent;
+            width: 75px; border: 1px solid transparent; background: transparent;
             text-align: right; font-size: 13px; padding: 2px 4px; border-radius: 3px;
             font-variant-numeric: tabular-nums;
         }
@@ -176,7 +176,7 @@
         <div class="page-header">
             <div class="page-title">
                 <h2>{{ division.display_name }} Scorecard</h2>
-                <p>13-week measurables and key performance indicators</p>
+                <p>Monthly measurables and key performance indicators</p>
             </div>
             {% if can_edit %}
             <button class="btn btn-primary" onclick="toggleAddForm()">+ Add Metric</button>
@@ -284,7 +284,7 @@
         <div class="scorecard-table">
             {% if metrics %}
             <div class="table-header">
-                <h3>13-Week Scorecard</h3>
+                <h3>Monthly Scorecard</h3>
                 <span style="font-size: 12px; color: #6a6a6a;">{{ metrics[0].quarter if metrics else '' }}</span>
             </div>
             <table>
@@ -294,18 +294,18 @@
                         <th>Owner</th>
                         <th>Goal</th>
                         <th>Status</th>
-                        <th class="week-cell">W1</th>
-                        <th class="week-cell">W2</th>
-                        <th class="week-cell">W3</th>
-                        <th class="week-cell">W4</th>
-                        <th class="week-cell">W5</th>
-                        <th class="week-cell">W6</th>
-                        <th class="week-cell">W7</th>
-                        <th class="week-cell">W8</th>
-                        <th class="week-cell">W9</th>
-                        <th class="week-cell">W10</th>
-                        <th class="week-cell">W11</th>
-                        <th class="week-cell">W12</th>
+                        <th class="week-cell">Jan</th>
+                        <th class="week-cell">Feb</th>
+                        <th class="week-cell">Mar</th>
+                        <th class="week-cell">Apr</th>
+                        <th class="week-cell">May</th>
+                        <th class="week-cell">Jun</th>
+                        <th class="week-cell">Jul</th>
+                        <th class="week-cell">Aug</th>
+                        <th class="week-cell">Sep</th>
+                        <th class="week-cell">Oct</th>
+                        <th class="week-cell">Nov</th>
+                        <th class="week-cell">Dec</th>
                         <th class="week-cell">W13</th>
                         {% if can_edit %}<th></th>{% endif %}
                     </tr>
@@ -328,9 +328,18 @@
                             <input type="number" step="any"
                                    value="{{ metric['week_' ~ w] if metric['week_' ~ w] is not none else '' }}"
                                    onchange="updateWeek({{ metric.id }}, 'week_{{ w }}', this.value)"
-                                   placeholder="-">
+                                   placeholder="-"
+                                   title="{{ '${:,.0f}'.format(metric['week_' ~ w]) if metric['week_' ~ w] is not none else '' }}">
                             {% else %}
-                            {{ metric['week_' ~ w] if metric['week_' ~ w] is not none else '-' }}
+                            {% if metric['week_' ~ w] is not none %}
+                                {% if metric['week_' ~ w] | abs >= 1000 %}
+                                    ${{ "{:,.0f}".format(metric['week_' ~ w]) }}
+                                {% else %}
+                                    {{ metric['week_' ~ w] }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
                             {% endif %}
                         </td>
                         {% endfor %}

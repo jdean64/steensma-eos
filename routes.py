@@ -141,12 +141,22 @@ def register_dashboard_routes(app):
             """, (division['id'],))
             division['todos_count'] = cursor.fetchone()['count']
         
+        # Corporate summary for parent admins
+        corporate_summary = None
+        if user.get('is_parent_admin'):
+            cursor.execute("SELECT COUNT(*) as count FROM vto WHERE division_id IS NULL AND is_active = 1")
+            corp_vto = cursor.fetchone()['count'] > 0
+            cursor.execute("SELECT COUNT(*) as count FROM accountability_chart WHERE division_id IS NULL AND is_active = 1")
+            corp_seats = cursor.fetchone()['count']
+            corporate_summary = {'vto_exists': corp_vto, 'seats': corp_seats}
+
         conn.close()
-        
+
         return render_template('parent_dashboard.html',
                              user=user,
                              organization=organization,
-                             divisions=divisions)
+                             divisions=divisions,
+                             corporate_summary=corporate_summary)
     
     @app.route('/division/<int:division_id>')
     @login_required

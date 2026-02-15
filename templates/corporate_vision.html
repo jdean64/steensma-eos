@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Vision/VTO - {{ organization.display_name }} - EOS Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
+        }
+        .header {
+            background: #1a1a1a; color: white; padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .back-link { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .back-link:hover { color: white; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header-right { display: flex; gap: 20px; align-items: center; }
+        .user-info { font-size: 14px; color: #b0b0b0; }
+        .btn-logout {
+            padding: 8px 16px; background: transparent; border: 1px solid #4a4a4a;
+            color: white; border-radius: 4px; font-size: 13px; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-logout:hover { background: #2d2d2d; }
+        .container { max-width: 1400px; margin: 32px auto; padding: 0 40px; }
+        .page-header { margin-bottom: 32px; }
+        .page-title h2 { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+        .page-title p { font-size: 14px; color: #6a6a6a; }
+
+        .vto-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px; margin-bottom: 24px;
+        }
+        .vto-section {
+            background: white; border-radius: 8px; padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
+        }
+        .vto-section.full-width { grid-column: 1 / -1; }
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #f0f0f0;
+        }
+        .section-header-left { display: flex; align-items: center; gap: 12px; }
+        .section-icon { font-size: 24px; }
+        .section-title { font-size: 18px; font-weight: 600; color: #1a1a1a; }
+        .section-content { font-size: 14px; color: #4a4a4a; line-height: 1.8; }
+
+        .core-values-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;
+        }
+        .core-value-item {
+            background: #f8f8f8; padding: 12px 16px; border-radius: 6px;
+            text-align: center; font-weight: 500; font-size: 13px; border: 1px solid #e5e5e5;
+        }
+
+        .timeline-section {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white; padding: 32px; border-radius: 8px; margin-bottom: 24px;
+        }
+        .timeline-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px; }
+        .timeline-card {
+            background: rgba(255,255,255,0.1); padding: 20px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .timeline-label {
+            font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+            color: #b0b0b0; margin-bottom: 8px;
+        }
+        .timeline-value { font-size: 16px; font-weight: 600; line-height: 1.4; }
+
+        .subsection { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+        .subsection-title {
+            font-size: 13px; font-weight: 600; color: #6a6a6a;
+            text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;
+        }
+        .subsection-content { font-size: 14px; color: #4a4a4a; line-height: 1.6; }
+
+        .btn-edit {
+            padding: 4px 12px; background: #f0f0f0; border: 1px solid #d0d0d0;
+            border-radius: 4px; font-size: 12px; cursor: pointer; color: #4a4a4a;
+            transition: all 0.2s;
+        }
+        .btn-edit:hover { background: #e0e0e0; border-color: #1a1a1a; }
+        .btn-save {
+            padding: 6px 16px; background: #1a1a1a; color: white; border: none;
+            border-radius: 4px; font-size: 13px; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-save:hover { background: #333; }
+        .btn-cancel {
+            padding: 6px 16px; background: white; color: #4a4a4a; border: 1px solid #d0d0d0;
+            border-radius: 4px; font-size: 13px; cursor: pointer; margin-left: 8px;
+        }
+        .edit-form { display: none; }
+        .edit-form.active { display: block; }
+        .edit-form textarea, .edit-form input[type="text"] {
+            width: 100%; padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px;
+            font-size: 14px; font-family: inherit; margin-bottom: 8px; resize: vertical;
+        }
+        .edit-form textarea { min-height: 80px; }
+        .edit-actions { margin-top: 12px; display: flex; gap: 8px; }
+
+        .cv-edit-list { list-style: none; }
+        .cv-edit-item {
+            display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+        }
+        .cv-edit-item input { flex: 1; }
+        .cv-remove {
+            background: none; border: none; color: #dc3545; cursor: pointer;
+            font-size: 18px; padding: 0 4px;
+        }
+        .cv-add {
+            padding: 4px 12px; background: #f0f0f0; border: 1px solid #d0d0d0;
+            border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 4px;
+        }
+
+        .no-data { text-align: center; padding: 40px; color: #6a6a6a; font-size: 14px; }
+        .badge {
+            display: inline-block; background: #1a1a1a; color: white;
+            padding: 6px 12px; border-radius: 4px; font-size: 12px;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 768px) {
+            .timeline-grid { grid-template-columns: 1fr; }
+            .vto-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <a href="{{ url_for('corporate_dashboard') }}" class="back-link">&#8592; Corporate Dashboard</a>
+            <h1>Vision/Traction Organizer</h1>
+        </div>
+        <div class="header-right">
+            <span class="user-info">{{ user.full_name }} ({{ user.role }})</span>
+            <a href="/logout" class="btn-logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="page-title">
+                <h2>{{ organization.display_name }} Vision</h2>
+                <p>Company-wide foundational vision &mdash; cascades to all divisions</p>
+            </div>
+        </div>
+
+        {% if vto %}
+        <!-- Timeline Section -->
+        <div class="timeline-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 20px; font-weight: 600;">Strategic Timeline</h3>
+                <div>
+                    <button class="btn-edit" onclick="editSection('timeline')" id="timeline-edit-btn">Edit</button>
+                    <span class="badge" style="margin-left: 8px;">Corporate</span>
+                </div>
+            </div>
+
+            <!-- Display Mode -->
+            <div id="timeline-display">
+                <div class="timeline-grid">
+                    <div class="timeline-card">
+                        <div class="timeline-label">10-Year Target</div>
+                        <div class="timeline-value">{{ vto.ten_year_target if vto.ten_year_target else 'Not defined' }}</div>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-label">3-Year Picture</div>
+                        <div class="timeline-value">
+                            <div>Revenue: {{ vto.three_year_revenue if vto.three_year_revenue else 'TBD' }}</div>
+                            <div style="margin-top: 4px;">Profit: {{ vto.three_year_profit if vto.three_year_profit else 'TBD' }}</div>
+                        </div>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-label">1-Year Plan (2026)</div>
+                        <div class="timeline-value">
+                            <div>Revenue: {{ vto.one_year_revenue if vto.one_year_revenue else 'TBD' }}</div>
+                            <div style="margin-top: 4px;">Profit: {{ vto.one_year_profit if vto.one_year_profit else 'TBD' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div class="edit-form" id="timeline-form">
+                <div class="timeline-grid">
+                    <div class="timeline-card">
+                        <div class="timeline-label">10-Year Target</div>
+                        <textarea data-field="ten_year_target" style="background: rgba(255,255,255,0.9); color: #1a1a1a;">{{ vto.ten_year_target or '' }}</textarea>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-label">3-Year Revenue</div>
+                        <input type="text" data-field="three_year_revenue" value="{{ vto.three_year_revenue or '' }}" style="background: rgba(255,255,255,0.9); color: #1a1a1a;">
+                        <div class="timeline-label" style="margin-top: 8px;">3-Year Profit</div>
+                        <input type="text" data-field="three_year_profit" value="{{ vto.three_year_profit or '' }}" style="background: rgba(255,255,255,0.9); color: #1a1a1a;">
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-label">1-Year Revenue</div>
+                        <input type="text" data-field="one_year_revenue" value="{{ vto.one_year_revenue or '' }}" style="background: rgba(255,255,255,0.9); color: #1a1a1a;">
+                        <div class="timeline-label" style="margin-top: 8px;">1-Year Profit</div>
+                        <input type="text" data-field="one_year_profit" value="{{ vto.one_year_profit or '' }}" style="background: rgba(255,255,255,0.9); color: #1a1a1a;">
+                    </div>
+                </div>
+                <div class="edit-actions" style="margin-top: 16px;">
+                    <button class="btn-save" onclick="saveSection('timeline')">Save</button>
+                    <button class="btn-cancel" onclick="cancelEdit('timeline')">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="vto-grid">
+            <!-- Core Values -->
+            <div class="vto-section">
+                <div class="section-header">
+                    <div class="section-header-left">
+                        <span class="section-icon">&#11088;</span>
+                        <h3 class="section-title">Core Values</h3>
+                    </div>
+                    <button class="btn-edit" onclick="editSection('corevalues')" id="corevalues-edit-btn">Edit</button>
+                </div>
+                <div id="corevalues-display">
+                    <div class="core-values-grid">
+                        {% if core_values %}
+                            {% for value in core_values %}
+                            <div class="core-value-item">{{ value }}</div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-data">No core values defined</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="edit-form" id="corevalues-form">
+                    <ul class="cv-edit-list" id="cv-list">
+                        {% for value in core_values %}
+                        <li class="cv-edit-item">
+                            <input type="text" value="{{ value }}" class="cv-input">
+                            <button class="cv-remove" onclick="this.parentElement.remove()">&times;</button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button class="cv-add" onclick="addCoreValue()">+ Add Value</button>
+                    <div class="edit-actions">
+                        <button class="btn-save" onclick="saveCoreValues()">Save</button>
+                        <button class="btn-cancel" onclick="cancelEdit('corevalues')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Focus -->
+            <div class="vto-section">
+                <div class="section-header">
+                    <div class="section-header-left">
+                        <span class="section-icon">&#127919;</span>
+                        <h3 class="section-title">Core Focus</h3>
+                    </div>
+                    <button class="btn-edit" onclick="editSection('corefocus')" id="corefocus-edit-btn">Edit</button>
+                </div>
+                <div id="corefocus-display">
+                    <div class="section-content">
+                        {% if vto.core_purpose %}
+                        <div class="subsection">
+                            <div class="subsection-title">Purpose / Passion</div>
+                            <div class="subsection-content">{{ vto.core_purpose }}</div>
+                        </div>
+                        {% endif %}
+                        {% if vto.core_niche %}
+                        <div class="subsection">
+                            <div class="subsection-title">Niche</div>
+                            <div class="subsection-content">{{ vto.core_niche }}</div>
+                        </div>
+                        {% endif %}
+                        {% if not vto.core_purpose and not vto.core_niche %}
+                        <div class="no-data">No core focus defined</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="edit-form" id="corefocus-form">
+                    <div class="subsection-title">Purpose / Passion</div>
+                    <textarea data-field="core_purpose">{{ vto.core_purpose or '' }}</textarea>
+                    <div class="subsection-title">Niche</div>
+                    <textarea data-field="core_niche">{{ vto.core_niche or '' }}</textarea>
+                    <div class="edit-actions">
+                        <button class="btn-save" onclick="saveSection('corefocus')">Save</button>
+                        <button class="btn-cancel" onclick="cancelEdit('corefocus')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketing Strategy -->
+            <div class="vto-section full-width">
+                <div class="section-header">
+                    <div class="section-header-left">
+                        <span class="section-icon">&#128227;</span>
+                        <h3 class="section-title">Marketing Strategy</h3>
+                    </div>
+                    <button class="btn-edit" onclick="editSection('marketing')" id="marketing-edit-btn">Edit</button>
+                </div>
+                <div id="marketing-display">
+                    <div class="vto-grid" style="margin: 0;">
+                        <div>
+                            <div class="subsection-title">Target Market</div>
+                            <div class="subsection-content">{{ vto.target_market if vto.target_market else 'Not defined' }}</div>
+                        </div>
+                        <div>
+                            <div class="subsection-title">Unique Value Proposition</div>
+                            <div class="subsection-content">{{ vto.unique_value_proposition if vto.unique_value_proposition else 'Not defined' }}</div>
+                        </div>
+                        <div>
+                            <div class="subsection-title">Proven Process</div>
+                            <div class="subsection-content">{{ vto.proven_process if vto.proven_process else 'Not defined' }}</div>
+                        </div>
+                        <div>
+                            <div class="subsection-title">Guarantee</div>
+                            <div class="subsection-content">{{ vto.guarantee if vto.guarantee else 'Not defined' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="edit-form" id="marketing-form">
+                    <div class="vto-grid" style="margin: 0;">
+                        <div>
+                            <div class="subsection-title">Target Market</div>
+                            <textarea data-field="target_market">{{ vto.target_market or '' }}</textarea>
+                        </div>
+                        <div>
+                            <div class="subsection-title">Unique Value Proposition</div>
+                            <textarea data-field="unique_value_proposition">{{ vto.unique_value_proposition or '' }}</textarea>
+                        </div>
+                        <div>
+                            <div class="subsection-title">Proven Process</div>
+                            <textarea data-field="proven_process">{{ vto.proven_process or '' }}</textarea>
+                        </div>
+                        <div>
+                            <div class="subsection-title">Guarantee</div>
+                            <textarea data-field="guarantee">{{ vto.guarantee or '' }}</textarea>
+                        </div>
+                    </div>
+                    <div class="edit-actions">
+                        <button class="btn-save" onclick="saveSection('marketing')">Save</button>
+                        <button class="btn-cancel" onclick="cancelEdit('marketing')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3-Year Picture Details -->
+            <div class="vto-section">
+                <div class="section-header">
+                    <div class="section-header-left">
+                        <span class="section-icon">&#128302;</span>
+                        <h3 class="section-title">3-Year Picture</h3>
+                    </div>
+                    <button class="btn-edit" onclick="editSection('threeyear')" id="threeyear-edit-btn">Edit</button>
+                </div>
+                <div id="threeyear-display">
+                    <div class="section-content">
+                        {% if vto.three_year_measurables %}
+                        <div class="subsection">
+                            <div class="subsection-title">Measurables</div>
+                            <div class="subsection-content">{{ vto.three_year_measurables }}</div>
+                        </div>
+                        {% else %}
+                        <div class="no-data">No measurables defined</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="edit-form" id="threeyear-form">
+                    <div class="subsection-title">Measurables</div>
+                    <textarea data-field="three_year_measurables">{{ vto.three_year_measurables or '' }}</textarea>
+                    <div class="edit-actions">
+                        <button class="btn-save" onclick="saveSection('threeyear')">Save</button>
+                        <button class="btn-cancel" onclick="cancelEdit('threeyear')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1-Year Goals -->
+            <div class="vto-section">
+                <div class="section-header">
+                    <div class="section-header-left">
+                        <span class="section-icon">&#127919;</span>
+                        <h3 class="section-title">1-Year Goals</h3>
+                    </div>
+                    <button class="btn-edit" onclick="editSection('oneyear')" id="oneyear-edit-btn">Edit</button>
+                </div>
+                <div id="oneyear-display">
+                    <div class="section-content">
+                        {% if vto.one_year_goals %}
+                        <div class="subsection-content">{{ vto.one_year_goals|replace('\n', '<br>')|safe }}</div>
+                        {% else %}
+                        <div class="no-data">No goals defined</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="edit-form" id="oneyear-form">
+                    <textarea data-field="one_year_goals" style="min-height: 120px;">{{ vto.one_year_goals or '' }}</textarea>
+                    <div class="edit-actions">
+                        <button class="btn-save" onclick="saveSection('oneyear')">Save</button>
+                        <button class="btn-cancel" onclick="cancelEdit('oneyear')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="vto-section full-width">
+            <div class="no-data">
+                <h3 style="margin-bottom: 8px;">No Corporate VTO Data</h3>
+                <p>The company-wide Vision/Traction Organizer has not been configured yet.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+    function editSection(section) {
+        document.getElementById(section + '-display').style.display = 'none';
+        document.getElementById(section + '-form').classList.add('active');
+        document.getElementById(section + '-edit-btn').style.display = 'none';
+    }
+
+    function cancelEdit(section) {
+        document.getElementById(section + '-display').style.display = '';
+        document.getElementById(section + '-form').classList.remove('active');
+        document.getElementById(section + '-edit-btn').style.display = '';
+    }
+
+    function saveSection(section) {
+        const form = document.getElementById(section + '-form');
+        const data = {};
+        form.querySelectorAll('[data-field]').forEach(el => {
+            data[el.dataset.field] = el.value;
+        });
+        fetch('/corporate/vision/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) location.reload();
+            else alert('Save failed');
+        });
+    }
+
+    function addCoreValue() {
+        const li = document.createElement('li');
+        li.className = 'cv-edit-item';
+        li.innerHTML = '<input type="text" class="cv-input" placeholder="New core value">'
+            + '<button class="cv-remove" onclick="this.parentElement.remove()">&times;</button>';
+        document.getElementById('cv-list').appendChild(li);
+    }
+
+    function saveCoreValues() {
+        const inputs = document.querySelectorAll('#cv-list .cv-input');
+        const values = [];
+        inputs.forEach(el => {
+            const v = el.value.trim();
+            if (v) values.push(v);
+        });
+        fetch('/corporate/vision/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({core_values: JSON.stringify(values)})
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) location.reload();
+            else alert('Save failed');
+        });
+    }
+    </script>
+</body>
+</html>

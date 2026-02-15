@@ -38,6 +38,7 @@ from scorecard_routes import register_scorecard_routes
 from todos_routes import register_todos_routes
 from vision_routes import register_vision_routes
 from accountability_routes import register_accountability_routes
+from corporate_routes import register_corporate_routes
 from pdf_routes import register_pdf_routes
 from saml_routes import register_saml_routes
 
@@ -53,6 +54,7 @@ register_scorecard_routes(app)
 register_todos_routes(app)
 register_vision_routes(app)
 register_accountability_routes(app)
+register_corporate_routes(app)
 register_pdf_routes(app)
 
 # Template context processor to make datetime available

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Dashboard - {{ organization.display_name }} - EOS Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
+        }
+        .header {
+            background: #1a1a1a; color: white; padding: 24px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .back-link { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .back-link:hover { color: white; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header-right { display: flex; gap: 20px; align-items: center; }
+        .user-info { font-size: 14px; color: #b0b0b0; }
+        .btn-logout {
+            padding: 8px 16px; background: transparent; border: 1px solid #4a4a4a;
+            color: white; border-radius: 4px; font-size: 13px; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-logout:hover { background: #2d2d2d; }
+        .container { max-width: 1400px; margin: 40px auto; padding: 0 40px; }
+        .page-title { margin-bottom: 32px; }
+        .page-title h2 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .page-title p { font-size: 16px; color: #6a6a6a; }
+
+        .eos-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px; margin-bottom: 32px;
+        }
+        .eos-card {
+            background: white; border: 1px solid #e0e0e0; border-radius: 8px;
+            padding: 32px; transition: all 0.2s; cursor: pointer;
+            text-decoration: none; color: inherit; display: block; position: relative;
+        }
+        .eos-card:hover {
+            transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border-color: #1a1a1a;
+        }
+        .card-icon { font-size: 40px; margin-bottom: 16px; }
+        .card-title { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+        .card-desc { font-size: 14px; color: #6a6a6a; margin-bottom: 24px; }
+        .card-metrics {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+            padding-top: 16px; border-top: 1px solid #e8e8e8;
+        }
+        .metric { text-align: center; }
+        .metric-value { font-size: 28px; font-weight: 700; color: #1a1a1a; line-height: 1.2; }
+        .metric-label {
+            font-size: 11px; color: #8a8a8a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-top: 4px;
+        }
+
+        /* Financial rollup widget */
+        .financial-widget {
+            background: #111827; color: white; border-radius: 8px; padding: 28px;
+            margin-bottom: 32px; border: 1px solid #1f2937;
+        }
+        .fw-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .fw-title { font-size: 14px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+        .fw-total { font-size: 32px; font-weight: 700; color: #22c55e; }
+        .fw-subtitle { font-size: 13px; color: #9ca3af; margin-top: 4px; }
+        .fw-divisions {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+            border-top: 1px solid #374151; padding-top: 20px;
+        }
+        .fw-div-name { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+        .fw-div-value { font-size: 22px; font-weight: 600; color: white; margin-top: 4px; }
+        .fw-div-compare { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <a href="/" class="back-link">&#8592; All Divisions</a>
+            <h1>{{ organization.display_name }}</h1>
+        </div>
+        <div class="header-right">
+            <span class="user-info">{{ user.full_name }} ({{ user.role }})</span>
+            <a href="/logout" class="btn-logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div style="padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; font-size: 14px;
+            {% if category == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+            {% else %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="page-title">
+            <h2>Corporate Dashboard</h2>
+            <p>Company-wide Vision, Leadership, and Financial Overview</p>
+        </div>
+
+        <!-- Financial Rollup -->
+        {% if rollup %}
+        <div class="financial-widget">
+            <div class="fw-header">
+                <div>
+                    <div class="fw-title">Combined Gross Profit (YTD)</div>
+                    <div class="fw-total">${{ "{:,.0f}".format(rollup.gross_profit.ytd) }}</div>
+                    <div class="fw-subtitle">All Divisions Combined</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="fw-title">This Month</div>
+                    <div style="font-size: 24px; font-weight: 600; color: white;">${{ "{:,.0f}".format(rollup.gross_profit.month) }}</div>
+                    <div class="fw-subtitle">Prior Year: ${{ "{:,.0f}".format(rollup.gross_profit.py_month) }}</div>
+                </div>
+            </div>
+            <div class="fw-divisions">
+                {% for name, data in rollup.by_division.items() %}
+                <div>
+                    <div class="fw-div-name">{{ name }}</div>
+                    <div class="fw-div-value">${{ "{:,.0f}".format(data.gross_profit.ytd) }}</div>
+                    <div class="fw-div-compare">Month: ${{ "{:,.0f}".format(data.gross_profit.month) }} | PY: ${{ "{:,.0f}".format(data.gross_profit.py_ytd) }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- EOS Tool Cards -->
+        <div class="eos-grid">
+            <!-- Vision/VTO -->
+            <a href="{{ url_for('corporate_vision') }}" class="eos-card">
+                <div class="card-icon">&#128301;</div>
+                <div class="card-title">Vision / VTO</div>
+                <div class="card-desc">Core values, core focus, 10-year target, and marketing strategy</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{% if vto_exists %}&#10003;{% else %}&mdash;{% endif %}</div>
+                        <div class="metric-label">{% if vto_exists %}Configured{% else %}Not Set{% endif %}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" style="font-size: 16px;">Company-Wide</div>
+                        <div class="metric-label">Scope</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" style="font-size: 16px;">Editable</div>
+                        <div class="metric-label">Access</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Accountability Chart -->
+            <a href="{{ url_for('corporate_accountability') }}" class="eos-card">
+                <div class="card-icon">&#128101;</div>
+                <div class="card-title">Leadership</div>
+                <div class="card-desc">Company-wide accountability chart and leadership structure</div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{{ accountability_count }}</div>
+                        <div class="metric-label">Company Seats</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">3</div>
+                        <div class="metric-label">Divisions</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" style="font-size: 16px;">Editable</div>
+                        <div class="metric-label">Access</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

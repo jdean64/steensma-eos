@@ -39,6 +39,7 @@ def register_accountability_routes(app):
         division = dict(cursor.fetchone())
 
         # Get accountability chart seats with parent info
+        # Include company-level seats (division_id IS NULL) and division-specific seats
         cursor.execute("""
             SELECT
                 ac.id, ac.seat_name, ac.seat_description,
@@ -46,16 +47,18 @@ def register_accountability_routes(app):
                 ac.role_1, ac.role_2, ac.role_3, ac.role_4, ac.role_5,
                 ac.reports_to_seat_id,
                 ac.gwc_get_it, ac.gwc_want_it, ac.gwc_capacity,
+                ac.division_id,
                 parent.seat_name as reports_to_name
             FROM accountability_chart ac
             LEFT JOIN accountability_chart parent ON ac.reports_to_seat_id = parent.id
-            WHERE ac.division_id = ? AND ac.is_active = 1
-            ORDER BY ac.reports_to_seat_id IS NULL DESC, ac.reports_to_seat_id, ac.seat_name
+            WHERE (ac.division_id = ? OR ac.division_id IS NULL) AND ac.is_active = 1
+            ORDER BY ac.reports_to_seat_id IS NULL DESC, ac.reports_to_seat_id, ac.id
         """, (division_id,))
 
         seats = [dict(row) for row in cursor.fetchall()]
 
-        # Build roles list for each seat
+        # Build roles list and children map for each seat
+        seat_map = {}
         for seat in seats:
             roles = []
             for i in range(1, 6):
@@ -69,6 +72,17 @@ def register_accountability_routes(app):
                 1 if seat.get('gwc_want_it') else 0,
                 1 if seat.get('gwc_capacity') else 0,
             ])
+            seat['children'] = []
+            seat_map[seat['id']] = seat
+
+        # Build parent-child relationships
+        root_seats = []
+        for seat in seats:
+            parent_id = seat.get('reports_to_seat_id')
+            if parent_id and parent_id in seat_map:
+                seat_map[parent_id]['children'].append(seat)
+            else:
+                root_seats.append(seat)
 
         # Summary
         total = len(seats)
@@ -100,6 +114,7 @@ def register_accountability_routes(app):
                              user=user,
                              division=division,
                              seats=seats,
+                             root_seats=root_seats,
                              summary=summary,
                              users=users,
                              can_edit=can_edit)
