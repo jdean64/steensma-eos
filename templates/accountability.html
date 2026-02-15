@@ -3,269 +3,426 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accountability Chart - EOS</title>
+    <title>Accountability Chart - {{ division.display_name }} - EOS Platform</title>
     <style>
-        :root {
-            --enterprise-dark: #1a1a1a;
-            --enterprise-gray: #4a4a4a;
-            --enterprise-light: #f5f5f5;
-            --enterprise-border: #d0d0d0;
-            --text-primary: #2a2a2a;
-            --text-secondary: #6a6a6a;
-        }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
-            background: var(--enterprise-light);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-            letter-spacing: -0.01em;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
         }
-        
-        .container { max-width: 1200px; margin: 0 auto; }
-        
         .header {
-            background: var(--enterprise-dark);
-            color: white;
-            padding: 24px 32px;
-            border-radius: 2px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid var(--enterprise-border);
+            background: #1a1a1a; color: white; padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        
-        .header h1 { 
-            font-size: 24px; 
-            font-weight: 600; 
-            letter-spacing: -0.02em;
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .back-link { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .back-link:hover { color: white; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header-right { display: flex; gap: 20px; align-items: center; }
+        .user-info { font-size: 14px; color: #b0b0b0; }
+        .btn-logout {
+            padding: 8px 16px; background: transparent; border: 1px solid #4a4a4a;
+            color: white; border-radius: 4px; font-size: 13px; text-decoration: none; transition: all 0.2s;
         }
-        
-        .summary {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+        .btn-logout:hover { background: #2d2d2d; }
+        .container { max-width: 1400px; margin: 32px auto; padding: 0 40px; }
+
+        .flash { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
+        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .page-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+        .page-title h2 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .page-title p { font-size: 14px; color: #6a6a6a; }
+
+        .btn {
+            padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        
+        .btn-primary { background: #1a1a1a; color: white; }
+        .btn-primary:hover { background: #333; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-outline { background: white; color: #1a1a1a; border: 1px solid #d0d0d0; }
+        .btn-outline:hover { background: #f5f5f5; }
+        .btn-delete { background: transparent; color: #999; border: none; cursor: pointer; font-size: 14px; padding: 2px 6px; }
+        .btn-delete:hover { color: #dc3545; }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;
+        }
         .summary-card {
-            background: white;
-            border-radius: 2px;
-            padding: 20px;
-            border: 1px solid var(--enterprise-border);
-            text-align: center;
+            background: white; padding: 20px; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
         }
-        
-        .summary-card h3 { 
-            font-size: 11px; 
-            color: var(--text-secondary); 
-            margin-bottom: 8px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .summary-label {
+            font-size: 11px; color: #6a6a6a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 8px; font-weight: 600;
         }
-        
-        .summary-card .value { 
-            font-size: 32px; 
-            font-weight: 600; 
-            color: var(--text-primary);
-            letter-spacing: -0.02em;
+        .summary-value { font-size: 32px; font-weight: 700; }
+
+        /* Add Form */
+        .add-form {
+            background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
+            display: none;
         }
-        
-        .back-button {
-            background: white;
-            color: var(--text-primary);
-            padding: 8px 20px;
-            border-radius: 2px;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 14px;
-            border: 1px solid var(--enterprise-border);
-            transition: all 0.15s ease;
+        .add-form.active { display: block; }
+        .add-form h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 140px; }
+        .form-group label {
+            display: block; font-size: 12px; font-weight: 600; color: #6a6a6a;
+            margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em;
         }
-        
-        .back-button:hover { 
-            background: var(--enterprise-light);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 14px;
         }
-        
-        .org-chart {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 16px;
-        }
-        
-        .seat-card {
-            background: white;
-            border-radius: 2px;
-            padding: 24px;
-            border: 1px solid var(--enterprise-border);
-            border-left: 3px solid var(--enterprise-border);
-        }
-        .seat-card.filled { border-left-color: var(--enterprise-dark); }
-        .seat-card.open { border-left-color: var(--enterprise-gray); }
-        
-        .seat-header {
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--enterprise-border);
-        }
-        .seat-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-            letter-spacing: -0.01em;
-        }
-        .seat-person {
-            font-size: 15px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .seat-person.filled { color: var(--text-primary); font-weight: 500; }
-        .seat-person.open { color: var(--text-secondary); font-weight: 500; }
-        
-        .seat-roles {
-            margin-top: 12px;
-        }
-        .seat-roles h4 {
-            font-size: 11px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        .seat-roles ul {
-            list-style: none;
-            padding: 0;
-        }
-        .seat-roles li {
-            font-size: 13px;
-            color: var(--text-secondary);
-            padding: 5px 0;
-            padding-left: 16px;
+
+        /* Org Chart - Tree Layout */
+        .org-tree { margin-bottom: 32px; }
+
+        /* Level 0: Top seat */
+        .tree-top {
+            display: flex; justify-content: center; margin-bottom: 24px;
             position: relative;
         }
-        .seat-roles li::before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: var(--text-primary);
-            font-weight: bold;
+        .tree-top::after {
+            content: ''; position: absolute; bottom: -24px; left: 50%;
+            width: 2px; height: 24px; background: #d0d0d0;
         }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 2px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-top: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border: 1px solid;
+
+        /* Level connectors */
+        .tree-level {
+            display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+            position: relative; margin-bottom: 24px; padding-top: 24px;
         }
-        .status-filled { 
-            background: var(--enterprise-dark); 
-            color: white; 
-            border-color: var(--enterprise-dark);
+        .tree-level::before {
+            content: ''; position: absolute; top: 0; left: 10%; right: 10%;
+            height: 2px; background: #d0d0d0;
         }
-        .status-open { 
-            background: white; 
-            color: var(--text-primary); 
-            border-color: var(--enterprise-border);
+
+        .tree-branch { position: relative; }
+        .tree-branch::before {
+            content: ''; position: absolute; top: -24px; left: 50%;
+            width: 2px; height: 24px; background: #d0d0d0;
         }
+
+        /* Seat Card */
+        .seat-card {
+            background: white; border-radius: 8px; padding: 20px; width: 260px;
+            border: 1px solid #e5e5e5; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s; position: relative;
+        }
+        .seat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .seat-card.filled { border-left: 4px solid #1a1a1a; }
+        .seat-card.open { border-left: 4px solid #d0d0d0; }
+
+        .seat-title {
+            font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #1a1a1a;
+        }
+        .seat-person {
+            font-size: 14px; margin-bottom: 8px;
+        }
+        .seat-person.is-filled { color: #2a2a2a; font-weight: 500; }
+        .seat-person.is-open { color: #dc3545; font-style: italic; }
+
+        .seat-description {
+            font-size: 12px; color: #6a6a6a; margin-bottom: 8px; line-height: 1.4;
+        }
+        .seat-roles-list {
+            list-style: none; margin-bottom: 8px;
+        }
+        .seat-roles-list li {
+            font-size: 12px; color: #6a6a6a; padding: 2px 0 2px 12px; position: relative;
+        }
+        .seat-roles-list li::before {
+            content: '\2022'; position: absolute; left: 0; color: #999;
+        }
+
+        /* GWC Assessment */
+        .gwc-row {
+            display: flex; gap: 4px; margin-top: 8px; padding-top: 8px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .gwc-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 4px; font-size: 11px;
+            font-weight: 700; cursor: pointer; transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .gwc-badge.active { background: #28a745; color: white; border-color: #28a745; }
+        .gwc-badge.inactive { background: #f0f0f0; color: #999; border-color: #e0e0e0; }
+        .gwc-badge:hover { transform: scale(1.1); }
+        .gwc-label {
+            font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.05em;
+            margin-left: auto; line-height: 28px;
+        }
+
+        .seat-actions {
+            position: absolute; top: 8px; right: 8px; display: none;
+        }
+        .seat-card:hover .seat-actions { display: flex; gap: 4px; }
+
+        /* Flat list fallback for sub-levels */
+        .seat-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .level-label {
+            font-size: 12px; font-weight: 600; color: #6a6a6a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 12px; padding-bottom: 8px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .empty-state { text-align: center; padding: 60px 40px; color: #6a6a6a; }
+        .empty-state h3 { margin-bottom: 8px; font-size: 18px; color: #2a2a2a; }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="header-left">
+            <a href="{{ url_for('division_dashboard', division_id=division.id) }}" class="back-link">&#8592; Back to {{ division.display_name }}</a>
+            <h1>Accountability Chart</h1>
+        </div>
+        <div class="header-right">
+            <span class="user-info">{{ user.full_name or user.username }} ({{ user.role }})</span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </div>
+
     <div class="container">
-        <div class="header">
-            <h1>ACCOUNTABILITY CHART</h1>
-            <a href="/" class="back-button">← Back to Dashboard</a>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="page-header">
+            <div class="page-title">
+                <h2>{{ division.display_name }} Accountability</h2>
+                <p>Right people, right seats - GWC assessment</p>
+            </div>
+            {% if can_edit %}
+            <button class="btn btn-primary" onclick="toggleAddForm()">+ Add Seat</button>
+            {% endif %}
         </div>
 
-        <div class="summary">
+        <!-- Summary -->
+        <div class="summary-cards">
             <div class="summary-card">
-                <h3>Filled Seats</h3>
-                <div class="value" id="filledCount">-</div>
+                <div class="summary-label">Total Seats</div>
+                <div class="summary-value">{{ summary.total }}</div>
             </div>
             <div class="summary-card">
-                <h3>Open Seats</h3>
-                <div class="value" id="openCount">-</div>
+                <div class="summary-label">Filled</div>
+                <div class="summary-value" style="color: #28a745;">{{ summary.filled }}</div>
             </div>
             <div class="summary-card">
-                <h3>Total Seats</h3>
-                <div class="value" id="totalCount">-</div>
+                <div class="summary-label">Open</div>
+                <div class="summary-value" style="color: {% if summary.open > 0 %}#dc3545{% else %}#2a2a2a{% endif %};">{{ summary.open }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Right Seat (GWC)</div>
+                <div class="summary-value" style="color: #0d6efd;">{{ summary.right_seat }}</div>
             </div>
         </div>
 
-        <div class="org-chart" id="orgChart"></div>
+        <!-- Add Seat Form -->
+        {% if can_edit %}
+        <div class="add-form" id="addForm">
+            <h3>Add New Seat</h3>
+            <form method="POST" action="{{ url_for('add_seat', division_id=division.id) }}">
+                <div class="form-row" style="margin-bottom: 12px;">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Seat Name</label>
+                        <input type="text" name="seat_name" placeholder="e.g., Operations Manager" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Person</label>
+                        <input type="text" name="user_name" placeholder="Who sits here?">
+                    </div>
+                    <div class="form-group">
+                        <label>Reports To</label>
+                        <select name="reports_to_seat_id">
+                            <option value="">-- None (Top Level) --</option>
+                            {% for seat in seats %}
+                            <option value="{{ seat.id }}">{{ seat.seat_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 12px;">
+                    <div class="form-group" style="flex: 3;">
+                        <label>Accountabilities</label>
+                        <input type="text" name="seat_description" placeholder="Key accountabilities for this seat">
+                    </div>
+                    <div class="form-group">
+                        <label>Role 1</label>
+                        <input type="text" name="role_1" placeholder="Primary role">
+                    </div>
+                    <div class="form-group">
+                        <label>Role 2</label>
+                        <input type="text" name="role_2" placeholder="Secondary role">
+                    </div>
+                    <div class="form-group">
+                        <label>Role 3</label>
+                        <input type="text" name="role_3" placeholder="Third role">
+                    </div>
+                    <div class="form-group" style="flex: 0;">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Org Chart -->
+        {% macro render_seat_card(seat) %}
+        <div class="seat-card {{ 'filled' if seat.is_filled else 'open' }}" data-seat-id="{{ seat.id }}">
+            {% if can_edit %}
+            <div class="seat-actions">
+                <form method="POST" action="{{ url_for('delete_seat', division_id=division.id, seat_id=seat.id) }}"
+                      onsubmit="return confirm('Remove this seat?');" style="display:inline;">
+                    <button type="submit" class="btn-delete" title="Remove">&#x2715;</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="seat-title">{{ seat.seat_name }}</div>
+            <div class="seat-person {{ 'is-filled' if seat.is_filled else 'is-open' }}">
+                {{ seat.user_name if seat.is_filled else 'Open Seat' }}
+            </div>
+
+            {% if seat.seat_description %}
+            <div class="seat-description">{{ seat.seat_description }}</div>
+            {% endif %}
+
+            {% if seat.roles %}
+            <ul class="seat-roles-list">
+                {% for role in seat.roles %}
+                <li>{{ role }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if seat.reports_to_name %}
+            <div style="font-size: 11px; color: #999; margin-top: 4px;">
+                Reports to: {{ seat.reports_to_name }}
+            </div>
+            {% endif %}
+
+            {% if seat.is_filled and can_edit %}
+            <div class="gwc-row">
+                <span class="gwc-badge {{ 'active' if seat.gwc_get_it else 'inactive' }}"
+                      onclick="toggleGWC({{ seat.id }}, 'gwc_get_it', {{ 1 if not seat.gwc_get_it else 0 }})"
+                      title="Get It - understands the role">G</span>
+                <span class="gwc-badge {{ 'active' if seat.gwc_want_it else 'inactive' }}"
+                      onclick="toggleGWC({{ seat.id }}, 'gwc_want_it', {{ 1 if not seat.gwc_want_it else 0 }})"
+                      title="Want It - genuinely wants the role">W</span>
+                <span class="gwc-badge {{ 'active' if seat.gwc_capacity else 'inactive' }}"
+                      onclick="toggleGWC({{ seat.id }}, 'gwc_capacity', {{ 1 if not seat.gwc_capacity else 0 }})"
+                      title="Capacity to do It - has ability and time">C</span>
+                <span class="gwc-label">
+                    {% if seat.gwc_score == 3 %}Right Seat{% elif seat.gwc_score > 0 %}{{ seat.gwc_score }}/3{% endif %}
+                </span>
+            </div>
+            {% elif seat.is_filled %}
+            <div class="gwc-row">
+                <span class="gwc-badge {{ 'active' if seat.gwc_get_it else 'inactive' }}" title="Get It">G</span>
+                <span class="gwc-badge {{ 'active' if seat.gwc_want_it else 'inactive' }}" title="Want It">W</span>
+                <span class="gwc-badge {{ 'active' if seat.gwc_capacity else 'inactive' }}" title="Capacity">C</span>
+                <span class="gwc-label">
+                    {% if seat.gwc_score == 3 %}Right Seat{% elif seat.gwc_score > 0 %}{{ seat.gwc_score }}/3{% endif %}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        {% endmacro %}
+
+        {% if seats %}
+        {% set top_seats = seats | selectattr('reports_to_seat_id', 'none') | list %}
+        {% set manager_seats = [] %}
+        {% set other_seats = [] %}
+
+        {% for seat in seats %}
+            {% if seat.reports_to_seat_id is not none %}
+                {% set parent_is_top = false %}
+                {% for top in top_seats %}
+                    {% if seat.reports_to_seat_id == top.id %}
+                        {% set parent_is_top = true %}
+                    {% endif %}
+                {% endfor %}
+                {% if parent_is_top %}
+                    {% set _ = manager_seats.append(seat) %}
+                {% else %}
+                    {% set _ = other_seats.append(seat) %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- Top Level (Site Lead) -->
+        {% if top_seats %}
+        <div class="level-label">Leadership</div>
+        <div class="tree-top">
+            {% for seat in top_seats %}
+            {{ render_seat_card(seat) }}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Direct Reports -->
+        {% if manager_seats %}
+        <div class="level-label">Direct Reports</div>
+        <div class="seat-grid">
+            {% for seat in manager_seats %}
+            {{ render_seat_card(seat) }}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Team Members -->
+        {% if other_seats %}
+        <div class="level-label">Team Members</div>
+        <div class="seat-grid">
+            {% for seat in other_seats %}
+            {{ render_seat_card(seat) }}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <h3>No Seats Defined</h3>
+            <p>Click "+ Add Seat" to start building your accountability chart.</p>
+        </div>
+        {% endif %}
     </div>
 
     <script>
-        async function loadAccountability() {
-            try {
-                const response = await fetch('/api/data');
-                const data = await response.json();
-                
-                if (data.accountability) {
-                    displayAccountability(data.accountability);
-                }
-            } catch (error) {
-                console.error('Error loading accountability chart:', error);
-            }
-        }
+    const divisionId = {{ division.id }};
 
-        function displayAccountability(accountability) {
-            // Update summary
-            document.getElementById('filledCount').textContent = accountability.summary.filled;
-            document.getElementById('openCount').textContent = accountability.summary.open;
-            document.getElementById('totalCount').textContent = accountability.summary.total;
+    function toggleAddForm() {
+        document.getElementById('addForm').classList.toggle('active');
+    }
 
-            // Display seats
-            const chart = document.getElementById('orgChart');
-            chart.innerHTML = '';
-
-            accountability.seats.forEach(seat => {
-                const statusClass = seat.status === 'FILLED' ? 'filled' : 'open';
-                const personClass = seat.status === 'FILLED' ? 'filled' : 'open';
-                const statusBadgeClass = seat.status === 'FILLED' ? 'status-filled' : 'status-open';
-                
-                const card = document.createElement('div');
-                card.className = `seat-card ${statusClass}`;
-                
-                const rolesHtml = seat.roles && seat.roles.length > 0 ? `
-                    <div class="seat-roles">
-                        <h4>Key Roles & Responsibilities</h4>
-                        <ul>
-                            ${seat.roles.map(role => `<li>${role}</li>`).join('')}
-                        </ul>
-                    </div>
-                ` : '';
-                
-                card.innerHTML = `
-                    <div class="seat-header">
-                        <div class="seat-title">${seat.seat}</div>
-                        <div class="seat-person ${personClass}">
-                            ${seat.person}
-                        </div>
-                        <span class="status-badge ${statusBadgeClass}">${seat.status}</span>
-                    </div>
-                    ${rolesHtml}
-                `;
-                chart.appendChild(card);
-            });
-        }
-
-        loadAccountability();
-        setInterval(loadAccountability, 300000); // Refresh every 5 minutes
+    function toggleGWC(seatId, field, value) {
+        fetch(`/division/${divisionId}/accountability/${seatId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({[field]: value})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) location.reload();
+            else alert('Failed to update');
+        });
+    }
     </script>
 </body>
 </html>

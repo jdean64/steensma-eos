@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainstorm Issues - {{ division.display_name }} - EOS Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
+        }
+        .header {
+            background: #1a1a1a; color: white; padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .back-link { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .back-link:hover { color: white; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header-right { display: flex; gap: 20px; align-items: center; }
+        .user-info { font-size: 14px; color: #b0b0b0; }
+        .btn-logout {
+            padding: 8px 16px; background: transparent; border: 1px solid #4a4a4a;
+            color: white; border-radius: 4px; font-size: 13px; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-logout:hover { background: #2d2d2d; }
+        .container { max-width: 1200px; margin: 32px auto; padding: 0 40px; }
+
+        /* Flash Messages */
+        .flash { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
+        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        /* Phase Indicator */
+        .phase-bar {
+            display: flex; gap: 0; margin-bottom: 24px; border-radius: 8px; overflow: hidden;
+            background: white; border: 1px solid #e5e5e5;
+        }
+        .phase-step {
+            flex: 1; padding: 16px 24px; text-align: center; cursor: pointer;
+            font-size: 14px; font-weight: 600; color: #6a6a6a;
+            border-right: 1px solid #e5e5e5; transition: all 0.2s;
+        }
+        .phase-step:last-child { border-right: none; }
+        .phase-step.active { background: #1a1a1a; color: white; }
+        .phase-step.completed { background: #28a745; color: white; }
+        .phase-step .step-number {
+            display: inline-block; width: 24px; height: 24px; line-height: 24px;
+            border-radius: 50%; border: 2px solid currentColor; margin-right: 8px;
+            font-size: 12px; text-align: center;
+        }
+        .phase-step.active .step-number,
+        .phase-step.completed .step-number { border-color: currentColor; }
+
+        /* Phase 1: Brainstorm Entry */
+        .brainstorm-panel {
+            background: white; border-radius: 8px; padding: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
+            margin-bottom: 24px;
+        }
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px;
+        }
+        .panel-header h3 { font-size: 18px; font-weight: 600; }
+        .issue-count {
+            font-size: 13px; color: #6a6a6a; background: #f0f0f0;
+            padding: 4px 12px; border-radius: 12px;
+        }
+
+        .rapid-entry {
+            display: flex; gap: 12px; margin-bottom: 24px;
+        }
+        .rapid-entry input {
+            flex: 1; padding: 14px 20px; border: 2px solid #e5e5e5; border-radius: 8px;
+            font-size: 16px; transition: border-color 0.2s;
+        }
+        .rapid-entry input:focus { border-color: #1a1a1a; outline: none; }
+        .rapid-entry input::placeholder { color: #b0b0b0; }
+
+        .btn {
+            padding: 12px 24px; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary { background: #1a1a1a; color: white; }
+        .btn-primary:hover { background: #333; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-outline {
+            background: white; color: #1a1a1a; border: 1px solid #d0d0d0;
+        }
+        .btn-outline:hover { background: #f5f5f5; border-color: #999; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; font-weight: 500; }
+
+        /* Brainstorm List */
+        .brainstorm-list { list-style: none; }
+        .brainstorm-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; border-bottom: 1px solid #f0f0f0;
+            animation: slideIn 0.2s ease;
+        }
+        .brainstorm-item:last-child { border-bottom: none; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .item-number {
+            width: 28px; height: 28px; line-height: 28px; text-align: center;
+            background: #f0f0f0; border-radius: 50%; font-size: 12px;
+            font-weight: 600; color: #6a6a6a; flex-shrink: 0;
+        }
+        .item-text { flex: 1; font-size: 15px; }
+        .item-remove {
+            background: none; border: none; color: #ccc; cursor: pointer;
+            font-size: 18px; padding: 4px 8px; border-radius: 4px; transition: all 0.2s;
+        }
+        .item-remove:hover { color: #dc3545; background: #fff5f5; }
+
+        /* Phase 2: IDS Processing */
+        .ids-panel { display: none; }
+        .ids-panel.active { display: block; }
+
+        .ids-item {
+            background: white; border-radius: 8px; padding: 20px 24px;
+            border: 1px solid #e5e5e5; margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .ids-item-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .ids-item-text { font-size: 16px; font-weight: 600; flex: 1; }
+        .ids-item-number {
+            font-size: 12px; color: #6a6a6a; background: #f0f0f0;
+            padding: 2px 8px; border-radius: 10px; margin-right: 12px;
+        }
+
+        .ids-actions {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+        }
+        .action-btn {
+            padding: 8px 16px; border-radius: 6px; font-size: 13px;
+            font-weight: 600; cursor: pointer; border: 2px solid transparent;
+            transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .action-btn:hover { transform: translateY(-1px); }
+
+        .action-btn.rock {
+            background: #fff3e0; color: #e65100; border-color: #ffcc80;
+        }
+        .action-btn.rock:hover, .action-btn.rock.selected {
+            background: #e65100; color: white; border-color: #e65100;
+        }
+        .action-btn.todo {
+            background: #e3f2fd; color: #1565c0; border-color: #90caf9;
+        }
+        .action-btn.todo:hover, .action-btn.todo.selected {
+            background: #1565c0; color: white; border-color: #1565c0;
+        }
+        .action-btn.table-it {
+            background: #f3e5f5; color: #7b1fa2; border-color: #ce93d8;
+        }
+        .action-btn.table-it:hover, .action-btn.table-it.selected {
+            background: #7b1fa2; color: white; border-color: #7b1fa2;
+        }
+        .action-btn.resolve {
+            background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7;
+        }
+        .action-btn.resolve:hover, .action-btn.resolve.selected {
+            background: #2e7d32; color: white; border-color: #2e7d32;
+        }
+
+        .ids-detail {
+            display: none; margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .ids-detail.visible { display: flex; gap: 12px; flex-wrap: wrap; }
+        .ids-detail .form-group { flex: 1; min-width: 200px; }
+        .ids-detail label {
+            display: block; font-size: 12px; font-weight: 600; color: #6a6a6a;
+            margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .ids-detail input, .ids-detail select {
+            width: 100%; padding: 8px 12px; border: 1px solid #d0d0d0;
+            border-radius: 6px; font-size: 14px;
+        }
+
+        /* Summary Stats */
+        .process-summary {
+            display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+        }
+        .summary-stat {
+            background: white; padding: 16px 24px; border-radius: 8px;
+            border: 1px solid #e5e5e5; text-align: center; flex: 1; min-width: 120px;
+        }
+        .summary-stat .stat-value {
+            font-size: 28px; font-weight: 700;
+        }
+        .summary-stat .stat-label {
+            font-size: 11px; color: #6a6a6a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-top: 4px;
+        }
+        .stat-rock { color: #e65100; }
+        .stat-todo { color: #1565c0; }
+        .stat-table { color: #7b1fa2; }
+        .stat-resolve { color: #2e7d32; }
+        .stat-unset { color: #999; }
+
+        /* Phase 3: Complete */
+        .complete-panel { display: none; text-align: center; padding: 60px 40px; }
+        .complete-panel.active { display: block; }
+        .complete-icon { font-size: 64px; margin-bottom: 16px; }
+        .complete-panel h3 { font-size: 24px; margin-bottom: 8px; }
+        .complete-panel p { color: #6a6a6a; margin-bottom: 24px; }
+        .results-grid {
+            display: flex; gap: 16px; justify-content: center; margin-bottom: 32px;
+        }
+        .result-card {
+            background: white; padding: 20px 32px; border-radius: 8px;
+            border: 1px solid #e5e5e5;
+        }
+        .result-card .r-value { font-size: 32px; font-weight: 700; }
+        .result-card .r-label {
+            font-size: 12px; color: #6a6a6a; text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Empty state */
+        .empty-hint {
+            text-align: center; padding: 40px; color: #999; font-size: 14px;
+        }
+
+        /* Bottom action bar */
+        .action-bar {
+            position: sticky; bottom: 0; background: white; padding: 16px 40px;
+            border-top: 1px solid #e5e5e5; display: flex; justify-content: space-between;
+            align-items: center; box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+        }
+        .action-bar-info { font-size: 14px; color: #6a6a6a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <a href="{{ url_for('division_issues', division_id=division.id) }}" class="back-link">&#8592; Back to Issues</a>
+            <h1>Brainstorm &amp; IDS</h1>
+        </div>
+        <div class="header-right">
+            <span class="user-info">{{ user.full_name or user.username }} ({{ user.role }})</span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Phase Bar -->
+        <div class="phase-bar">
+            <div class="phase-step active" id="phase1Step" onclick="goToPhase(1)">
+                <span class="step-number">1</span> Brainstorm
+            </div>
+            <div class="phase-step" id="phase2Step" onclick="goToPhase(2)">
+                <span class="step-number">2</span> IDS - Categorize
+            </div>
+            <div class="phase-step" id="phase3Step">
+                <span class="step-number">3</span> Complete
+            </div>
+        </div>
+
+        <!-- Phase 1: Rapid Brainstorm Entry -->
+        <div id="phase1Panel">
+            <div class="brainstorm-panel">
+                <div class="panel-header">
+                    <h3>{{ division.display_name }} - Issue Brainstorm</h3>
+                    <span class="issue-count" id="issueCount">0 issues</span>
+                </div>
+
+                {% if can_edit %}
+                <div class="rapid-entry">
+                    <input type="text" id="issueInput" placeholder="Type an issue and press Enter..."
+                           autocomplete="off" autofocus>
+                    <button class="btn btn-primary" onclick="addIssue()">Add</button>
+                </div>
+                {% endif %}
+
+                <ul class="brainstorm-list" id="brainstormList">
+                    <li class="empty-hint" id="emptyHint">
+                        Start typing issues above. Press Enter after each one for rapid entry.
+                    </li>
+                </ul>
+            </div>
+
+            {% if can_edit %}
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-success" id="toPhase2Btn" onclick="goToPhase(2)" style="display: none;">
+                    Proceed to IDS &#8594;
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Phase 2: IDS Categorization -->
+        <div id="phase2Panel" class="ids-panel">
+            <div class="process-summary">
+                <div class="summary-stat">
+                    <div class="stat-value stat-rock" id="countRock">0</div>
+                    <div class="stat-label">Rocks</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="stat-value stat-todo" id="countTodo">0</div>
+                    <div class="stat-label">To-Dos</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="stat-value stat-table" id="countTable">0</div>
+                    <div class="stat-label">Tabled</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="stat-value stat-resolve" id="countResolve">0</div>
+                    <div class="stat-label">Resolved</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="stat-value stat-unset" id="countUnset">0</div>
+                    <div class="stat-label">Uncategorized</div>
+                </div>
+            </div>
+
+            <div id="idsItemList"></div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                <button class="btn btn-outline" onclick="goToPhase(1)">&#8592; Back to Brainstorm</button>
+                <button class="btn btn-success" id="processBtn" onclick="processAll()">
+                    Save &amp; Process All
+                </button>
+            </div>
+        </div>
+
+        <!-- Phase 3: Complete -->
+        <div id="phase3Panel" class="complete-panel">
+            <div class="complete-icon">&#10003;</div>
+            <h3>Brainstorm Complete</h3>
+            <p>All issues have been categorized and processed.</p>
+            <div class="results-grid" id="resultsGrid"></div>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <a href="{{ url_for('division_issues', division_id=division.id) }}" class="btn btn-primary">View Issues List</a>
+                <a href="{{ url_for('division_dashboard', division_id=division.id) }}" class="btn btn-outline">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const divisionId = {{ division.id }};
+    const users = {{ users | tojson }};
+    let brainstormItems = []; // {id, issue, action, owner, notes}
+    let currentPhase = 1;
+
+    // --- Phase 1: Rapid Issue Entry ---
+
+    const issueInput = document.getElementById('issueInput');
+    if (issueInput) {
+        issueInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addIssue();
+            }
+        });
+    }
+
+    function addIssue() {
+        const input = document.getElementById('issueInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        input.disabled = true;
+
+        fetch(`/division/${divisionId}/issues/brainstorm/add`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({issue: text})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                brainstormItems.push({
+                    id: data.id,
+                    issue: data.issue,
+                    action: null,
+                    owner: '',
+                    notes: ''
+                });
+                renderBrainstormList();
+                input.value = '';
+                input.disabled = false;
+                input.focus();
+            } else {
+                alert(data.error || 'Failed to add issue');
+                input.disabled = false;
+            }
+        })
+        .catch(err => {
+            alert('Network error');
+            input.disabled = false;
+        });
+    }
+
+    function removeItem(index) {
+        brainstormItems.splice(index, 1);
+        renderBrainstormList();
+    }
+
+    function renderBrainstormList() {
+        const list = document.getElementById('brainstormList');
+        const empty = document.getElementById('emptyHint');
+        const count = document.getElementById('issueCount');
+        const toPhase2 = document.getElementById('toPhase2Btn');
+
+        count.textContent = brainstormItems.length + ' issue' + (brainstormItems.length !== 1 ? 's' : '');
+
+        if (brainstormItems.length === 0) {
+            list.innerHTML = '<li class="empty-hint">Start typing issues above. Press Enter after each one for rapid entry.</li>';
+            if (toPhase2) toPhase2.style.display = 'none';
+            return;
+        }
+
+        if (toPhase2) toPhase2.style.display = 'inline-flex';
+
+        list.innerHTML = brainstormItems.map((item, i) =>
+            `<li class="brainstorm-item">
+                <span class="item-number">${i + 1}</span>
+                <span class="item-text">${escapeHtml(item.issue)}</span>
+                <button class="item-remove" onclick="removeItem(${i})" title="Remove">&#x2715;</button>
+            </li>`
+        ).join('');
+    }
+
+    // --- Phase 2: IDS Categorization ---
+
+    function renderIDSList() {
+        const container = document.getElementById('idsItemList');
+
+        let ownerOptions = '<option value="">-- Assign Owner --</option>';
+        users.forEach(u => {
+            ownerOptions += `<option value="${escapeHtml(u.full_name)}">${escapeHtml(u.full_name)}</option>`;
+        });
+
+        container.innerHTML = brainstormItems.map((item, i) =>
+            `<div class="ids-item" id="idsItem${i}">
+                <div class="ids-item-header">
+                    <div style="display: flex; align-items: center; flex: 1;">
+                        <span class="ids-item-number">${i + 1}</span>
+                        <span class="ids-item-text">${escapeHtml(item.issue)}</span>
+                    </div>
+                </div>
+                <div class="ids-actions">
+                    <button class="action-btn rock ${item.action === 'rock' ? 'selected' : ''}"
+                            onclick="setAction(${i}, 'rock')">Rock</button>
+                    <button class="action-btn todo ${item.action === 'todo' ? 'selected' : ''}"
+                            onclick="setAction(${i}, 'todo')">To-Do</button>
+                    <button class="action-btn table-it ${item.action === 'table' ? 'selected' : ''}"
+                            onclick="setAction(${i}, 'table')">Table</button>
+                    <button class="action-btn resolve ${item.action === 'resolve' ? 'selected' : ''}"
+                            onclick="setAction(${i}, 'resolve')">Resolve</button>
+                </div>
+                <div class="ids-detail ${item.action ? 'visible' : ''}" id="detail${i}">
+                    <div class="form-group">
+                        <label>Owner</label>
+                        <select onchange="setOwner(${i}, this.value)">
+                            ${ownerOptions}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <input type="text" placeholder="Optional notes..."
+                               value="${escapeHtml(item.notes)}"
+                               onchange="setNotes(${i}, this.value)">
+                    </div>
+                </div>
+            </div>`
+        ).join('');
+
+        updateCounts();
+    }
+
+    function setAction(index, action) {
+        // Toggle off if already selected
+        if (brainstormItems[index].action === action) {
+            brainstormItems[index].action = null;
+        } else {
+            brainstormItems[index].action = action;
+        }
+        renderIDSList();
+    }
+
+    function setOwner(index, owner) {
+        brainstormItems[index].owner = owner;
+    }
+
+    function setNotes(index, notes) {
+        brainstormItems[index].notes = notes;
+    }
+
+    function updateCounts() {
+        const counts = {rock: 0, todo: 0, table: 0, resolve: 0, unset: 0};
+        brainstormItems.forEach(item => {
+            if (item.action) counts[item.action]++;
+            else counts.unset++;
+        });
+        document.getElementById('countRock').textContent = counts.rock;
+        document.getElementById('countTodo').textContent = counts.todo;
+        document.getElementById('countTable').textContent = counts.table;
+        document.getElementById('countResolve').textContent = counts.resolve;
+        document.getElementById('countUnset').textContent = counts.unset;
+    }
+
+    // --- Phase Navigation ---
+
+    function goToPhase(phase) {
+        if (phase === 2 && brainstormItems.length === 0) {
+            alert('Add at least one issue before proceeding.');
+            return;
+        }
+
+        currentPhase = phase;
+
+        // Update phase bar
+        document.querySelectorAll('.phase-step').forEach((step, i) => {
+            step.classList.remove('active', 'completed');
+            if (i + 1 < phase) step.classList.add('completed');
+            if (i + 1 === phase) step.classList.add('active');
+        });
+
+        // Show/hide panels
+        document.getElementById('phase1Panel').style.display = phase === 1 ? 'block' : 'none';
+        document.getElementById('phase2Panel').classList.toggle('active', phase === 2);
+        document.getElementById('phase3Panel').classList.toggle('active', phase === 3);
+
+        if (phase === 2) {
+            renderIDSList();
+        }
+    }
+
+    // --- Process All ---
+
+    function processAll() {
+        const unset = brainstormItems.filter(i => !i.action).length;
+        if (unset > 0) {
+            if (!confirm(`${unset} issue(s) have no category assigned. They will be tabled (kept on the issues list). Continue?`)) {
+                return;
+            }
+            // Default uncategorized to "table"
+            brainstormItems.forEach(item => {
+                if (!item.action) item.action = 'table';
+            });
+        }
+
+        const payload = {
+            items: brainstormItems.map(item => ({
+                id: item.id,
+                action: item.action,
+                owner: item.owner,
+                notes: item.notes
+            }))
+        };
+
+        const btn = document.getElementById('processBtn');
+        btn.disabled = true;
+        btn.textContent = 'Processing...';
+
+        fetch(`/division/${divisionId}/issues/brainstorm/process`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showResults(data.results);
+            } else {
+                alert(data.error || 'Processing failed');
+                btn.disabled = false;
+                btn.textContent = 'Save & Process All';
+            }
+        })
+        .catch(err => {
+            alert('Network error');
+            btn.disabled = false;
+            btn.textContent = 'Save & Process All';
+        });
+    }
+
+    function showResults(results) {
+        const grid = document.getElementById('resultsGrid');
+        grid.innerHTML = `
+            <div class="result-card">
+                <div class="r-value" style="color: #e65100;">${results.rocks}</div>
+                <div class="r-label">Rocks Created</div>
+            </div>
+            <div class="result-card">
+                <div class="r-value" style="color: #1565c0;">${results.todos}</div>
+                <div class="r-label">To-Dos Created</div>
+            </div>
+            <div class="result-card">
+                <div class="r-value" style="color: #7b1fa2;">${results.tabled}</div>
+                <div class="r-label">Tabled Issues</div>
+            </div>
+            <div class="result-card">
+                <div class="r-value" style="color: #2e7d32;">${results.resolved}</div>
+                <div class="r-label">Resolved</div>
+            </div>
+        `;
+        goToPhase(3);
+    }
+
+    // --- Utility ---
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+    </script>
+</body>
+</html>

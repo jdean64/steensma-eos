@@ -48,66 +48,66 @@ def authenticate_user(username: str, password: str) -> dict:
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    # Get user
-    cursor.execute("""
-        SELECT id, username, email, full_name, password_hash, is_active
-        FROM users
-        WHERE username = ? AND is_active = 1
-    """, (username,))
-    
-    user = cursor.fetchone()
-    
-    if not user:
+
+    try:
+        # Get user
+        cursor.execute("""
+            SELECT id, username, email, full_name, password_hash, is_active
+            FROM users
+            WHERE username = ? AND is_active = 1
+        """, (username,))
+
+        user = cursor.fetchone()
+
+        if not user:
+            return None
+
+        # Verify password
+        if not verify_password(password, user['password_hash']):
+            return None
+
+        # Get user roles and permissions
+        cursor.execute("""
+            SELECT
+                ur.id as assignment_id,
+                r.name as role_name,
+                r.display_name as role_display,
+                r.level as role_level,
+                ur.organization_id,
+                ur.division_id,
+                o.name as org_name,
+                o.slug as org_slug,
+                d.name as division_name,
+                d.slug as division_slug,
+                d.full_slug as division_full_slug
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            LEFT JOIN organizations o ON ur.organization_id = o.id
+            LEFT JOIN divisions d ON ur.division_id = d.id
+            WHERE ur.user_id = ? AND ur.is_active = 1
+        """, (user['id'],))
+
+        roles = [dict(row) for row in cursor.fetchall()]
+
+        # Update last login
+        cursor.execute("""
+            UPDATE users
+            SET last_login = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (user['id'],))
+
+        conn.commit()
+
+        return {
+            'id': user['id'],
+            'username': user['username'],
+            'email': user['email'],
+            'full_name': user['full_name'],
+            'roles': roles,
+            'is_parent_admin': any(r['role_name'] == 'PARENT_ADMIN' for r in roles)
+        }
+    finally:
         conn.close()
-        return None
-    
-    # Verify password
-    if not verify_password(password, user['password_hash']):
-        conn.close()
-        return None
-    
-    # Get user roles and permissions
-    cursor.execute("""
-        SELECT 
-            ur.id as assignment_id,
-            r.name as role_name,
-            r.display_name as role_display,
-            r.level as role_level,
-            ur.organization_id,
-            ur.division_id,
-            o.name as org_name,
-            o.slug as org_slug,
-            d.name as division_name,
-            d.slug as division_slug,
-            d.full_slug as division_full_slug
-        FROM user_roles ur
-        JOIN roles r ON ur.role_id = r.id
-        LEFT JOIN organizations o ON ur.organization_id = o.id
-        LEFT JOIN divisions d ON ur.division_id = d.id
-        WHERE ur.user_id = ? AND ur.is_active = 1
-    """, (user['id'],))
-    
-    roles = [dict(row) for row in cursor.fetchall()]
-    
-    # Update last login
-    cursor.execute("""
-        UPDATE users 
-        SET last_login = CURRENT_TIMESTAMP 
-        WHERE id = ?
-    """, (user['id'],))
-    
-    conn.commit()
-    conn.close()
-    
-    return {
-        'id': user['id'],
-        'username': user['username'],
-        'email': user['email'],
-        'full_name': user['full_name'],
-        'roles': roles,
-        'is_parent_admin': any(r['role_name'] == 'PARENT_ADMIN' for r in roles)
-    }
 
 # =====================================================
 # PERMISSION CHECKING
@@ -176,15 +176,17 @@ def get_user_divisions(user: dict) -> list:
         conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT id, organization_id, name, slug, full_slug, display_name
-            FROM divisions
-            WHERE is_active = 1
-            ORDER BY name
-        """)
-        divisions = [dict(row) for row in cursor.fetchall()]
-        conn.close()
-        return divisions
+        try:
+            cursor.execute("""
+                SELECT id, organization_id, name, slug, full_slug, display_name
+                FROM divisions
+                WHERE is_active = 1
+                ORDER BY name
+            """)
+            divisions = [dict(row) for row in cursor.fetchall()]
+            return divisions
+        finally:
+            conn.close()
     
     # Regular users see only their assigned divisions
     divisions = []
@@ -297,197 +299,208 @@ def create_user(username: str, email: str, password: str, full_name: str = None)
     """Create a new user"""
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     cursor = conn.cursor()
-    
-    password_hash = hash_password(password)
-    
-    cursor.execute("""
-        INSERT INTO users (username, email, password_hash, full_name)
-        VALUES (?, ?, ?, ?)
-    """, (username, email, password_hash, full_name))
-    
-    user_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    return user_id
 
-def assign_role(user_id: int, role_name: str, organization_id: int = None, 
+    try:
+        password_hash = hash_password(password)
+
+        cursor.execute("""
+            INSERT INTO users (username, email, password_hash, full_name)
+            VALUES (?, ?, ?, ?)
+        """, (username, email, password_hash, full_name))
+
+        user_id = cursor.lastrowid
+        conn.commit()
+
+        return user_id
+    finally:
+        conn.close()
+
+def assign_role(user_id: int, role_name: str, organization_id: int = None,
                 division_id: int = None, assigned_by: int = None) -> int:
     """Assign a role to a user"""
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     cursor = conn.cursor()
-    
-    # Get role ID
-    cursor.execute("SELECT id FROM roles WHERE name = ?", (role_name,))
-    role = cursor.fetchone()
-    
-    if not role:
+
+    try:
+        # Get role ID
+        cursor.execute("SELECT id FROM roles WHERE name = ?", (role_name,))
+        role = cursor.fetchone()
+
+        if not role:
+            raise ValueError(f"Role '{role_name}' not found")
+
+        role_id = role[0]
+
+        # Assign role
+        cursor.execute("""
+            INSERT INTO user_roles (user_id, role_id, organization_id, division_id, assigned_by)
+            VALUES (?, ?, ?, ?, ?)
+        """, (user_id, role_id, organization_id, division_id, assigned_by))
+
+        assignment_id = cursor.lastrowid
+        conn.commit()
+
+        return assignment_id
+    finally:
         conn.close()
-        raise ValueError(f"Role '{role_name}' not found")
-    
-    role_id = role[0]
-    
-    # Assign role
-    cursor.execute("""
-        INSERT INTO user_roles (user_id, role_id, organization_id, division_id, assigned_by)
-        VALUES (?, ?, ?, ?, ?)
-    """, (user_id, role_id, organization_id, division_id, assigned_by))
-    
-    assignment_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    return assignment_id
 
 def get_user_by_id(user_id: int) -> dict:
     """Get user by ID with roles"""
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT id, username, email, full_name, is_active
-        FROM users
-        WHERE id = ?
-    """, (user_id,))
-    
-    user = cursor.fetchone()
-    
-    if not user:
+
+    try:
+        cursor.execute("""
+            SELECT id, username, email, full_name, is_active
+            FROM users
+            WHERE id = ?
+        """, (user_id,))
+
+        user = cursor.fetchone()
+
+        if not user:
+            return None
+
+        # Get roles
+        cursor.execute("""
+            SELECT
+                r.name as role_name,
+                r.display_name as role_display,
+                ur.organization_id,
+                ur.division_id,
+                o.name as org_name,
+                d.name as division_name
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            LEFT JOIN organizations o ON ur.organization_id = o.id
+            LEFT JOIN divisions d ON ur.division_id = d.id
+            WHERE ur.user_id = ? AND ur.is_active = 1
+        """, (user_id,))
+
+        roles = [dict(row) for row in cursor.fetchall()]
+
+        return {
+            'id': user['id'],
+            'username': user['username'],
+            'email': user['email'],
+            'full_name': user['full_name'],
+            'is_active': user['is_active'],
+            'roles': roles,
+            'is_parent_admin': any(r['role_name'] == 'PARENT_ADMIN' for r in roles)
+        }
+    finally:
         conn.close()
-        return None
-    
-    # Get roles
-    cursor.execute("""
-        SELECT 
-            r.name as role_name,
-            r.display_name as role_display,
-            ur.organization_id,
-            ur.division_id,
-            o.name as org_name,
-            d.name as division_name
-        FROM user_roles ur
-        JOIN roles r ON ur.role_id = r.id
-        LEFT JOIN organizations o ON ur.organization_id = o.id
-        LEFT JOIN divisions d ON ur.division_id = d.id
-        WHERE ur.user_id = ? AND ur.is_active = 1
-    """, (user_id,))
-    
-    roles = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    
-    return {
-        'id': user['id'],
-        'username': user['username'],
-        'email': user['email'],
-        'full_name': user['full_name'],
-        'is_active': user['is_active'],
-        'roles': roles,
-        'is_parent_admin': any(r['role_name'] == 'PARENT_ADMIN' for r in roles)
-    }
 
 # =====================================================
 # DIVISION MANAGEMENT
 # =====================================================
 
-def create_division(organization_id: int, name: str, slug: str, 
+def create_division(organization_id: int, name: str, slug: str,
                    display_name: str = None, created_by: int = None) -> int:
     """Create a new division"""
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     cursor = conn.cursor()
-    
-    # Get organization slug
-    cursor.execute("SELECT slug FROM organizations WHERE id = ?", (organization_id,))
-    org = cursor.fetchone()
-    
-    if not org:
+
+    try:
+        # Get organization slug
+        cursor.execute("SELECT slug FROM organizations WHERE id = ?", (organization_id,))
+        org = cursor.fetchone()
+
+        if not org:
+            raise ValueError(f"Organization {organization_id} not found")
+
+        org_slug = org[0]
+        full_slug = f"{org_slug}.{slug}"
+
+        if not display_name:
+            display_name = name
+
+        cursor.execute("""
+            INSERT INTO divisions (organization_id, name, slug, full_slug, display_name, created_by)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (organization_id, name, slug, full_slug, display_name, created_by))
+
+        division_id = cursor.lastrowid
+        conn.commit()
+
+        return division_id
+    finally:
         conn.close()
-        raise ValueError(f"Organization {organization_id} not found")
-    
-    org_slug = org[0]
-    full_slug = f"{org_slug}.{slug}"
-    
-    if not display_name:
-        display_name = name
-    
-    cursor.execute("""
-        INSERT INTO divisions (organization_id, name, slug, full_slug, display_name, created_by)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (organization_id, name, slug, full_slug, display_name, created_by))
-    
-    division_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    return division_id
 
 def get_division_by_id(division_id: int) -> dict:
     """Get division by ID"""
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT d.*, o.name as org_name, o.slug as org_slug
-        FROM divisions d
-        JOIN organizations o ON d.organization_id = o.id
-        WHERE d.id = ?
-    """, (division_id,))
-    
-    division = cursor.fetchone()
-    conn.close()
-    
-    return dict(division) if division else None
+
+    try:
+        cursor.execute("""
+            SELECT d.*, o.name as org_name, o.slug as org_slug
+            FROM divisions d
+            JOIN organizations o ON d.organization_id = o.id
+            WHERE d.id = ?
+        """, (division_id,))
+
+        division = cursor.fetchone()
+
+        return dict(division) if division else None
+    finally:
+        conn.close()
 
 def get_all_divisions(organization_id: int = None) -> list:
     """Get all divisions, optionally filtered by organization"""
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    if organization_id:
-        cursor.execute("""
-            SELECT * FROM divisions
-            WHERE organization_id = ? AND is_active = 1
-            ORDER BY name
-        """, (organization_id,))
-    else:
-        cursor.execute("""
-            SELECT * FROM divisions
-            WHERE is_active = 1
-            ORDER BY name
-        """)
-    
-    divisions = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    
-    return divisions
+
+    try:
+        if organization_id:
+            cursor.execute("""
+                SELECT * FROM divisions
+                WHERE organization_id = ? AND is_active = 1
+                ORDER BY name
+            """, (organization_id,))
+        else:
+            cursor.execute("""
+                SELECT * FROM divisions
+                WHERE is_active = 1
+                ORDER BY name
+            """)
+
+        divisions = [dict(row) for row in cursor.fetchall()]
+
+        return divisions
+    finally:
+        conn.close()
 
 # =====================================================
 # AUDIT LOGGING
 # =====================================================
 
 def log_action(user_id: int, table_name: str, record_id: int, action: str,
-               changes: dict = None, organization_id: int = None, 
+               changes: dict = None, organization_id: int = None,
                division_id: int = None, ip_address: str = None):
     """Log an action to the audit trail"""
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
     cursor = conn.cursor()
-    
-    import json
-    changes_json = json.dumps(changes) if changes else None
-    
-    cursor.execute("""
-        INSERT INTO audit_log (
-            organization_id, division_id, user_id, table_name, 
-            record_id, action, changes, ip_address
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (organization_id, division_id, user_id, table_name, 
-          record_id, action, changes_json, ip_address))
-    
-    conn.commit()
-    conn.close()
+
+    try:
+        import json
+        changes_json = json.dumps(changes) if changes else None
+
+        cursor.execute("""
+            INSERT INTO audit_log (
+                organization_id, division_id, user_id, table_name,
+                record_id, action, changes, ip_address
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (organization_id, division_id, user_id, table_name,
+              record_id, action, changes_json, ip_address))
+
+        conn.commit()
+    finally:
+        conn.close()
 
 # =====================================================
 # SSO / SAML SUPPORT
@@ -513,7 +526,7 @@ def get_authentication_methods():
         try:
             from saml_auth import get_sso_portal_url
             methods['sso_portal_url'] = get_sso_portal_url()
-        except:
+        except Exception:
             methods['sso_portal_url'] = ''
     
     return methods

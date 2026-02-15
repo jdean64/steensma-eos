@@ -3,353 +3,420 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-Do List - EOS</title>
+    <title>To-Dos - {{ division.display_name }} - EOS Platform</title>
     <style>
-        :root {
-            --enterprise-dark: #1a1a1a;
-            --enterprise-gray: #4a4a4a;
-            --enterprise-light: #f5f5f5;
-            --enterprise-border: #d0d0d0;
-            --text-primary: #2a2a2a;
-            --text-secondary: #6a6a6a;
-        }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
-            background: var(--enterprise-light);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-            letter-spacing: -0.01em;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
         }
-        
-        .container { max-width: 1200px; margin: 0 auto; }
-        
         .header {
-            background: var(--enterprise-dark);
-            color: white;
-            padding: 24px 32px;
-            border-radius: 2px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid var(--enterprise-border);
+            background: #1a1a1a; color: white; padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        
-        .header h1 { 
-            font-size: 24px; 
-            font-weight: 600; 
-            letter-spacing: -0.02em;
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .back-link { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .back-link:hover { color: white; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header-right { display: flex; gap: 20px; align-items: center; }
+        .user-info { font-size: 14px; color: #b0b0b0; }
+        .btn-logout {
+            padding: 8px 16px; background: transparent; border: 1px solid #4a4a4a;
+            color: white; border-radius: 4px; font-size: 13px; text-decoration: none; transition: all 0.2s;
         }
-        
-        .summary {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+        .btn-logout:hover { background: #2d2d2d; }
+        .container { max-width: 1200px; margin: 32px auto; padding: 0 40px; }
+
+        /* Flash Messages */
+        .flash { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
+        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .page-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+        .page-title h2 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .page-title p { font-size: 14px; color: #6a6a6a; }
+        .header-actions { display: flex; gap: 12px; }
+
+        .btn {
+            padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        
+        .btn-primary { background: #1a1a1a; color: white; }
+        .btn-primary:hover { background: #333; }
+        .btn-email { background: #0d6efd; color: white; }
+        .btn-email:hover { background: #0b5ed7; }
+        .btn-email:disabled { background: #6c757d; cursor: not-allowed; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; font-weight: 500; border-radius: 4px; }
+        .btn-outline { background: white; color: #1a1a1a; border: 1px solid #d0d0d0; }
+        .btn-outline:hover { background: #f5f5f5; }
+        .btn-success-sm { background: #28a745; color: white; }
+        .btn-success-sm:hover { background: #218838; }
+        .btn-warning-sm { background: #ffc107; color: #1a1a1a; }
+        .btn-warning-sm:hover { background: #e0a800; }
+        .btn-danger-sm { background: transparent; color: #dc3545; border: 1px solid #f5c6cb; }
+        .btn-danger-sm:hover { background: #fff5f5; }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-bottom: 24px;
+        }
         .summary-card {
-            background: white;
-            border-radius: 2px;
-            padding: 20px;
-            border: 1px solid var(--enterprise-border);
+            background: white; padding: 20px; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
         }
-        
-        .summary-card h3 { 
-            font-size: 11px; 
-            color: var(--text-secondary); 
-            margin-bottom: 8px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .summary-label {
+            font-size: 11px; color: #6a6a6a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 8px; font-weight: 600;
         }
-        
-        .summary-card .value { 
-            font-size: 32px; 
-            font-weight: 600; 
-            color: var(--text-primary);
-            letter-spacing: -0.02em;
+        .summary-value { font-size: 32px; font-weight: 700; }
+
+        /* Add Form */
+        .add-form {
+            background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
+            display: none;
         }
-        
-        .back-button {
-            background: white;
-            color: var(--text-primary);
-            padding: 8px 20px;
-            border-radius: 2px;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 14px;
-            border: 1px solid var(--enterprise-border);
-            transition: all 0.15s ease;
+        .add-form.active { display: block; }
+        .add-form h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 140px; }
+        .form-group label {
+            display: block; font-size: 12px; font-weight: 600; color: #6a6a6a;
+            margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em;
         }
-        
-        .back-button:hover { 
-            background: var(--enterprise-light);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .form-group input, .form-group select {
+            width: 100%; padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 14px;
         }
-        
-        .section {
-            background: white;
-            border-radius: 2px;
-            padding: 24px;
-            margin-bottom: 16px;
-            border: 1px solid var(--enterprise-border);
+
+        /* Todo List */
+        .todo-section {
+            background: white; border-radius: 8px; padding: 24px; margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
         }
-        
-        .section h2 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--enterprise-border);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 14px;
+        .section-header {
+            font-size: 14px; font-weight: 600; color: #6a6a6a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 16px; padding-bottom: 12px;
+            border-bottom: 1px solid #e5e5e5;
         }
-        
         .todo-item {
-            padding: 16px 0;
-            border-bottom: 1px solid var(--enterprise-light);
-            display: flex;
-            align-items: center;
-            gap: 16px;
+            display: flex; align-items: center; gap: 12px; padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
         }
-        
         .todo-item:last-child { border-bottom: none; }
-        .todo-item:hover { background: var(--enterprise-light); margin: 0 -12px; padding: 16px 12px; }
-        
-        .todo-checkbox {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--enterprise-border);
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
-        
-        .todo-content {
-            flex: 1;
-        }
-        
-        .todo-text {
-            font-size: 15px;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
+        .todo-item.completed { opacity: 0.5; }
+        .todo-item.completed .todo-text { text-decoration: line-through; }
+
+        .todo-text { flex: 1; font-size: 15px; font-weight: 500; }
         .todo-meta {
-            display: flex;
-            gap: 20px;
-            color: var(--text-secondary);
-            font-size: 13px;
+            display: flex; gap: 16px; align-items: center; font-size: 13px; color: #6a6a6a;
         }
-        
-        .todo-meta span { 
-            display: flex; 
-            align-items: center; 
-            gap: 6px;
-        }
-        
-        .meta-label {
-            font-weight: 500;
+        .priority-badge {
+            padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
             text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
         }
-        
-        .due-badge {
-            padding: 4px 12px;
-            border-radius: 2px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border: 1px solid;
+        .priority-HIGH { background: #f8d7da; color: #721c24; }
+        .priority-MEDIUM { background: #fff3cd; color: #856404; }
+        .priority-LOW { background: #d4edda; color: #155724; }
+        .source-badge {
+            padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+            background: #e9ecef; color: #495057; text-transform: uppercase;
         }
-        
-        .due-overdue { 
-            background: var(--enterprise-dark); 
-            color: white; 
-            border-color: var(--enterprise-dark);
+        .overdue-badge {
+            padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;
+            background: #1a1a1a; color: white; text-transform: uppercase;
         }
-        .due-today { 
-            background: var(--enterprise-gray); 
-            color: white; 
-            border-color: var(--enterprise-gray);
-        }
-        .due-this-week { 
-            background: white; 
-            color: var(--text-primary); 
-            border-color: var(--enterprise-border);
-        }
-        .due-later { 
-            background: var(--enterprise-light); 
-            color: var(--text-secondary); 
-            border-color: var(--enterprise-border);
-        }
-        
+        .todo-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
         .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
+            text-align: center; padding: 60px 40px; color: #6a6a6a;
         }
-        
-        .empty-state h3 { 
-            font-size: 18px; 
-            margin-bottom: 8px;
-            color: var(--text-primary);
-            font-weight: 600;
+        .empty-state h3 { margin-bottom: 8px; font-size: 18px; color: #2a2a2a; }
+
+        /* Email Preview Modal */
+        .modal {
+            display: none; position: fixed; z-index: 2000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); align-items: center; justify-content: center;
         }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white; padding: 32px; border-radius: 8px;
+            max-width: 520px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .modal-body { margin-bottom: 24px; font-size: 14px; }
+        .modal-footer { display: flex; gap: 12px; justify-content: flex-end; }
+        .recipient-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;
+        }
+        .recipient-row:last-child { border-bottom: none; }
+        .recipient-email { color: #6a6a6a; }
+        .recipient-count { font-weight: 600; }
+        .no-email { color: #dc3545; font-style: italic; }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="header-left">
+            <a href="{{ url_for('division_dashboard', division_id=division.id) }}" class="back-link">&#8592; Back to {{ division.display_name }}</a>
+            <h1>To-Dos</h1>
+        </div>
+        <div class="header-right">
+            <span class="user-info">{{ user.full_name or user.username }} ({{ user.role }})</span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </div>
+
     <div class="container">
-        <div class="header">
-            <h1>TO-DO LIST</h1>
-            <a href="/" class="back-button">← Back to Dashboard</a>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="page-header">
+            <div class="page-title">
+                <h2>{{ division.display_name }} To-Dos</h2>
+                <p>Action items with owners and due dates</p>
+            </div>
+            {% if can_edit %}
+            <div class="header-actions">
+                <button class="btn btn-email" onclick="previewNotify()" title="Email task assignments to owners and their leads">
+                    Email Tasks
+                </button>
+                <button class="btn btn-primary" onclick="toggleAddForm()">+ Add To-Do</button>
+            </div>
+            {% endif %}
         </div>
 
-        <div class="summary">
+        <!-- Summary Cards -->
+        <div class="summary-cards">
             <div class="summary-card">
-                <h3>Overdue</h3>
-                <div class="value" id="overdueCount">-</div>
+                <div class="summary-label">Total</div>
+                <div class="summary-value">{{ summary.total }}</div>
             </div>
             <div class="summary-card">
-                <h3>This Week</h3>
-                <div class="value" id="thisWeekCount">-</div>
+                <div class="summary-label">Open</div>
+                <div class="summary-value" style="color: #0d6efd;">{{ summary.open }}</div>
             </div>
             <div class="summary-card">
-                <h3>Total Open</h3>
-                <div class="value" id="totalCount">-</div>
+                <div class="summary-label">Complete</div>
+                <div class="summary-value" style="color: #28a745;">{{ summary.complete }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Overdue</div>
+                <div class="summary-value" style="color: {% if summary.overdue > 0 %}#dc3545{% else %}#2a2a2a{% endif %};">{{ summary.overdue }}</div>
             </div>
         </div>
 
-        <div class="section" id="overdueSection" style="display: none;">
-            <h2>Overdue</h2>
-            <div id="overdueList"></div>
+        <!-- Add To-Do Form -->
+        {% if can_edit %}
+        <div class="add-form" id="addForm">
+            <h3>Add New To-Do</h3>
+            <form method="POST" action="{{ url_for('add_todo', division_id=division.id) }}">
+                <div class="form-row">
+                    <div class="form-group" style="flex: 3;">
+                        <label>Task</label>
+                        <input type="text" name="task" placeholder="What needs to be done?" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Owner</label>
+                        <select name="owner">
+                            <option value="">-- Select --</option>
+                            {% for u in users %}
+                            <option value="{{ u.full_name }}">{{ u.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date</label>
+                        <input type="date" name="due_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select name="priority">
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 0;">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </form>
         </div>
+        {% endif %}
 
-        <div class="section" id="thisWeekSection" style="display: none;">
-            <h2>Due This Week</h2>
-            <div id="thisWeekList"></div>
+        <!-- To-Do List -->
+        {% if todos %}
+            {% set open_todos = todos | rejectattr('is_completed') | list %}
+            {% set completed_todos = todos | selectattr('is_completed') | list %}
+
+            {% if open_todos %}
+            <div class="todo-section">
+                <div class="section-header">Open ({{ open_todos | length }})</div>
+                {% for todo in open_todos %}
+                <div class="todo-item">
+                    <div class="todo-text">{{ todo.todo }}</div>
+                    <div class="todo-meta">
+                        <span>{{ todo.owner or 'Unassigned' }}</span>
+                        {% if todo.due_date %}
+                        <span>{{ todo.due_date }}</span>
+                        {% endif %}
+                        {% if todo.due_date and todo.due_date < now_str %}
+                        <span class="overdue-badge">Overdue</span>
+                        {% endif %}
+                        <span class="priority-badge priority-{{ todo.priority or 'MEDIUM' }}">{{ todo.priority or 'MEDIUM' }}</span>
+                        {% if todo.source %}
+                        <span class="source-badge">{{ todo.source }}</span>
+                        {% endif %}
+                    </div>
+                    {% if can_edit %}
+                    <div class="todo-actions">
+                        <form method="POST" action="{{ url_for('complete_todo', division_id=division.id, todo_id=todo.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success-sm" title="Mark complete">Done</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('delete_todo', division_id=division.id, todo_id=todo.id) }}" style="display:inline;" onsubmit="return confirm('Remove this to-do?');">
+                            <button type="submit" class="btn btn-sm btn-danger-sm" title="Delete">&#x2715;</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if completed_todos %}
+            <div class="todo-section" style="opacity: 0.7;">
+                <div class="section-header">Completed ({{ completed_todos | length }})</div>
+                {% for todo in completed_todos %}
+                <div class="todo-item completed">
+                    <div class="todo-text">{{ todo.todo }}</div>
+                    <div class="todo-meta">
+                        <span>{{ todo.owner or 'Unassigned' }}</span>
+                        {% if todo.completed_at %}
+                        <span>Completed {{ todo.completed_at[:10] }}</span>
+                        {% endif %}
+                        {% if todo.source %}
+                        <span class="source-badge">{{ todo.source }}</span>
+                        {% endif %}
+                    </div>
+                    {% if can_edit %}
+                    <div class="todo-actions">
+                        <form method="POST" action="{{ url_for('reopen_todo', division_id=division.id, todo_id=todo.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-warning-sm" title="Reopen">Reopen</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('delete_todo', division_id=division.id, todo_id=todo.id) }}" style="display:inline;" onsubmit="return confirm('Remove this to-do?');">
+                            <button type="submit" class="btn btn-sm btn-danger-sm" title="Delete">&#x2715;</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="todo-section">
+            <div class="empty-state">
+                <h3>No To-Dos Yet</h3>
+                <p>Click "+ Add To-Do" to create your first action item.</p>
+            </div>
         </div>
+        {% endif %}
+    </div>
 
-        <div class="section" id="upcomingSection" style="display: none;">
-            <h2>Upcoming</h2>
-            <div id="upcomingList"></div>
+    <!-- Email Notification Preview Modal -->
+    <div id="notifyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Email Task Notifications</div>
+            <div class="modal-body" id="notifyBody">
+                Loading preview...
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <form method="POST" action="{{ url_for('send_todo_notifications', division_id=division.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-email" id="sendBtn">Send Emails</button>
+                </form>
+            </div>
         </div>
     </div>
 
     <script>
-        // Server-rendered data
-        const todosData = {{ todos | tojson }};
-        const summaryData = {{ summary | tojson }};
-        
-        function displayTodos() {
-            // Update summary
-            document.getElementById('overdueCount').textContent = summaryData.overdue;
-            document.getElementById('thisWeekCount').textContent = summaryData.total - summaryData.complete;
-            document.getElementById('totalCount').textContent = summaryData.open;
+    // Pass current date for overdue comparison
+    const nowStr = "{{ now_str }}";
 
-            // Categorize todos
-            const overdue = [];
-            const thisWeek = [];
-            const upcoming = [];
-            
-            const now = new Date();
-            const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    function toggleAddForm() {
+        document.getElementById('addForm').classList.toggle('active');
+    }
 
-            todosData.forEach(todo => {
-                if (todo.is_completed) return; // Skip completed
-                
-                if (todo.due_date) {
-                    const dueDate = new Date(todo.due_date);
-                    if (dueDate < now) {
-                        overdue.push(todo);
-                    } else if (dueDate <= weekFromNow) {
-                        thisWeek.push(todo);
-                    } else {
-                        upcoming.push(todo);
-                    }
-                } else {
-                    // No due date - put in upcoming
-                    upcoming.push(todo);
-                }
-            });
+    function previewNotify() {
+        const modal = document.getElementById('notifyModal');
+        const body = document.getElementById('notifyBody');
+        modal.classList.add('active');
 
-            // Display sections
-            displaySection('overdueSection', 'overdueList', overdue, 'due-overdue');
-            displaySection('thisWeekSection', 'thisWeekList', thisWeek, 'due-this-week');
-            displaySection('upcomingSection', 'upcomingList', upcoming, 'due-later');
-        }
-
-        function displaySection(sectionId, listId, items, badgeClass) {
-            const section = document.getElementById(sectionId);
-            const list = document.getElementById(listId);
-
-            if (items.length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-
-            section.style.display = 'block';
-            list.innerHTML = '';
-
-            items.forEach(todo => {
-                const div = document.createElement('div');
-                div.className = 'todo-item';
-                
-                let statusText = '';
-                let badgeClass = 'due-later';
-                if (todo.due_date) {
-                    const dueDate = new Date(todo.due_date);
-                    const now = new Date();
-                    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    
-                    if (dueDate < now) {
-                        statusText = 'OVERDUE';
-                        badgeClass = 'due-overdue';
-                    } else if (dueDate <= weekFromNow) {
-                        statusText = 'THIS WEEK';
-                        badgeClass = 'due-this-week';
-                    } else {
-                        statusText = 'UPCOMING';
-                        badgeClass = 'due-later';
-                    }
-                } else {
-                    statusText = 'NO DUE DATE';
-                    badgeClass = 'due-later';
-                }
-
-                div.innerHTML = `
-                    <div class="todo-checkbox"></div>
-                    <div class="todo-content">
-                        <div class="todo-text">${todo.todo}</div>
-                        <div class="todo-meta">
-                            <span>
-                                <span class="meta-label">Owner</span>
-                                ${todo.owner}
-                            </span>
-                            <span>
-                                <span class="meta-label">Due</span>
-                                ${todo.due_date || 'Not set'}
-                            </span>
-                            <span class="due-badge ${badgeClass}">${statusText}</span>
+        fetch('{{ url_for("preview_notifications", division_id=division.id) }}')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.email_configured) {
+                    body.innerHTML = `
+                        <div style="padding: 16px; background: #fff3cd; border-radius: 6px; margin-bottom: 16px;">
+                            <strong>Email not configured.</strong><br>
+                            Set these environment variables in the eosplatform service:<br>
+                            <code>EOS_SMTP_HOST</code>, <code>EOS_SMTP_USER</code>, <code>EOS_SMTP_PASS</code>
                         </div>
+                    `;
+                    document.getElementById('sendBtn').disabled = true;
+                    return;
+                }
+
+                if (data.recipients.length === 0) {
+                    body.innerHTML = '<p>No open tasks to notify about.</p>';
+                    document.getElementById('sendBtn').disabled = true;
+                    return;
+                }
+
+                let rows = data.recipients.map(r =>
+                    `<div class="recipient-row">
+                        <div>
+                            <strong>${r.name}</strong>
+                            ${r.can_send
+                                ? `<span class="recipient-email">(${r.email})</span>`
+                                : '<span class="no-email">No email</span>'}
+                        </div>
+                        <div class="recipient-count">${r.task_count} task${r.task_count !== 1 ? 's' : ''}</div>
+                    </div>`
+                ).join('');
+
+                body.innerHTML = `
+                    <p style="margin-bottom: 12px;">The following people will receive an email with their assigned open tasks.
+                    Their leads (from the accountability chart) will also be notified.</p>
+                    <div style="background: #f8f9fa; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+                        ${rows}
                     </div>
                 `;
-                list.appendChild(div);
+                document.getElementById('sendBtn').disabled = false;
+            })
+            .catch(() => {
+                body.innerHTML = '<p style="color: #dc3545;">Failed to load preview.</p>';
             });
-        }
+    }
 
-        // Initialize on page load
-        displayTodos();
+    function closeModal() {
+        document.getElementById('notifyModal').classList.remove('active');
+    }
+
+    // Close modal on outside click
+    document.getElementById('notifyModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
     </script>
 </body>
 </html>

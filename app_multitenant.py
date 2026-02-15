@@ -11,12 +11,12 @@ from pathlib import Path
 # Initialize Flask app
 app = Flask(__name__)
 
-# Secret key for sessions (CHANGE THIS IN PRODUCTION!)
-app.secret_key = os.environ.get('SECRET_KEY', 'eos-platform-secret-key-change-this-in-production')
+# Secret key for sessions
+app.secret_key = os.environ.get('SECRET_KEY', 'e7254a50fc2634e2b103f222034d16ca04a5a4ea6a41bc81fabe603678f3d49e')
 
 # Session configuration
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=12)
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
@@ -72,5 +72,4 @@ def internal_error(e):
     return '<h1>500 - Internal Server Error</h1>', 500
 
 if __name__ == '__main__':
-    # Development mode only
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='127.0.0.1', port=5002, debug=False)

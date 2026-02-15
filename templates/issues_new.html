@@ -492,7 +492,10 @@
                 <p>Identify, Discuss, and Solve problems</p>
             </div>
             {% if can_edit %}
-            <a href="{{ url_for('add_issue', division_id=division.id) }}" class="btn-primary">+ Add Issue</a>
+            <div style="display: flex; gap: 12px;">
+                <a href="{{ url_for('issue_brainstorm', division_id=division.id) }}" class="btn-primary" style="background: #e65100;">Brainstorm &amp; IDS</a>
+                <a href="{{ url_for('add_issue', division_id=division.id) }}" class="btn-primary">+ Add Issue</a>
+            </div>
             {% endif %}
         </div>
         

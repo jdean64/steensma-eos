@@ -14,6 +14,7 @@ from io import BytesIO
 from datetime import datetime
 from pathlib import Path
 import json
+import sqlite3
 
 # Paths
 STATIC_DIR = Path(__file__).parent / 'static'
@@ -470,7 +471,7 @@ def generate_l10_pdf(meeting_id, db_connection):
     Generate L10 Meeting PDF with professional table layout
     """
     buffer = BytesIO()
-    
+
     # Create PDF with portrait orientation
     doc = SimpleDocTemplate(
         buffer,
@@ -480,13 +481,14 @@ def generate_l10_pdf(meeting_id, db_connection):
         topMargin=0.5*inch,
         bottomMargin=0.5*inch
     )
-    
+
     width, height = letter
     content_width = width - inch
-    
-    # Fetch meeting data
+
+    # Ensure row_factory for dict-style column access
+    db_connection.row_factory = sqlite3.Row
     cursor = db_connection.cursor()
-    
+
     cursor.execute("""
         SELECT l10.*, d.name as division_name
         FROM l10_meetings l10
@@ -494,18 +496,18 @@ def generate_l10_pdf(meeting_id, db_connection):
         WHERE l10.id = ?
     """, (meeting_id,))
     meeting = cursor.fetchone()
-    
+
     if not meeting:
-        # Return empty PDF with error message
         story = [Paragraph("Meeting not found", getSampleStyleSheet()['Heading1'])]
         doc.build(story)
         buffer.seek(0)
         return buffer
-    
-    # Get meeting details
-    meeting_date = meeting[3] if len(meeting) > 3 else ""
-    division_name = meeting[-1] if len(meeting) > 0 else "Unknown"
-    
+
+    # Use column names instead of fragile indices
+    meeting_date = meeting['meeting_date'] or ""
+    division_name = meeting['division_name'] or "Unknown"
+    division_id = meeting['division_id']
+
     # Get agenda items
     cursor.execute("""
         SELECT section_name, time_allocated, status, notes
@@ -514,46 +516,69 @@ def generate_l10_pdf(meeting_id, db_connection):
         ORDER BY sort_order
     """, (meeting_id,))
     agenda_items = cursor.fetchall()
-    
+
     # Get scorecard data
     cursor.execute("""
         SELECT metric, goal, week_1, status
         FROM scorecard_metrics
-        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
+        WHERE division_id = ? AND is_active = 1
         ORDER BY metric
         LIMIT 10
-    """, (meeting_id,))
+    """, (division_id,))
     scorecard = cursor.fetchall()
-    
+
     # Get rocks
     cursor.execute("""
         SELECT description, owner, status, progress
         FROM rocks
-        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
-        AND is_active = 1
+        WHERE division_id = ? AND is_active = 1
         ORDER BY created_at DESC
         LIMIT 10
-    """, (meeting_id,))
+    """, (division_id,))
     rocks = cursor.fetchall()
-    
-    # Get todos
+
+    # Get meeting-specific todos from l10_todos_review
     cursor.execute("""
-        SELECT task, owner, due_date, status
-        FROM todos
-        WHERE division_id = (SELECT division_id FROM l10_meetings WHERE id = ?)
-        AND is_active = 1
-        ORDER BY created_at DESC
-        LIMIT 10
+        SELECT todo_text, who, done, notes
+        FROM l10_todos_review
+        WHERE meeting_id = ?
+        ORDER BY id
     """, (meeting_id,))
-    todos = cursor.fetchall()
-    
-    # Get issues discussed
-    issues_json = meeting[16] if len(meeting) > 16 else "[]"
-    try:
-        issues_discussed = json.loads(issues_json) if issues_json else []
-    except:
-        issues_discussed = []
-    
+    meeting_todos = cursor.fetchall()
+
+    # Fall back to division todos if no meeting-specific ones
+    if not meeting_todos:
+        cursor.execute("""
+            SELECT task, owner, due_date, status
+            FROM todos
+            WHERE division_id = ? AND is_active = 1
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (division_id,))
+        division_todos = cursor.fetchall()
+    else:
+        division_todos = None
+
+    # Get meeting-specific issues from l10_issues_discussed
+    cursor.execute("""
+        SELECT lid.priority, lid.discussed, lid.resolved, lid.notes,
+               i.issue, i.owner, i.status as issue_status
+        FROM l10_issues_discussed lid
+        JOIN issues i ON lid.issue_id = i.id
+        WHERE lid.meeting_id = ?
+        ORDER BY CASE lid.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 ELSE 3 END
+    """, (meeting_id,))
+    meeting_issues = cursor.fetchall()
+
+    # Get headlines from l10_headlines
+    cursor.execute("""
+        SELECT headline_type, sentiment, headline_text, who_reported
+        FROM l10_headlines
+        WHERE meeting_id = ?
+        ORDER BY id
+    """, (meeting_id,))
+    headlines_rows = cursor.fetchall()
+
     # Styles
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
@@ -564,7 +589,7 @@ def generate_l10_pdf(meeting_id, db_connection):
         alignment=TA_CENTER,
         spaceAfter=6
     )
-    
+
     section_title_style = ParagraphStyle(
         'SectionTitle',
         parent=styles['Heading2'],
@@ -574,35 +599,35 @@ def generate_l10_pdf(meeting_id, db_connection):
         fontName='Helvetica-Bold',
         spaceAfter=3
     )
-    
+
     content_style = ParagraphStyle(
         'Content',
         parent=styles['Normal'],
         fontSize=9,
         leading=13
     )
-    
+
     small_style = ParagraphStyle(
         'Small',
         parent=styles['Normal'],
         fontSize=8,
         leading=12
     )
-    
+
     story = []
-    
+
     # Logo and Header
     if LOGO_PATH.exists():
         logo = Image(str(LOGO_PATH), width=1.2*inch, height=0.4*inch)
         story.append(logo)
         story.append(Spacer(1, 0.05*inch))
-    
+
     # Title Header
     header_data = [
         [Paragraph("STEENSMA EOS<br/>LEVEL 10 MEETING™", title_style)],
         [Paragraph(f"{division_name} - {meeting_date}", content_style)]
     ]
-    
+
     header_table = Table(header_data, colWidths=[content_width])
     header_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), HEADER_BG),
@@ -613,59 +638,93 @@ def generate_l10_pdf(meeting_id, db_connection):
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR)
     ]))
-    
+
     story.append(header_table)
     story.append(Spacer(1, 0.08*inch))
-    
-    # Build sections content
-    segue_text = meeting[12] if len(meeting) > 12 else "No good news shared"
-    headlines_text = meeting[14] if len(meeting) > 14 else "No headlines"
-    
+
+    # Segue - use correct column name
+    segue_text = meeting['segue_good_news'] or "No good news shared"
+
+    # Headlines - from l10_headlines table or meeting field
+    if headlines_rows:
+        headlines_text = ""
+        for hl in headlines_rows:
+            sentiment = hl['sentiment'] or ""
+            icon = "+" if sentiment == 'GOOD' else "-" if sentiment == 'BAD' else "*"
+            text = hl['headline_text'] or ""
+            who = hl['who_reported'] or ""
+            headlines_text += f"{icon} {text}"
+            if who:
+                headlines_text += f" ({who})"
+            headlines_text += "<br/><br/>"
+    else:
+        headlines_text = meeting['customer_employee_headlines'] or "No headlines"
+
     # Scorecard table
     scorecard_text = ""
     if scorecard:
         scorecard_text = "<b>Metric | Goal | Week 1 | Status</b><br/><br/>"
         for sc in scorecard[:5]:
-            metric = sc[0][:30] if sc[0] else ""
-            goal = str(sc[1])[:12] if len(sc) > 1 and sc[1] else ""
-            week1 = str(sc[2])[:12] if len(sc) > 2 and sc[2] else ""
-            status = sc[3][:12] if len(sc) > 3 else ""
+            metric = (sc['metric'] or "")[:30]
+            goal = str(sc['goal'] or "")[:12]
+            week1 = str(sc['week_1'] or "")[:12]
+            status = (sc['status'] or "")[:12]
             scorecard_text += f"{metric} | {goal} | {week1} | {status}<br/><br/>"
     else:
         scorecard_text = "<i>No scorecard data</i>"
-    
+
     # Rocks review
     rocks_text = ""
     if rocks:
         for i, rock in enumerate(rocks[:5], 1):
-            description = rock[0][:60] if rock[0] else ""
-            owner = rock[1][:20] if len(rock) > 1 and rock[1] else ""
-            progress = rock[3] if len(rock) > 3 else 0
+            description = (rock['description'] or "")[:60]
+            owner = (rock['owner'] or "")[:20]
+            progress = rock['progress'] or 0
             rocks_text += f"{i}. {description}<br/>   Owner: {owner} | Progress: {progress}%<br/><br/>"
     else:
         rocks_text = "<i>No rocks</i>"
-    
-    # Todos
+
+    # Todos - prefer meeting-specific todos from l10_todos_review
     todos_text = ""
-    if todos:
-        for i, todo in enumerate(todos[:7], 1):
-            task = todo[0][:55] if todo[0] else ""
-            owner = todo[1][:20] if len(todo) > 1 and todo[1] else ""
-            due_date = todo[2] if len(todo) > 2 and todo[2] else ""
+    if meeting_todos:
+        for i, todo in enumerate(meeting_todos[:10], 1):
+            task = (todo['todo_text'] or "")[:55]
+            who = (todo['who'] or "")[:20]
+            done = "DONE" if todo['done'] else "OPEN"
+            todos_text += f"{i}. {task}<br/>   Owner: {who} | {done}<br/><br/>"
+    elif division_todos:
+        for i, todo in enumerate(division_todos[:7], 1):
+            task = (todo['task'] or "")[:55]
+            owner = (todo['owner'] or "")[:20]
+            due_date = todo['due_date'] or ""
             due_str = f" | Due: {due_date}" if due_date else ""
             todos_text += f"{i}. {task}<br/>   Owner: {owner}{due_str}<br/><br/>"
     else:
         todos_text = "<i>No to-dos</i>"
-    
-    # IDS Issues
+
+    # IDS Issues - prefer meeting-specific issues from l10_issues_discussed
     ids_text = ""
-    if issues_discussed:
-        for i, issue in enumerate(issues_discussed[:5], 1):
-            issue_text = issue if isinstance(issue, str) else str(issue)
-            ids_text += f"{i}. {issue_text[:70]}<br/><br/>"
+    if meeting_issues:
+        for i, mi in enumerate(meeting_issues[:7], 1):
+            issue_desc = (mi['issue'] or "")[:70]
+            priority = mi['priority'] or ""
+            owner = (mi['owner'] or "")[:20]
+            resolved = "RESOLVED" if mi['resolved'] else "OPEN"
+            ids_text += f"{i}. [{priority}] {issue_desc}<br/>   Owner: {owner} | {resolved}<br/><br/>"
     else:
-        ids_text = "<i>No issues discussed</i>"
-    
+        # Fall back to JSON field on meeting record
+        issues_json = meeting['issues_discussed']
+        try:
+            issues_list = json.loads(issues_json) if issues_json else []
+        except (json.JSONDecodeError, TypeError):
+            issues_list = []
+        if issues_list:
+            for i, issue in enumerate(issues_list[:5], 1):
+                issue_text = issue if isinstance(issue, str) else str(issue)
+                ids_text += f"{i}. {issue_text[:70]}<br/><br/>"
+        else:
+            ids_text = "<i>No issues discussed</i>"
+
     # Create sections table
     sections_data = [
         [Paragraph("<b>SEGUE (5 min)</b> - Good News", section_title_style)],
@@ -683,7 +742,7 @@ def generate_l10_pdf(meeting_id, db_connection):
         [Paragraph("<b>CONCLUDE (5 min)</b>", section_title_style)],
         [Paragraph("• Recap To-Dos<br/>• Cascading Messages<br/>• Rate Meeting 1-10", small_style)]
     ]
-    
+
     sections_table = Table(sections_data, colWidths=[content_width])
     sections_table.setStyle(TableStyle([
         # Section headers
@@ -694,7 +753,7 @@ def generate_l10_pdf(meeting_id, db_connection):
         ('BACKGROUND', (0, 8), (0, 8), SECTION_BG),
         ('BACKGROUND', (0, 10), (0, 10), SECTION_BG),
         ('BACKGROUND', (0, 12), (0, 12), SECTION_BG),
-        
+
         # Content cells
         ('BACKGROUND', (0, 1), (0, 1), CELL_BG),
         ('BACKGROUND', (0, 3), (0, 3), CELL_BG),
@@ -703,28 +762,28 @@ def generate_l10_pdf(meeting_id, db_connection):
         ('BACKGROUND', (0, 9), (0, 9), CELL_BG),
         ('BACKGROUND', (0, 11), (0, 11), CELL_BG),
         ('BACKGROUND', (0, 13), (0, 13), CELL_BG),
-        
+
         # Padding and alignment
         ('TOPPADDING', (0, 0), (-1, -1), 10),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
         ('LEFTPADDING', (0, 0), (-1, -1), 12),
         ('RIGHTPADDING', (0, 0), (-1, -1), 12),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        
+
         # Borders
         ('GRID', (0, 0), (-1, -1), 1, BORDER_COLOR),
         ('BOX', (0, 0), (-1, -1), 1.5, colors.black)
     ]))
-    
+
     story.append(sections_table)
     story.append(Spacer(1, 0.05*inch))
-    
+
     # Footer
     footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=7, textColor=colors.grey, alignment=TA_CENTER)
     story.append(Paragraph("© EOS Worldwide. All Rights Reserved.", footer_style))
-    
+
     # Build PDF
     doc.build(story)
-    
+
     buffer.seek(0)
     return buffer

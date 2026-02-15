@@ -5,199 +5,151 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scorecard - {{ division.display_name }} - EOS Platform</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
-            background: #f5f5f5;
-            color: #2a2a2a;
-            line-height: 1.6;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
         }
-        
         .header {
-            background: #1a1a1a;
-            color: white;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #1a1a1a; color: white; padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .back-link {
-            color: #b0b0b0;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-        
-        .back-link:hover {
-            color: white;
-        }
-        
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .header-right {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        
-        .user-info {
-            font-size: 14px;
-            color: #b0b0b0;
-        }
-        
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .back-link { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .back-link:hover { color: white; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header-right { display: flex; gap: 20px; align-items: center; }
+        .user-info { font-size: 14px; color: #b0b0b0; }
         .btn-logout {
-            padding: 8px 16px;
-            background: transparent;
-            border: 1px solid #4a4a4a;
-            color: white;
-            border-radius: 4px;
-            font-size: 13px;
-            text-decoration: none;
-            transition: all 0.2s;
+            padding: 8px 16px; background: transparent; border: 1px solid #4a4a4a;
+            color: white; border-radius: 4px; font-size: 13px; text-decoration: none; transition: all 0.2s;
         }
-        
-        .btn-logout:hover {
-            background: #2d2d2d;
-        }
-        
-        .container {
-            max-width: 1600px;
-            margin: 32px auto;
-            padding: 0 40px;
-        }
-        
-        .page-header {
-            margin-bottom: 32px;
-        }
-        
-        .page-title h2 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        
-        .page-title p {
-            font-size: 14px;
-            color: #6a6a6a;
-        }
-        
+        .btn-logout:hover { background: #2d2d2d; }
+        .container { max-width: 1600px; margin: 32px auto; padding: 0 40px; }
+        .page-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+        .page-title h2 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .page-title p { font-size: 14px; color: #6a6a6a; }
+
+        /* Flash Messages */
+        .flash { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
+        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        /* Summary Cards */
         .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px; margin-bottom: 24px;
         }
-        
         .summary-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e5e5e5;
+            background: white; padding: 20px; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
         }
-        
         .summary-label {
-            font-size: 12px;
-            color: #6a6a6a;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 8px;
+            font-size: 12px; color: #6a6a6a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 8px;
         }
-        
-        .summary-value {
-            font-size: 32px;
-            font-weight: 700;
+        .summary-value { font-size: 32px; font-weight: 700; }
+
+        /* Gross Profit Widget */
+        .gross-profit-widget {
+            background: #111827; color: white; border-radius: 8px; padding: 24px;
+            margin-bottom: 24px; border: 1px solid #1f2937;
         }
-        
+        .gp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .gp-title { font-size: 14px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+        .gp-total { font-size: 28px; font-weight: 700; color: #22c55e; }
+        .gp-subtitle { font-size: 13px; color: #9ca3af; margin-top: 4px; }
+        .gp-progress-container { margin: 16px 0; }
+        .gp-progress-bar {
+            height: 8px; background: #374151; border-radius: 4px; overflow: hidden;
+        }
+        .gp-progress-fill {
+            height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a);
+            border-radius: 4px; transition: width 0.5s ease;
+        }
+        .gp-progress-label {
+            display: flex; justify-content: space-between; font-size: 12px; color: #9ca3af; margin-top: 4px;
+        }
+        .gp-categories {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;
+            border-top: 1px solid #374151; padding-top: 16px;
+        }
+        .gp-category-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+        .gp-category-value { font-size: 18px; font-weight: 600; color: white; margin-top: 4px; }
+        .gp-category-compare { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+        /* Scorecard Table */
         .scorecard-table {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e5e5e5;
+            background: white; border-radius: 8px; padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
             overflow-x: auto;
         }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        
-        thead {
-            background: #f8f9fa;
-        }
-        
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .table-header h3 { font-size: 16px; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead { background: #f8f9fa; }
         th {
-            padding: 12px 16px;
-            text-align: left;
-            font-weight: 600;
-            color: #1a1a1a;
-            border-bottom: 2px solid #e5e5e5;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.05em;
+            padding: 10px 12px; text-align: left; font-weight: 600; color: #1a1a1a;
+            border-bottom: 2px solid #e5e5e5; text-transform: uppercase;
+            font-size: 10px; letter-spacing: 0.05em; white-space: nowrap;
         }
-        
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #f0f0f0;
+        td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #f8f9fa; }
+        .week-cell {
+            text-align: right; font-variant-numeric: tabular-nums; min-width: 60px;
         }
-        
-        tr:hover {
-            background: #f8f9fa;
+        .week-cell input {
+            width: 60px; border: 1px solid transparent; background: transparent;
+            text-align: right; font-size: 13px; padding: 2px 4px; border-radius: 3px;
+            font-variant-numeric: tabular-nums;
         }
-        
+        .week-cell input:hover { border-color: #d0d0d0; background: #fafafa; }
+        .week-cell input:focus { border-color: #4a90d9; background: white; outline: none; }
         .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
+            display: inline-block; padding: 3px 8px; border-radius: 4px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase; cursor: pointer;
         }
-        
-        .status-GREEN {
-            background: #d4edda;
-            color: #155724;
+        .status-GREEN { background: #d4edda; color: #155724; }
+        .status-YELLOW { background: #fff3cd; color: #856404; }
+        .status-RED { background: #f8d7da; color: #721c24; }
+        .metric-name { font-weight: 500; min-width: 140px; }
+        .owner-name { color: #6a6a6a; min-width: 80px; }
+        .goal-cell { color: #4a4a4a; font-weight: 500; min-width: 70px; }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px; border-radius: 6px; font-size: 13px;
+            font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
         }
-        
-        .status-YELLOW {
-            background: #fff3cd;
-            color: #856404;
+        .btn-primary { background: #1a1a1a; color: white; }
+        .btn-primary:hover { background: #333; }
+        .btn-delete {
+            background: transparent; border: none; color: #999; cursor: pointer;
+            font-size: 14px; padding: 2px 6px; border-radius: 3px;
         }
-        
-        .status-RED {
-            background: #f8d7da;
-            color: #721c24;
+        .btn-delete:hover { color: #dc3545; background: #fff5f5; }
+
+        /* Add Metric Form */
+        .add-metric-form {
+            background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e5e5;
+            display: none;
         }
-        
-        .no-data {
-            text-align: center;
-            padding: 60px 40px;
-            color: #6a6a6a;
+        .add-metric-form.active { display: block; }
+        .form-row { display: flex; gap: 16px; align-items: flex-end; }
+        .form-group { flex: 1; }
+        .form-group label {
+            display: block; font-size: 12px; font-weight: 600; color: #4a4a4a;
+            margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;
         }
-        
-        .no-data h3 {
-            margin-bottom: 8px;
-            font-size: 18px;
+        .form-group input {
+            width: 100%; padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px;
+            font-size: 14px;
         }
+        .no-data { text-align: center; padding: 60px 40px; color: #6a6a6a; }
+        .no-data h3 { margin-bottom: 8px; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -211,38 +163,130 @@
             <a href="/logout" class="btn-logout">Logout</a>
         </div>
     </div>
-    
+
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
         <div class="page-header">
             <div class="page-title">
                 <h2>{{ division.display_name }} Scorecard</h2>
                 <p>13-week measurables and key performance indicators</p>
             </div>
+            {% if can_edit %}
+            <button class="btn btn-primary" onclick="toggleAddForm()">+ Add Metric</button>
+            {% endif %}
         </div>
-        
-        {% if metrics %}
+
+        <!-- Gross Profit Widget -->
+        {% if gross_profit and gross_profit.gross_profit %}
+        {% set gp = gross_profit %}
+        {% set total_ytd = (gp.new_equipment.ytd or 0) + (gp.parts.ytd or 0) + (gp.labor.ytd or 0) %}
+        {% set annual_goal = 6600000 %}
+        {% set pct = ((total_ytd / annual_goal) * 100) if annual_goal > 0 else 0 %}
+        <div class="gross-profit-widget">
+            <div class="gp-header">
+                <div>
+                    <div class="gp-title">Total YTD Gross Profit</div>
+                    <div class="gp-total">${{ "{:,.0f}".format(total_ytd) }}</div>
+                    <div class="gp-subtitle">{{ "{:.1f}".format(pct) }}% of ${{ "{:,.0f}".format(annual_goal) }} annual goal</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="gp-title">Gross Profit This Month</div>
+                    <div style="font-size: 20px; font-weight: 600; color: white;">${{ "{:,.0f}".format(gp.gross_profit.month or 0) }}</div>
+                    <div class="gp-subtitle">Prior Year: ${{ "{:,.0f}".format(gp.gross_profit.py_month or 0) }}</div>
+                </div>
+            </div>
+            <div class="gp-progress-container">
+                <div class="gp-progress-bar">
+                    <div class="gp-progress-fill" style="width: {{ [pct, 100] | min }}%;"></div>
+                </div>
+                <div class="gp-progress-label">
+                    <span>Progress to Goal</span>
+                    <span>${{ "{:,.0f}".format(total_ytd) }} / ${{ "{:,.0f}".format(annual_goal) }}</span>
+                </div>
+            </div>
+            <div class="gp-categories">
+                <div>
+                    <div class="gp-category-label">New Equipment</div>
+                    <div class="gp-category-value">${{ "{:,.0f}".format(gp.new_equipment.ytd or 0) }}</div>
+                    <div class="gp-category-compare">PY: ${{ "{:,.0f}".format(gp.new_equipment.py_ytd or 0) }}</div>
+                </div>
+                <div>
+                    <div class="gp-category-label">Parts</div>
+                    <div class="gp-category-value">${{ "{:,.0f}".format(gp.parts.ytd or 0) }}</div>
+                    <div class="gp-category-compare">PY: ${{ "{:,.0f}".format(gp.parts.py_ytd or 0) }}</div>
+                </div>
+                <div>
+                    <div class="gp-category-label">Service Labor</div>
+                    <div class="gp-category-value">${{ "{:,.0f}".format(gp.labor.ytd or 0) }}</div>
+                    <div class="gp-category-compare">PY: ${{ "{:,.0f}".format(gp.labor.py_ytd or 0) }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Summary Cards -->
+        {% if metrics %}
         <div class="summary-cards">
             <div class="summary-card">
                 <div class="summary-label">Total Metrics</div>
                 <div class="summary-value">{{ summary.total }}</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Green</div>
+                <div class="summary-label">On Track</div>
                 <div class="summary-value" style="color: #28a745;">{{ summary.green }}</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Yellow</div>
+                <div class="summary-label">Needs Attention</div>
                 <div class="summary-value" style="color: #ffc107;">{{ summary.yellow }}</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Red</div>
+                <div class="summary-label">Off Track</div>
                 <div class="summary-value" style="color: #dc3545;">{{ summary.red }}</div>
             </div>
         </div>
-        
+        {% endif %}
+
+        <!-- Add Metric Form -->
+        {% if can_edit %}
+        <div class="add-metric-form" id="addMetricForm">
+            <h3 style="margin-bottom: 16px; font-size: 16px;">Add New Metric</h3>
+            <form method="POST" action="/division/{{ division.id }}/scorecard/add">
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Metric Name</label>
+                        <input type="text" name="metric" placeholder="e.g., Revenue, Customer Satisfaction" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Owner</label>
+                        <input type="text" name="owner" placeholder="Person responsible" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Goal</label>
+                        <input type="text" name="goal" placeholder="e.g., $100K, 90%, < 5">
+                    </div>
+                    <div class="form-group" style="flex: 0;">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
         <!-- Scorecard Table -->
         <div class="scorecard-table">
+            {% if metrics %}
+            <div class="table-header">
+                <h3>13-Week Scorecard</h3>
+                <span style="font-size: 12px; color: #6a6a6a;">{{ metrics[0].quarter if metrics else '' }}</span>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -250,32 +294,95 @@
                         <th>Owner</th>
                         <th>Goal</th>
                         <th>Status</th>
-                        <th>Quarter</th>
+                        <th class="week-cell">W1</th>
+                        <th class="week-cell">W2</th>
+                        <th class="week-cell">W3</th>
+                        <th class="week-cell">W4</th>
+                        <th class="week-cell">W5</th>
+                        <th class="week-cell">W6</th>
+                        <th class="week-cell">W7</th>
+                        <th class="week-cell">W8</th>
+                        <th class="week-cell">W9</th>
+                        <th class="week-cell">W10</th>
+                        <th class="week-cell">W11</th>
+                        <th class="week-cell">W12</th>
+                        <th class="week-cell">W13</th>
+                        {% if can_edit %}<th></th>{% endif %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for metric in metrics %}
-                    <tr>
-                        <td>{{ metric.metric }}</td>
-                        <td>{{ metric.owner }}</td>
-                        <td>{{ metric.goal if metric.goal else 'Not set' }}</td>
-                        <td><span class="status-badge status-{{ metric.status }}">{{ metric.status }}</span></td>
-                        <td>{{ metric.quarter if metric.quarter else 'N/A' }}</td>
+                    <tr data-metric-id="{{ metric.id }}">
+                        <td class="metric-name">{{ metric.metric }}</td>
+                        <td class="owner-name">{{ metric.owner }}</td>
+                        <td class="goal-cell">{{ metric.goal if metric.goal else '-' }}</td>
+                        <td>
+                            <span class="status-badge status-{{ metric.status }}"
+                                  onclick="{% if can_edit %}cycleStatus({{ metric.id }}, '{{ metric.status }}'){% endif %}">
+                                {{ metric.status }}
+                            </span>
+                        </td>
+                        {% for w in range(1, 14) %}
+                        <td class="week-cell">
+                            {% if can_edit %}
+                            <input type="number" step="any"
+                                   value="{{ metric['week_' ~ w] if metric['week_' ~ w] is not none else '' }}"
+                                   onchange="updateWeek({{ metric.id }}, 'week_{{ w }}', this.value)"
+                                   placeholder="-">
+                            {% else %}
+                            {{ metric['week_' ~ w] if metric['week_' ~ w] is not none else '-' }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        {% if can_edit %}
+                        <td>
+                            <form method="POST" action="/division/{{ division.id }}/scorecard/{{ metric.id }}/delete"
+                                  onsubmit="return confirm('Remove this metric?');" style="display:inline;">
+                                <button type="submit" class="btn-delete" title="Remove metric">&#x2715;</button>
+                            </form>
+                        </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-        
-        {% else %}
-        <!-- No Data -->
-        <div class="scorecard-table">
+            {% else %}
             <div class="no-data">
                 <h3>No Scorecard Metrics</h3>
-                <p>There are no scorecard metrics defined for this division yet.</p>
+                <p>Click "+ Add Metric" above to start tracking your weekly measurables.</p>
             </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
+
+    <script>
+    function toggleAddForm() {
+        document.getElementById('addMetricForm').classList.toggle('active');
+    }
+
+    function cycleStatus(metricId, currentStatus) {
+        const cycle = {'GREEN': 'YELLOW', 'YELLOW': 'RED', 'RED': 'GREEN'};
+        const newStatus = cycle[currentStatus] || 'GREEN';
+        fetch(`/division/{{ division.id }}/scorecard/${metricId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: newStatus})
+        }).then(r => r.json()).then(data => {
+            if (data.success) location.reload();
+        });
+    }
+
+    function updateWeek(metricId, weekField, value) {
+        const payload = {};
+        payload[weekField] = value === '' ? null : parseFloat(value);
+        fetch(`/division/{{ division.id }}/scorecard/${metricId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        }).then(r => r.json()).then(data => {
+            if (!data.success) alert('Failed to save');
+        });
+    }
+    </script>
 </body>
 </html>

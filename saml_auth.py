@@ -141,18 +141,24 @@ def saml_acs():
     # Map SSO groups to EOS roles
     eos_roles = map_sso_groups_to_roles(user_info['groups'], user['id'])
     
-    # Create Flask session
-    session['user_id'] = user['id']
-    session['username'] = user['username']
-    session['email'] = user['email']
-    session['full_name'] = user['full_name']
-    session['roles'] = eos_roles
+    # Build user dict matching the format from authenticate_user() in auth.py
+    # This is required: @login_required checks session['user']
+    session['user'] = {
+        'id': user['id'],
+        'username': user['username'],
+        'email': user['email'],
+        'full_name': user['full_name'],
+        'roles': eos_roles,
+        'is_parent_admin': any(r['role_name'] == 'PARENT_ADMIN' for r in eos_roles)
+    }
     session['auth_method'] = 'saml'
     session['saml_session_index'] = session_index
     session['saml_nameid'] = nameid
-    
+    session['user_id'] = user['id']
+    session.permanent = True
+
     # Get return URL or default to dashboard
-    return_to = session.pop('saml_return_to', url_for('home'))
+    return_to = session.pop('saml_return_to', url_for('dashboard'))
     
     return redirect(return_to)
 
@@ -177,8 +183,8 @@ def saml_logout():
     if name_id and session_index:
         return redirect(auth.logout(name_id=name_id, session_index=session_index))
     
-    # Otherwise just redirect to home
-    return redirect(url_for('home'))
+    # Otherwise just redirect to login
+    return redirect(url_for('login'))
 
 def saml_metadata():
     """
@@ -286,12 +292,12 @@ def map_sso_groups_to_roles(sso_groups, user_id):
     Returns:
         List of role dicts
     """
-    # Group to role mapping
+    # Group to role mapping (must match role names in the roles table)
     group_role_map = {
-        'Steensma-Admins': 'platform_admin',
-        'Steensma-Managers': 'org_admin',
-        'Steensma-Users': 'user',
-        'Steensma-ReadOnly': 'viewer'
+        'Steensma-Admins': 'PARENT_ADMIN',
+        'Steensma-Managers': 'DIVISION_ADMIN',
+        'Steensma-Users': 'USER_RW',
+        'Steensma-ReadOnly': 'USER_RO'
     }
     
     conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
@@ -332,7 +338,11 @@ def map_sso_groups_to_roles(sso_groups, user_id):
             roles.append({
                 'role_name': role['name'],
                 'role_display': role['display_name'],
-                'role_level': role['level']
+                'role_level': role['level'],
+                'organization_id': None,
+                'division_id': None,
+                'org_name': None,
+                'division_name': None
             })
         
         conn.commit()
@@ -358,5 +368,5 @@ def get_sso_portal_url():
     try:
         settings = load_saml_settings()
         return settings.get('idp', {}).get('singleSignOnService', {}).get('url', '')
-    except:
+    except Exception:
         return ''

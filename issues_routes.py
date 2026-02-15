@@ -487,5 +487,226 @@ def register_issues_routes(app):
             """, (division_id,))
             
             issues = [dict(row) for row in cursor.fetchall()]
-            
+
             return jsonify(issues)
+
+    @app.route('/division/<int:division_id>/issues/brainstorm')
+    @login_required
+    @division_access_required('division_id')
+    def issue_brainstorm(division_id):
+        """Brainstorm issues screen - rapid entry then IDS categorization"""
+        user = session.get('user')
+
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT d.*, o.name as org_name
+                FROM divisions d
+                JOIN organizations o ON d.organization_id = o.id
+                WHERE d.id = ?
+            """, (division_id,))
+            division = dict(cursor.fetchone())
+
+            # Get division users for owner assignment
+            cursor.execute("""
+                SELECT DISTINCT u.id, u.full_name
+                FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                WHERE ur.division_id = ? AND u.is_active = 1
+                ORDER BY u.full_name
+            """, (division_id,))
+            users = [dict(row) for row in cursor.fetchall()]
+
+            can_edit = can_edit_division(user, division_id)
+
+        return render_template('brainstorm.html',
+                             user=user,
+                             division=division,
+                             users=users,
+                             can_edit=can_edit)
+
+    @app.route('/division/<int:division_id>/issues/brainstorm/add', methods=['POST'])
+    @login_required
+    @division_edit_required('division_id')
+    @retry_on_lock(max_retries=5)
+    def brainstorm_add_issue(division_id):
+        """Rapidly add an issue during brainstorm session"""
+        user = session.get('user')
+        data = request.get_json()
+
+        if not data or not data.get('issue', '').strip():
+            return jsonify({'error': 'Issue text is required'}), 400
+
+        issue_text = data['issue'].strip()
+
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                INSERT INTO issues (
+                    organization_id, division_id, issue, category, priority,
+                    owner, owner_name, date_added, status, ids_stage,
+                    created_by, updated_by
+                )
+                VALUES (
+                    (SELECT organization_id FROM divisions WHERE id = ?),
+                    ?, ?, 'ADMINISTRATIVE', 'MEDIUM',
+                    'Unassigned', NULL, ?, 'OPEN', 'IDENTIFY',
+                    ?, ?
+                )
+            """, (division_id, division_id, issue_text,
+                  datetime.now().strftime('%Y-%m-%d'),
+                  user['id'], user['id']))
+
+            issue_id = cursor.lastrowid
+            conn.commit()
+
+        log_to_audit(
+            user['id'], 'issues', issue_id, 'CREATE',
+            changes={'issue': issue_text, 'source': 'brainstorm'},
+            organization_id=1,
+            division_id=division_id,
+            ip_address=request.remote_addr
+        )
+
+        return jsonify({'success': True, 'id': issue_id, 'issue': issue_text})
+
+    @app.route('/division/<int:division_id>/issues/brainstorm/process', methods=['POST'])
+    @login_required
+    @division_edit_required('division_id')
+    @retry_on_lock(max_retries=5)
+    def brainstorm_process_issues(division_id):
+        """Process brainstormed issues - categorize as Rock, To-Do, Table, or Resolve"""
+        user = session.get('user')
+        data = request.get_json()
+
+        if not data or not data.get('items'):
+            return jsonify({'error': 'No items to process'}), 400
+
+        results = {'rocks': 0, 'todos': 0, 'tabled': 0, 'resolved': 0, 'errors': []}
+
+        current_month = datetime.now().month
+        current_quarter = (current_month - 1) // 3 + 1
+        current_year = datetime.now().year
+
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+
+            for item in data['items']:
+                issue_id = item.get('id')
+                action = item.get('action')  # rock, todo, table, resolve
+                owner_name = item.get('owner', '')
+                notes = item.get('notes', '')
+
+                if not issue_id or not action:
+                    continue
+
+                try:
+                    # Verify issue belongs to this division
+                    cursor.execute("""
+                        SELECT * FROM issues WHERE id = ? AND division_id = ? AND is_active = 1
+                    """, (issue_id, division_id))
+                    issue = cursor.fetchone()
+                    if not issue:
+                        results['errors'].append(f'Issue {issue_id} not found')
+                        continue
+
+                    issue = dict(issue)
+
+                    # Update owner if provided
+                    if owner_name:
+                        cursor.execute("""
+                            UPDATE issues SET owner_name = ?, owner = ?
+                            WHERE id = ?
+                        """, (owner_name, owner_name, issue_id))
+
+                    if action == 'rock':
+                        # Convert to Rock
+                        cursor.execute("""
+                            INSERT INTO rocks (
+                                organization_id, division_id, description, owner,
+                                quarter, year, status, progress, priority,
+                                created_by, is_active
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, 'NOT STARTED', 0, 1, ?, 1)
+                        """, (1, division_id, issue['issue'],
+                              owner_name or issue.get('owner_name') or 'Unassigned',
+                              current_quarter, current_year, user['id']))
+
+                        rock_id = cursor.lastrowid
+
+                        cursor.execute("""
+                            UPDATE issues
+                            SET status = 'RESOLVED', ids_stage = 'SOLVE',
+                                solution = ?, resolved_at = CURRENT_TIMESTAMP,
+                                resolved_by = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                        """, (f'Converted to Rock (Q{current_quarter} {current_year})',
+                              user['id'], user['id'], issue_id))
+
+                        results['rocks'] += 1
+
+                    elif action == 'todo':
+                        # Convert to To-Do
+                        cursor.execute("""
+                            INSERT INTO todos (
+                                organization_id, division_id, task, owner,
+                                status, source, source_issue_id, priority,
+                                created_by, is_active
+                            )
+                            VALUES (?, ?, ?, ?, 'OPEN', 'ISSUE', ?, 'MEDIUM', ?, 1)
+                        """, (1, division_id, issue['issue'],
+                              owner_name or issue.get('owner_name') or 'Unassigned',
+                              issue_id, user['id']))
+
+                        cursor.execute("""
+                            UPDATE issues
+                            SET status = 'RESOLVED', ids_stage = 'SOLVE',
+                                solution = 'Converted to To-Do',
+                                resolved_at = CURRENT_TIMESTAMP,
+                                resolved_by = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                        """, (user['id'], user['id'], issue_id))
+
+                        results['todos'] += 1
+
+                    elif action == 'table':
+                        # Keep on issues list - update notes/owner if provided
+                        cursor.execute("""
+                            UPDATE issues
+                            SET ids_stage = 'IDENTIFY',
+                                discussion_notes = CASE WHEN ? != '' THEN ? ELSE discussion_notes END,
+                                updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                        """, (notes, notes, user['id'], issue_id))
+
+                        results['tabled'] += 1
+
+                    elif action == 'resolve':
+                        cursor.execute("""
+                            UPDATE issues
+                            SET status = 'RESOLVED', ids_stage = 'SOLVE',
+                                solution = ?,
+                                resolved_at = CURRENT_TIMESTAMP,
+                                resolved_by = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                        """, (notes or 'Resolved during brainstorm session',
+                              user['id'], user['id'], issue_id))
+
+                        results['resolved'] += 1
+
+                except Exception as e:
+                    results['errors'].append(f'Error processing issue {issue_id}: {str(e)}')
+
+            conn.commit()
+
+        log_to_audit(
+            user['id'], 'issues', 0, 'BRAINSTORM_PROCESS',
+            changes=results,
+            organization_id=1,
+            division_id=division_id,
+            ip_address=request.remote_addr
+        )
+
+        return jsonify({'success': True, 'results': results})
