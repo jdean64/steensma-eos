@@ -5,537 +5,300 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>L10 Meeting - {{ meeting.meeting_date }} - EOS Platform</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
-            background: #f5f5f5;
-            color: #2a2a2a;
-            line-height: 1.6;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
         }
-        
+
+        /* ===== HEADER ===== */
         .header {
-            background: #1a1a1a;
-            color: white;
-            padding: 20px 40px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            background: #1a1a1a; color: white; padding: 14px 40px;
+            position: sticky; top: 0; z-index: 200;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
-        
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header-right { display: flex; gap: 16px; align-items: center; }
+        .timer-display {
+            font-family: 'Courier New', monospace; font-size: 22px; font-weight: 700;
+            color: #00ff88; letter-spacing: 1px;
         }
-        
-        .header h1 {
-            font-size: 20px;
-            font-weight: 600;
-        }
-        
-        .header-actions {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 32px 40px;
-        }
-        
-        .meeting-controls {
-            background: white;
-            border-radius: 8px;
-            padding: 24px 32px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .meeting-meta {
-            display: flex;
-            gap: 32px;
-            align-items: center;
-        }
-        
-        .meta-item {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .meta-label {
-            font-size: 12px;
-            color: #6a6a6a;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .meta-value {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-top: 4px;
-        }
-        
+        .timer-display.overtime { color: #ff4444; }
+
+        /* ===== BUTTONS ===== */
         .btn {
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            text-decoration: none;
-            display: inline-block;
+            padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; border: none; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        
-        .btn-success {
-            background: #00aa55;
-            color: white;
+        .btn-success { background: #00aa55; color: white; }
+        .btn-success:hover { background: #008844; }
+        .btn-danger { background: #cc3333; color: white; }
+        .btn-danger:hover { background: #aa2222; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: white; color: #2a2a2a; border: 1px solid #d0d0d0; }
+        .btn-secondary:hover { background: #f5f5f5; border-color: #999; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        .btn-ghost { background: transparent; color: #6a6a6a; border: 1px solid transparent; }
+        .btn-ghost:hover { background: rgba(0,0,0,0.05); border-color: #d0d0d0; }
+
+        /* ===== CONTAINER ===== */
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px 32px 60px; }
+
+        /* ===== MEETING STATUS BAR ===== */
+        .meeting-bar {
+            background: white; border-radius: 10px; padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        
-        .btn-success:hover {
-            background: #008844;
-        }
-        
-        .btn-primary {
-            background: #1a1a1a;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #2d2d2d;
-        }
-        
-        .btn-secondary {
-            background: white;
-            color: #2a2a2a;
-            border: 1px solid #d0d0d0;
-        }
-        
-        .btn-secondary:hover {
-            border-color: #1a1a1a;
-        }
-        
-        .agenda-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
-        .agenda-section {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: all 0.3s;
-        }
-        
-        .agenda-section.full-width {
-            grid-column: 1 / -1;
-        }
-        
-        .agenda-section.active {
-            border: 2px solid #00aa55;
-            box-shadow: 0 4px 16px rgba(0,170,85,0.2);
-        }
-        
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .section-time {
-            font-size: 12px;
-            color: #6a6a6a;
-            background: #f0f0f0;
-            padding: 4px 10px;
-            border-radius: 12px;
-        }
-        
-        .section-content {
-            font-size: 14px;
-            color: #4a4a4a;
-            line-height: 1.8;
-        }
-        
-        .section-notes {
-            width: 100%;
-            min-height: 80px;
-            padding: 12px;
-            border: 1px solid #d0d0d0;
-            border-radius: 4px;
-            font-family: inherit;
-            font-size: 14px;
-            resize: vertical;
-            margin-top: 12px;
-        }
-        
-        .section-notes:focus {
-            outline: none;
-            border-color: #1a1a1a;
-        }
-        
-        .items-list {
-            list-style: none;
-            margin-top: 12px;
-        }
-        
-        .item {
-            padding: 10px 0;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-        }
-        
-        .item:last-child {
-            border-bottom: none;
-        }
-        
-        .item-title {
-            flex: 1;
-        }
-        
-        .item-meta {
-            font-size: 12px;
-            color: #6a6a6a;
-            margin-left: 12px;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .badge-high {
-            background: #fee;
-            color: #c33;
-        }
-        
-        .badge-medium {
-            background: #fff4e6;
-            color: #cc7700;
-        }
-        
-        .badge-low {
-            background: #f0f0f0;
-            color: #6a6a6a;
-        }
-        
-        .badge-on-track {
-            background: #e8f8f0;
-            color: #00aa55;
-        }
-        
-        .badge-off-track {
-            background: #fee;
-            color: #c33;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 32px 20px;
-            color: #8a8a8a;
-            font-size: 13px;
-        }
-        
-        .progress-indicator {
-            height: 4px;
-            background: #e8e8e8;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: #00aa55;
-            transition: width 0.3s;
-        }
-        
-        .alert {
-            padding: 16px 20px;
-            border-radius: 6px;
-            margin-bottom: 24px;
-            font-size: 14px;
-        }
-        
-        .alert-success {
-            background: #efe;
-            color: #3c3;
-            border: 1px solid #cfc;
-        }
-        
-        .timer {
-            font-family: 'Courier New', monospace;
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a1a1a;
-        }
-        
+        .meeting-meta { display: flex; gap: 28px; align-items: center; }
+        .meta-item { display: flex; flex-direction: column; }
+        .meta-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .meta-value { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-top: 2px; }
         .status-badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
+            display: inline-block; padding: 4px 12px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
         }
-        
-        .status-scheduled {
-            background: #e8f4fd;
-            color: #0066cc;
+        .status-scheduled { background: #e8f4fd; color: #0066cc; }
+        .status-in_progress, .status-in-progress { background: #fff4e6; color: #cc7700; }
+        .status-completed { background: #e8f8f0; color: #00aa55; }
+
+        /* ===== SECTION NAVIGATION ===== */
+        .section-nav {
+            display: flex; gap: 4px; background: white; border-radius: 10px;
+            padding: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;
+            overflow-x: auto;
         }
-        
-        .status-in-progress {
-            background: #fff4e6;
-            color: #cc7700;
+        .section-nav-item {
+            padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            border: none; background: transparent; color: #6a6a6a;
         }
-        
-        .status-completed {
-            background: #e8f8f0;
-            color: #00aa55;
+        .section-nav-item:hover { background: #f0f0f0; color: #2a2a2a; }
+        .section-nav-item.active { background: #1a1a1a; color: white; }
+        .section-nav-item.completed { background: #e8f8f0; color: #00aa55; }
+
+        /* ===== AGENDA SECTIONS ===== */
+        .section-panel {
+            background: white; border-radius: 10px; padding: 28px 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;
+            border: 2px solid transparent; transition: border-color 0.3s;
         }
-        
-        /* Print Styles for L10 Meeting */
+        .section-panel.active-section { border-color: #00aa55; }
+        .section-panel .section-head {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+        }
+        .section-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .section-time-badge {
+            font-size: 12px; color: #888; background: #f0f0f0; padding: 4px 12px;
+            border-radius: 12px; font-weight: 500;
+        }
+
+        /* ===== NOTES TEXTAREA (auto-save) ===== */
+        .auto-save-area {
+            width: 100%; min-height: 100px; padding: 14px 16px;
+            border: 1px solid #e0e0e0; border-radius: 8px;
+            font-family: inherit; font-size: 14px; line-height: 1.7;
+            resize: vertical; transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fafafa;
+        }
+        .auto-save-area:focus {
+            outline: none; border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1); background: #fff;
+        }
+        .save-indicator {
+            font-size: 11px; margin-top: 6px; min-height: 16px;
+            transition: opacity 0.3s;
+        }
+        .save-indicator.saving { color: #cc7700; }
+        .save-indicator.saved { color: #00aa55; }
+        .save-indicator.error { color: #cc3333; }
+
+        /* ===== INLINE ITEMS (rocks, todos, issues) ===== */
+        .items-table { width: 100%; margin-top: 12px; }
+        .items-table th {
+            text-align: left; font-size: 11px; color: #888; text-transform: uppercase;
+            letter-spacing: 0.5px; padding: 8px 12px; border-bottom: 2px solid #e8e8e8;
+        }
+        .items-table td {
+            padding: 10px 12px; border-bottom: 1px solid #f0f0f0;
+            font-size: 14px; vertical-align: middle;
+        }
+        .items-table tr:hover { background: #fafafa; }
+        .items-table tr.resolved { opacity: 0.5; text-decoration: line-through; }
+
+        .inline-input {
+            border: 1px solid transparent; padding: 4px 8px; border-radius: 4px;
+            font-size: 13px; font-family: inherit; background: transparent;
+            transition: all 0.2s; width: 100%;
+        }
+        .inline-input:hover { border-color: #d0d0d0; background: #fafafa; }
+        .inline-input:focus { outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+
+        .inline-select {
+            border: 1px solid transparent; padding: 4px 8px; border-radius: 4px;
+            font-size: 13px; font-family: inherit; background: transparent;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .inline-select:hover { border-color: #d0d0d0; background: #fafafa; }
+        .inline-select:focus { outline: none; border-color: #2563eb; background: #fff; }
+
+        /* Status colors */
+        .status-on-track, .status-ON_TRACK { color: #00aa55; }
+        .status-off-track, .status-OFF_TRACK { color: #cc3333; }
+
+        /* Priority badges */
+        .priority-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+        }
+        .priority-HIGH { background: #fee2e2; color: #cc3333; }
+        .priority-MEDIUM { background: #fff4e6; color: #cc7700; }
+        .priority-LOW { background: #f0f0f0; color: #6a6a6a; }
+
+        /* IDS stage badges */
+        .ids-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 10px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .ids-IDENTIFY { background: #e8f4fd; color: #0066cc; }
+        .ids-DISCUSS { background: #fff4e6; color: #cc7700; }
+        .ids-SOLVE { background: #f0e8ff; color: #7733cc; }
+        .ids-RESOLVED { background: #e8f8f0; color: #00aa55; }
+
+        /* Checkbox */
+        .todo-check {
+            width: 20px; height: 20px; cursor: pointer; accent-color: #00aa55;
+        }
+        .todo-done .item-text { text-decoration: line-through; color: #aaa; }
+
+        /* Progress bar */
+        .progress-mini {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .progress-track {
+            flex: 1; height: 6px; background: #e8e8e8; border-radius: 3px; overflow: hidden;
+        }
+        .progress-fill { height: 100%; background: #00aa55; border-radius: 3px; transition: width 0.3s; }
+        .progress-pct { font-size: 12px; font-weight: 600; color: #6a6a6a; min-width: 36px; }
+
+        /* Add row */
+        .add-row { margin-top: 12px; }
+        .add-row-form {
+            display: none; background: #f9f9f9; border: 1px dashed #d0d0d0;
+            border-radius: 8px; padding: 16px; margin-top: 8px;
+        }
+        .add-row-form.visible { display: block; }
+        .add-row-form .form-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .add-row-form input, .add-row-form select {
+            padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px;
+            font-size: 13px; font-family: inherit;
+        }
+        .add-row-form input:focus, .add-row-form select:focus {
+            outline: none; border-color: #2563eb;
+        }
+
+        /* Rating */
+        .rating-container { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+        .rating-stars { display: flex; gap: 4px; }
+        .rating-star {
+            font-size: 28px; cursor: pointer; color: #d0d0d0;
+            transition: color 0.15s, transform 0.15s;
+        }
+        .rating-star:hover { transform: scale(1.15); }
+        .rating-star.active { color: #ffaa00; }
+        .rating-value { font-size: 24px; font-weight: 700; margin-left: 12px; color: #1a1a1a; }
+
+        /* ===== EMAIL MODAL ===== */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 500;
+            justify-content: center; align-items: center;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal {
+            background: white; border-radius: 12px; width: 520px; max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;
+        }
+        .modal-header {
+            background: #1a1a1a; color: white; padding: 20px 24px;
+        }
+        .modal-header h2 { font-size: 18px; font-weight: 600; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #e8e8e8; display: flex; justify-content: flex-end; gap: 12px; }
+        .email-tag-input { width: 100%; padding: 10px 14px; border: 1px solid #d0d0d0; border-radius: 8px; font-size: 14px; }
+        .email-tag-input:focus { outline: none; border-color: #2563eb; }
+        .email-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .email-tag {
+            background: #e8f4fd; color: #0066cc; padding: 4px 10px; border-radius: 12px;
+            font-size: 12px; display: flex; align-items: center; gap: 6px;
+        }
+        .email-tag .remove { cursor: pointer; font-weight: 700; }
+
+        /* ===== FLASH MESSAGES ===== */
+        .alert {
+            padding: 14px 20px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;
+        }
+        .alert-success { background: #e8f8f0; color: #006633; border: 1px solid #b8e8d0; }
+        .alert-danger { background: #fee; color: #c33; border: 1px solid #fcc; }
+
+        /* Toast notification */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 300;
+            background: #1a1a1a; color: white; padding: 12px 20px; border-radius: 8px;
+            font-size: 13px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transform: translateY(80px); opacity: 0; transition: all 0.3s;
+        }
+        .toast.visible { transform: translateY(0); opacity: 1; }
+        .toast.toast-success { background: #00aa55; }
+        .toast.toast-error { background: #cc3333; }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 32px; color: #aaa; font-size: 14px; }
+
+        /* ===== PRINT ===== */
         @media print {
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            
-            body {
-                background: white !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                font-size: 9pt;
-                line-height: 1.4;
-            }
-            
-            /* Hide interactive elements and controls */
-            .header-actions,
-            .meeting-controls,
-            .btn,
-            button,
-            form,
-            .section-notes,
-            textarea,
-            input {
-                display: none !important;
-            }
-            
-            .header {
-                background: white !important;
-                color: #1a1a1a !important;
-                padding: 8pt 0 !important;
-                margin: 0 !important;
-                box-shadow: none !important;
-                position: static !important;
-                border-bottom: 2pt solid #1a1a1a;
-                page-break-after: avoid;
-            }
-            
-            .header h1 {
-                font-size: 14pt !important;
-                color: #1a1a1a !important;
-                font-weight: 700;
-            }
-            
-            .container {
-                max-width: 100%;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            /* Two-column grid becomes single column for print */
-            .agenda-grid {
-                display: block !important;
-                margin-top: 10pt;
-            }
-            
-            .agenda-section {
-                page-break-inside: avoid;
-                margin-bottom: 8pt;
-                padding: 8pt 10pt !important;
-                border: 1pt solid #1a1a1a !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-                background: white !important;
-            }
-            
-            .agenda-section.active {
-                border: 2pt solid #1a1a1a !important;
-                box-shadow: none !important;
-            }
-            
-            .agenda-section.full-width {
-                grid-column: auto !important;
-                width: 100%;
-            }
-            
-            .section-header {
-                margin-bottom: 6pt;
-                page-break-after: avoid;
-            }
-            
-            .section-title {
-                font-size: 11pt !important;
-                font-weight: 700;
-            }
-            
-            .section-time {
-                font-size: 8pt !important;
-                background: #e8e8e8 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                padding: 2pt 6pt !important;
-            }
-            
-            .section-content {
-                font-size: 9pt !important;
-                line-height: 1.5 !important;
-            }
-            
-            .section-content p {
-                margin-bottom: 6pt;
-            }
-            
-            /* Items lists formatting */
-            .items-list {
-                margin-top: 6pt;
-            }
-            
-            .items-list li {
-                page-break-inside: avoid;
-                margin-bottom: 4pt;
-                font-size: 9pt;
-            }
-            
-            .item-bullet {
-                min-width: 16pt;
-            }
-            
-            .item-owner {
-                font-size: 8pt !important;
-                background: #f0f0f0 !important;
-                padding: 1pt 4pt !important;
-            }
-            
-            /* Status badges */
-            .status-badge {
-                padding: 2pt 6pt !important;
-                font-size: 8pt !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            /* Table formatting if any */
-            table {
-                page-break-inside: avoid;
-                border-collapse: collapse;
-                width: 100%;
-            }
-            
-            table td,
-            table th {
-                border: 1pt solid #1a1a1a !important;
-                padding: 4pt 6pt !important;
-                font-size: 9pt;
-            }
-            
-            table th {
-                background: #e8e8e8 !important;
-                font-weight: 700;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            /* Scorecard specific */
-            .scorecard-table {
-                width: 100%;
-                margin-top: 6pt;
-            }
-            
-            /* Headlines and notes */
-            .headlines-list,
-            .notes-content {
-                font-size: 9pt;
-                line-height: 1.5;
-            }
-            
-            /* Ensure no orphans */
-            h1, h2, h3, h4, h5, h6 {
-                page-break-after: avoid;
-            }
-            
-            /* Rock and Todo items */
-            .rock-item,
-            .todo-item {
-                page-break-inside: avoid;
-                margin-bottom: 4pt;
-            }
-        }
-        
-        @page {
-            size: letter portrait;
-            margin: 0.5in 0.5in 0.75in 0.5in;
+            .header, .section-nav, .meeting-bar .btn, .add-row, .modal-overlay { display: none !important; }
+            body { background: white; font-size: 10pt; }
+            .container { max-width: 100%; padding: 0; }
+            .section-panel { box-shadow: none; border: 1pt solid #ccc; page-break-inside: avoid; margin-bottom: 10pt; }
+            .auto-save-area { border: none; background: transparent; min-height: auto; }
         }
     </style>
 </head>
 <body>
+    <!-- HEADER -->
     <div class="header">
         <div class="header-content">
-            <h1>📋 L10 Meeting - {{ meeting.meeting_date }} - {{ meeting.division_name }}</h1>
-            <div class="header-actions">
-                <a href="/division/{{ division_id }}/l10/{{ meeting.id }}/pdf" class="btn btn-primary">🖨️ Download L10 PDF</a>
-                <a href="{{ url_for('l10_meetings', division_id=division_id) }}" class="btn btn-secondary">← Back</a>
+            <h1>L10 Meeting &mdash; {{ meeting.meeting_date }} &mdash; {{ meeting.division_name or 'Division' }}</h1>
+            <div class="header-right">
+                {% if meeting.status == 'IN_PROGRESS' %}
+                <span class="timer-display" id="meetingTimer">00:00:00</span>
+                {% endif %}
+                <a href="{{ url_for('l10_meetings', division_id=division_id) }}" class="btn btn-secondary" style="color: #ccc; border-color: #555;">Back to Meetings</a>
             </div>
         </div>
     </div>
-    
+
     <div class="container">
+        <!-- FLASH MESSAGES -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
         {% endwith %}
-        
-        <div class="meeting-controls">
+
+        <!-- MEETING STATUS BAR -->
+        <div class="meeting-bar">
             <div class="meeting-meta">
                 <div class="meta-item">
                     <span class="meta-label">Status</span>
                     <span class="meta-value">
-                        <span class="status-badge status-{{ meeting.status.lower()|replace(' ', '-') }}">
-                            {{ meeting.status }}
-                        </span>
+                        <span class="status-badge status-{{ meeting.status|lower|replace(' ', '-') }}">{{ meeting.status|replace('_', ' ') }}</span>
                     </span>
                 </div>
                 <div class="meta-item">
@@ -544,7 +307,7 @@
                 </div>
                 <div class="meta-item">
                     <span class="meta-label">Duration</span>
-                    <span class="meta-value">{{ meeting.duration_minutes or 90 }} min</span>
+                    <span class="meta-value">{{ meeting.duration_minutes or 60 }} min</span>
                 </div>
                 {% if meeting.facilitator_name %}
                 <div class="meta-item">
@@ -553,183 +316,877 @@
                 </div>
                 {% endif %}
             </div>
-            
-            {% if can_edit %}
-            <div style="display: flex; gap: 12px;">
-                {% if meeting.status == 'SCHEDULED' %}
-                <form method="POST" action="{{ url_for('start_l10_meeting', division_id=division_id, meeting_id=meeting.id) }}" style="display: inline;">
-                    <button type="submit" class="btn btn-success">▶️ Start Meeting</button>
-                </form>
-                {% elif meeting.status == 'IN_PROGRESS' %}
-                <form method="POST" action="{{ url_for('complete_l10_meeting', division_id=division_id, meeting_id=meeting.id) }}" style="display: inline;" onsubmit="return confirm('Mark this meeting as complete?');">
-                    <button type="submit" class="btn btn-success">✓ Complete Meeting</button>
-                </form>
+            <div style="display: flex; gap: 10px;">
+                {% if can_edit %}
+                    {% if meeting.status == 'SCHEDULED' %}
+                    <form method="POST" action="{{ url_for('start_l10_meeting', division_id=division_id, meeting_id=meeting.id) }}">
+                        <button type="submit" class="btn btn-success">&#9654; Start Meeting</button>
+                    </form>
+                    {% elif meeting.status == 'IN_PROGRESS' %}
+                    <button class="btn btn-success" onclick="openCompleteModal()">&#10003; Complete Meeting</button>
+                    {% endif %}
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- SECTION NAVIGATION -->
+        <div class="section-nav" id="sectionNav">
+            <button class="section-nav-item active" data-section="segue" onclick="scrollToSection('segue')">Segue</button>
+            <button class="section-nav-item" data-section="headlines" onclick="scrollToSection('headlines')">Headlines</button>
+            <button class="section-nav-item" data-section="scorecard" onclick="scrollToSection('scorecard')">Scorecard</button>
+            <button class="section-nav-item" data-section="rocks" onclick="scrollToSection('rocks')">Rock Review</button>
+            <button class="section-nav-item" data-section="todos" onclick="scrollToSection('todos')">To-Do List</button>
+            <button class="section-nav-item" data-section="ids" onclick="scrollToSection('ids')">IDS</button>
+            <button class="section-nav-item" data-section="conclude" onclick="scrollToSection('conclude')">Conclude</button>
+        </div>
+
+        <!-- ======================== SEGUE ======================== -->
+        <div class="section-panel active-section" id="section-segue" data-section-name="Segue">
+            <div class="section-head">
+                <h3 class="section-title">&#127775; Segue</h3>
+                <span class="section-time-badge">5 min</span>
+            </div>
+            <p style="color: #888; font-size: 13px; margin-bottom: 12px;">Share good news &mdash; personal &amp; business</p>
+            <textarea class="auto-save-area" id="notes-segue"
+                data-field="segue_good_news"
+                placeholder="What good news do team members want to share?"
+                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}
+            >{{ meeting.segue_good_news or '' }}</textarea>
+            <div class="save-indicator" id="save-segue"></div>
+        </div>
+
+        <!-- ======================== HEADLINES ======================== -->
+        <div class="section-panel" id="section-headlines" data-section-name="Headlines">
+            <div class="section-head">
+                <h3 class="section-title">&#128240; Headlines</h3>
+                <span class="section-time-badge">5 min</span>
+            </div>
+            <p style="color: #888; font-size: 13px; margin-bottom: 12px;">Customer &amp; employee updates (good &amp; bad)</p>
+            <textarea class="auto-save-area" id="notes-headlines"
+                data-field="customer_employee_headlines"
+                placeholder="What's happening with customers & employees?"
+                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}
+            >{{ meeting.customer_employee_headlines or '' }}</textarea>
+            <div class="save-indicator" id="save-headlines"></div>
+        </div>
+
+        <!-- ======================== SCORECARD REVIEW ======================== -->
+        <div class="section-panel" id="section-scorecard" data-section-name="Scorecard Review">
+            <div class="section-head">
+                <h3 class="section-title">&#128202; Scorecard Review</h3>
+                <span class="section-time-badge">5 min</span>
+            </div>
+            <p style="color: #888; font-size: 13px; margin-bottom: 12px;">Review 5-15 weekly numbers. Are we on track?</p>
+            <textarea class="auto-save-area" id="notes-scorecard"
+                data-field="scorecard_review"
+                placeholder="Review your weekly numbers. What's on/off track?"
+                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}
+            >{{ meeting.scorecard_review or '' }}</textarea>
+            <div class="save-indicator" id="save-scorecard"></div>
+        </div>
+
+        <!-- ======================== ROCK REVIEW ======================== -->
+        <div class="section-panel" id="section-rocks" data-section-name="Rock Review">
+            <div class="section-head">
+                <h3 class="section-title">&#127919; Rock Review</h3>
+                <span class="section-time-badge">5 min</span>
+            </div>
+            <p style="color: #888; font-size: 13px; margin-bottom: 8px;">Current 90-day priorities &mdash; update status &amp; progress inline</p>
+
+            {% if rocks %}
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40%;">Rock</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                        <th style="width: 22%;">Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rock in rocks %}
+                    <tr data-rock-id="{{ rock.id }}">
+                        <td>
+                            <input type="text" class="inline-input rock-field"
+                                value="{{ rock.description }}" data-field="description"
+                                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                        </td>
+                        <td>
+                            <span style="font-size: 13px; color: #666;">{{ rock.owner_full_name or rock.owner }}</span>
+                        </td>
+                        <td>
+                            <select class="inline-select rock-field" data-field="status"
+                                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                                <option value="ON TRACK" {% if rock.status == 'ON TRACK' %}selected{% endif %}>On Track</option>
+                                <option value="OFF TRACK" {% if rock.status == 'OFF TRACK' %}selected{% endif %}>Off Track</option>
+                                <option value="COMPLETE" {% if rock.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
+                                <option value="NOT STARTED" {% if rock.status == 'NOT STARTED' %}selected{% endif %}>Not Started</option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="progress-mini">
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="width: {{ rock.progress or 0 }}%;"></div>
+                                </div>
+                                <input type="number" class="inline-input rock-field" style="width: 50px; text-align: center;"
+                                    value="{{ rock.progress or 0 }}" min="0" max="100" data-field="progress"
+                                    {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                                <span class="progress-pct">%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">No active rocks for this division</div>
+            {% endif %}
+
+            <textarea class="auto-save-area" id="notes-rocks" data-field="rock_review"
+                style="margin-top: 16px; min-height: 60px;"
+                placeholder="Rock review notes..."
+                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}
+            >{{ meeting.rock_review or '' }}</textarea>
+            <div class="save-indicator" id="save-rocks"></div>
+        </div>
+
+        <!-- ======================== TO-DO LIST REVIEW ======================== -->
+        <div class="section-panel" id="section-todos" data-section-name="To-Do List Review">
+            <div class="section-head">
+                <h3 class="section-title">&#9989; To-Do List Review</h3>
+                <span class="section-time-badge">5 min</span>
+            </div>
+            <p style="color: #888; font-size: 13px; margin-bottom: 8px;">Review action items &mdash; check off completed, edit inline</p>
+
+            <table class="items-table" id="todosTable">
+                <thead>
+                    <tr>
+                        <th style="width: 30px;"></th>
+                        <th>Task</th>
+                        <th>Owner</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for todo in todos %}
+                    <tr data-todo-id="{{ todo.id }}" class="{% if todo.is_completed %}todo-done{% endif %}">
+                        <td>
+                            <input type="checkbox" class="todo-check" {% if todo.is_completed %}checked{% endif %}
+                                onchange="toggleTodo({{ todo.id }}, this.checked)"
+                                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                        </td>
+                        <td>
+                            <input type="text" class="inline-input todo-field item-text"
+                                value="{{ todo.task }}" data-field="task"
+                                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                        </td>
+                        <td>
+                            <span style="font-size: 13px; color: #666;">{{ todo.owner_full_name or todo.owner }}</span>
+                        </td>
+                        <td>
+                            <span style="font-size: 13px; color: #888;">{{ todo.due_date or '—' }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if not todos %}
+            <div class="empty-state" id="todosEmpty">No open to-dos</div>
+            {% endif %}
+
+            {% if can_edit and meeting.status != 'COMPLETED' %}
+            <div class="add-row">
+                <button class="btn btn-ghost btn-sm" onclick="toggleAddForm('todo')">+ Add To-Do</button>
+                <div class="add-row-form" id="addTodoForm">
+                    <div class="form-row">
+                        <input type="text" id="newTodoTask" placeholder="What needs to be done?" style="flex: 2;">
+                        <select id="newTodoOwner">
+                            <option value="">Owner...</option>
+                            {% for u in users %}
+                            <option value="{{ u.full_name }}">{{ u.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="date" id="newTodoDue" style="width: 140px;">
+                        <button class="btn btn-primary btn-sm" onclick="createTodo()">Add</button>
+                        <button class="btn btn-secondary btn-sm" onclick="toggleAddForm('todo')">Cancel</button>
+                    </div>
+                </div>
             </div>
             {% endif %}
         </div>
-        
-        <div class="agenda-grid">
-            <!-- Segue -->
-            <div class="agenda-section">
-                <div class="section-header">
-                    <h3 class="section-title">🌟 Segue</h3>
-                    <span class="section-time">5 min</span>
-                </div>
-                <div class="section-content">
-                    <p style="margin-bottom: 12px;">Share good news (personal &amp; business)</p>
-                    <textarea class="section-notes" placeholder="What good news do team members want to share?">{{ meeting.segue_good_news or '' }}</textarea>
-                </div>
+
+        <!-- ======================== IDS ======================== -->
+        <div class="section-panel" id="section-ids" data-section-name="IDS">
+            <div class="section-head">
+                <h3 class="section-title">&#128293; IDS &mdash; Identify, Discuss, Solve</h3>
+                <span class="section-time-badge">30 min</span>
             </div>
-            
-            <!-- Scorecard Review -->
-            <div class="agenda-section">
-                <div class="section-header">
-                    <h3 class="section-title">📊 Scorecard Review</h3>
-                    <span class="section-time">5 min</span>
-                </div>
-                <div class="section-content">
-                    <p style="margin-bottom: 12px;">Review 5-15 weekly numbers</p>
-                    <textarea class="section-notes" placeholder="Are we on track? Any issues to discuss?">{{ meeting.scorecard_review or '' }}</textarea>
-                </div>
-            </div>
-            
-            <!-- Rock Review -->
-            <div class="agenda-section">
-                <div class="section-header">
-                    <h3 class="section-title">🎯 Rock Review</h3>
-                    <span class="section-time">5 min</span>
-                </div>
-                <div class="section-content">
-                    <p style="margin-bottom: 8px; font-size: 13px; color: #6a6a6a;">Current 90-day priorities:</p>
-                    {% if rocks %}
-                    <ul class="items-list">
-                        {% for rock in rocks %}
-                        <li class="item">
-                            <span class="item-title">{{ rock.rock }}</span>
-                            <span class="badge badge-{{ rock.status.lower()|replace(' ', '-') if rock.status else 'on-track' }}">
-                                {{ rock.status or 'On Track' }}
-                            </span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <div class="empty-state">No rocks defined</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Headlines -->
-            <div class="agenda-section">
-                <div class="section-header">
-                    <h3 class="section-title">📰 Headlines</h3>
-                    <span class="section-time">5 min</span>
-                </div>
-                <div class="section-content">
-                    <p style="margin-bottom: 12px;">Customer/Employee updates (good & bad)</p>
-                    <textarea class="section-notes" placeholder="What's happening with customers & employees?">{{ meeting.customer_employee_headlines or '' }}</textarea>
-                </div>
-            </div>
-            
-            <!-- To-Do Review -->
-            <div class="agenda-section">
-                <div class="section-header">
-                    <h3 class="section-title">✅ To-Do List Review</h3>
-                    <span class="section-time">5 min</span>
-                </div>
-                <div class="section-content">
-                    <p style="margin-bottom: 8px; font-size: 13px; color: #6a6a6a;">Review last week's action items:</p>
-                    {% if todos %}
-                    <ul class="items-list">
-                        {% for todo in todos %}
-                        <li class="item">
-                            <span class="item-title">{{ todo.todo }}</span>
-                            <span class="item-meta">
-                                {{ todo.owner_full_name or todo.owner_name or 'Unassigned' }}
-                                {% if todo.due_date %}
-                                • Due: {{ todo.due_date }}
-                                {% endif %}
-                            </span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <div class="empty-state">No open to-dos</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- IDS (Main Focus) -->
-            <div class="agenda-section full-width">
-                <div class="section-header">
-                    <h3 class="section-title">🔥 IDS (Identify, Discuss, Solve)</h3>
-                    <span class="section-time">60 min</span>
-                </div>
-                <div class="section-content">
-                    <p style="margin-bottom: 12px; font-size: 14px;">Work through your issues list using the IDS process</p>
-                    
-                    {% if issues %}
-                    <ul class="items-list">
-                        {% for issue in issues %}
-                        <li class="item">
-                            <span class="item-title">
-                                <span class="badge badge-{{ issue.priority.lower() if issue.priority else 'medium' }}">{{ issue.priority or 'MEDIUM' }}</span>
-                                {{ issue.issue }}
-                            </span>
-                            <span class="item-meta">
-                                {{ issue.category }} 
-                                {% if issue.owner_full_name %}
-                                • {{ issue.owner_full_name }}
-                                {% endif %}
-                            </span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    <div style="margin-top: 16px; text-align: center;">
-                        <a href="{{ url_for('division_issues', division_id=division_id) }}" class="btn btn-secondary">Manage Issues →</a>
-                    </div>
-                    {% else %}
-                    <div class="empty-state">
-                        No open issues! 🎉<br>
-                        <a href="{{ url_for('add_issue', division_id=division_id) }}" class="btn btn-primary" style="margin-top: 12px;">Add Issue</a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Conclude -->
-            <div class="agenda-section full-width">
-                <div class="section-header">
-                    <h3 class="section-title">🏁 Conclude</h3>
-                    <span class="section-time">5 min</span>
-                </div>
-                <div class="section-content">
-                    <p style="margin-bottom: 12px;">Recap to-dos, cascading messages, and rate the meeting</p>
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
-                        <div>
-                            <label style="font-size: 13px; margin-bottom: 6px; display: block; color: #6a6a6a;">Key takeaways & action items:</label>
-                            <textarea class="section-notes" style="margin-top: 0;" placeholder="What are the key takeaways from this meeting?"></textarea>
-                        </div>
-                        <div>
-                            <label style="font-size: 13px; margin-bottom: 6px; display: block; color: #6a6a6a;">Meeting Rating (1-10):</label>
-                            <input type="number" min="1" max="10" value="8" style="width: 100%; padding: 12px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 24px; text-align: center;">
-                            <div style="margin-top: 8px; font-size: 12px; color: #6a6a6a; text-align: center;">Did we stay on track?</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div style="margin-top: 32px; padding: 24px; background: white; border-radius: 8px; text-align: center;">
-            <p style="font-size: 14px; color: #6a6a6a; margin-bottom: 16px;">
-                ⚡ Keep your Level 10 at a "10" by staying disciplined with the agenda and time limits
-            </p>
+            <p style="color: #888; font-size: 13px; margin-bottom: 8px;">Work through issues by priority. Move each through Identify &rarr; Discuss &rarr; Solve.</p>
+
+            <table class="items-table" id="issuesTable">
+                <thead>
+                    <tr>
+                        <th>Priority</th>
+                        <th style="width: 35%;">Issue</th>
+                        <th>Owner</th>
+                        <th>Stage</th>
+                        <th style="width: 80px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in issues %}
+                    <tr data-issue-id="{{ issue.id }}" class="{% if issue.status == 'RESOLVED' %}resolved{% endif %}">
+                        <td>
+                            <select class="inline-select issue-field" data-field="priority"
+                                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                                <option value="HIGH" {% if issue.priority == 'HIGH' %}selected{% endif %}>HIGH</option>
+                                <option value="MEDIUM" {% if issue.priority == 'MEDIUM' %}selected{% endif %}>MEDIUM</option>
+                                <option value="LOW" {% if issue.priority == 'LOW' %}selected{% endif %}>LOW</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" class="inline-input issue-field"
+                                value="{{ issue.issue }}" data-field="issue" style="font-weight: 500;"
+                                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                            <div style="margin-top: 4px;">
+                                <input type="text" class="inline-input issue-field" style="font-size: 12px; color: #888;"
+                                    value="{{ issue.discussion_notes or '' }}" data-field="discussion_notes"
+                                    placeholder="Discussion notes..."
+                                    {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                            </div>
+                            <div style="margin-top: 2px;">
+                                <input type="text" class="inline-input issue-field" style="font-size: 12px; color: #00aa55;"
+                                    value="{{ issue.solution or '' }}" data-field="solution"
+                                    placeholder="Solution..."
+                                    {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-size: 13px; color: #666;">{{ issue.owner_full_name or issue.owner or issue.owner_name or '—' }}</span>
+                        </td>
+                        <td>
+                            <select class="inline-select issue-field" data-field="ids_stage"
+                                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}>
+                                <option value="IDENTIFY" {% if issue.ids_stage == 'IDENTIFY' %}selected{% endif %}>Identify</option>
+                                <option value="DISCUSS" {% if issue.ids_stage == 'DISCUSS' %}selected{% endif %}>Discuss</option>
+                                <option value="SOLVE" {% if issue.ids_stage == 'SOLVE' %}selected{% endif %}>Solve</option>
+                            </select>
+                        </td>
+                        <td>
+                            {% if can_edit and meeting.status != 'COMPLETED' %}
+                            <button class="btn btn-sm btn-success"
+                                onclick="resolveIssue({{ issue.id }})"
+                                title="Resolve this issue">&#10003;</button>
+                            <button class="btn btn-sm btn-ghost"
+                                onclick="createTodoFromIssue({{ issue.id }}, '{{ issue.issue|replace("'", "\\'") }}')"
+                                title="Create To-Do from this issue">+T</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if not issues %}
+            <div class="empty-state" id="issuesEmpty">No open issues &#127881;</div>
+            {% endif %}
+
             {% if can_edit and meeting.status != 'COMPLETED' %}
-            <form method="POST" action="{{ url_for('complete_l10_meeting', division_id=division_id, meeting_id=meeting.id) }}" style="display: inline;" onsubmit="return confirm('Mark this meeting as complete? This will save all notes and timestamp the completion.');">
-                <button type="submit" class="btn btn-success">✓ Complete This L10 Meeting</button>
-            </form>
+            <div class="add-row">
+                <button class="btn btn-ghost btn-sm" onclick="toggleAddForm('issue')">+ Add Issue</button>
+                <div class="add-row-form" id="addIssueForm">
+                    <div class="form-row">
+                        <input type="text" id="newIssueText" placeholder="Describe the issue..." style="flex: 2;">
+                        <select id="newIssuePriority">
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                        <select id="newIssueOwner">
+                            <option value="">Owner...</option>
+                            {% for u in users %}
+                            <option value="{{ u.full_name }}">{{ u.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="createIssue()">Add</button>
+                        <button class="btn btn-secondary btn-sm" onclick="toggleAddForm('issue')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ======================== CONCLUDE ======================== -->
+        <div class="section-panel" id="section-conclude" data-section-name="Conclude">
+            <div class="section-head">
+                <h3 class="section-title">&#127937; Conclude</h3>
+                <span class="section-time-badge">5 min</span>
+            </div>
+            <p style="color: #888; font-size: 13px; margin-bottom: 12px;">Recap to-dos, cascading messages, and rate the meeting</p>
+
+            <textarea class="auto-save-area" id="notes-conclude"
+                data-field=""
+                placeholder="Key takeaways, cascading messages, action items..."
+                {% if not can_edit or meeting.status == 'COMPLETED' %}disabled{% endif %}
+            >{{ conclude_notes or '' }}</textarea>
+            <div class="save-indicator" id="save-conclude"></div>
+
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e8e8e8;">
+                <label style="font-size: 14px; font-weight: 600; display: block; margin-bottom: 8px;">Meeting Rating</label>
+                <p style="font-size: 13px; color: #888; margin-bottom: 12px;">How effective was this meeting? (1-10)</p>
+                <div class="rating-container">
+                    <div class="rating-stars" id="ratingStars">
+                        {% for i in range(1, 11) %}
+                        <span class="rating-star" data-value="{{ i }}" onclick="setRating({{ i }})">&#9733;</span>
+                        {% endfor %}
+                    </div>
+                    <span class="rating-value" id="ratingValue">—</span>
+                </div>
+            </div>
+
+            {% if can_edit and meeting.status == 'IN_PROGRESS' %}
+            <div style="margin-top: 28px; text-align: center;">
+                <button class="btn btn-success" style="font-size: 16px; padding: 14px 40px;" onclick="openCompleteModal()">
+                    &#10003; Complete This L10 Meeting
+                </button>
+            </div>
             {% endif %}
         </div>
     </div>
+
+    <!-- ===== COMPLETE + EMAIL MODAL ===== -->
+    <div class="modal-overlay" id="completeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Complete L10 Meeting &amp; Send Summary</h2>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: #666;">Send a summary email to the team. Add email addresses below.</p>
+
+                <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Recipients</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" class="email-tag-input" id="emailInput"
+                        placeholder="Type email and press Enter"
+                        onkeydown="handleEmailKey(event)">
+                    <button class="btn btn-secondary btn-sm" onclick="addEmailFromInput()">Add</button>
+                </div>
+                <div class="email-tags" id="emailTags"></div>
+
+                {% if users %}
+                <div style="margin-top: 12px;">
+                    <label style="font-size: 12px; color: #888;">Quick add:</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+                        {% for u in users %}
+                        {% if u.email %}
+                        <button class="btn btn-ghost btn-sm" onclick="addEmail('{{ u.email }}')">{{ u.full_name }}</button>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div style="margin-top: 20px;">
+                    <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Meeting Rating: <span id="modalRating">—</span>/10</label>
+                </div>
+
+                <div style="margin-top: 12px;">
+                    <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Conclude Notes</label>
+                    <textarea class="email-tag-input" id="modalNotes" rows="3"
+                        placeholder="Key takeaways to include in the email..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCompleteModal()">Cancel</button>
+                <button class="btn btn-primary" id="btnCompleteNoEmail" onclick="completeMeeting(false)">Complete (No Email)</button>
+                <button class="btn btn-success" id="btnCompleteEmail" onclick="completeMeeting(true)">Complete &amp; Send Email</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+    // ===== CONFIGURATION =====
+    const MEETING_ID = {{ meeting.id }};
+    const DIVISION_ID = {{ division_id }};
+    const MEETING_STATUS = '{{ meeting.status }}';
+    const CAN_EDIT = {{ 'true' if can_edit else 'false' }};
+    const STARTED_AT = '{{ meeting.started_at or '' }}';
+    const DURATION_MINUTES = {{ meeting.duration_minutes or 60 }};
+
+    let currentRating = 0;
+    let emailList = [];
+    let saveTimers = {};
+
+    // ===== TIMER =====
+    function startTimer() {
+        if (!STARTED_AT || MEETING_STATUS !== 'IN_PROGRESS') return;
+        const timerEl = document.getElementById('meetingTimer');
+        if (!timerEl) return;
+
+        const started = new Date(STARTED_AT + (STARTED_AT.includes('Z') ? '' : 'Z'));
+
+        function updateTimer() {
+            const now = new Date();
+            const diff = Math.floor((now - started) / 1000);
+            const hrs = Math.floor(diff / 3600);
+            const mins = Math.floor((diff % 3600) / 60);
+            const secs = diff % 60;
+            timerEl.textContent = String(hrs).padStart(2, '0') + ':' +
+                                  String(mins).padStart(2, '0') + ':' +
+                                  String(secs).padStart(2, '0');
+            if (diff > DURATION_MINUTES * 60) {
+                timerEl.classList.add('overtime');
+            }
+        }
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    }
+    startTimer();
+
+    // ===== SECTION NAVIGATION =====
+    function scrollToSection(name) {
+        const el = document.getElementById('section-' + name);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        document.querySelectorAll('.section-nav-item').forEach(btn => btn.classList.remove('active'));
+        const navBtn = document.querySelector(`.section-nav-item[data-section="${name}"]`);
+        if (navBtn) navBtn.classList.add('active');
+    }
+
+    // Highlight nav on scroll
+    const sectionElements = document.querySelectorAll('.section-panel');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id.replace('section-', '');
+                document.querySelectorAll('.section-nav-item').forEach(btn => btn.classList.remove('active'));
+                const navBtn = document.querySelector(`.section-nav-item[data-section="${id}"]`);
+                if (navBtn) navBtn.classList.add('active');
+            }
+        });
+    }, { threshold: 0.3 });
+    sectionElements.forEach(el => observer.observe(el));
+
+    // ===== AUTO-SAVE NOTES =====
+    document.querySelectorAll('.auto-save-area').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            const field = this.dataset.field;
+            if (!field) {
+                // conclude notes -> save via section
+                autoSaveConclude(this);
+                return;
+            }
+            const indicatorId = this.id.replace('notes-', 'save-');
+            debouncedSave(field, this.value, indicatorId);
+        });
+    });
+
+    function debouncedSave(field, value, indicatorId) {
+        clearTimeout(saveTimers[field]);
+        showIndicator(indicatorId, 'saving', 'Saving...');
+        saveTimers[field] = setTimeout(() => {
+            fetch(`/api/l10/${MEETING_ID}/save-notes`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ field: field, value: value })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showIndicator(indicatorId, 'saved', 'Saved');
+                } else {
+                    showIndicator(indicatorId, 'error', 'Error saving');
+                }
+            })
+            .catch(() => showIndicator(indicatorId, 'error', 'Network error'));
+        }, 600);
+    }
+
+    function autoSaveConclude(textarea) {
+        clearTimeout(saveTimers['conclude']);
+        showIndicator('save-conclude', 'saving', 'Saving...');
+        saveTimers['conclude'] = setTimeout(() => {
+            // Save conclude notes to the section
+            const sections = {{ sections|tojson }};
+            const concludeSection = sections.find(s => s.section_name === 'Conclude');
+            if (concludeSection) {
+                fetch(`/api/l10/${MEETING_ID}/save-section`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ section_id: concludeSection.id, notes: textarea.value, status: 'ACTIVE' })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    showIndicator('save-conclude', data.success ? 'saved' : 'error', data.success ? 'Saved' : 'Error');
+                })
+                .catch(() => showIndicator('save-conclude', 'error', 'Network error'));
+            }
+        }, 600);
+    }
+
+    function showIndicator(id, cls, text) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.className = 'save-indicator ' + cls;
+        el.textContent = text;
+        if (cls === 'saved') {
+            setTimeout(() => { el.textContent = ''; el.className = 'save-indicator'; }, 2000);
+        }
+    }
+
+    // ===== INLINE ROCK UPDATE =====
+    document.querySelectorAll('.rock-field').forEach(input => {
+        const handler = input.tagName === 'SELECT' ? 'change' : 'blur';
+        input.addEventListener(handler, function() {
+            const row = this.closest('tr');
+            const rockId = row.dataset.rockId;
+            const field = this.dataset.field;
+            const value = this.value;
+
+            fetch(`/api/l10/rock/${rockId}/update`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ [field]: value })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Rock updated', 'success');
+                    // Update progress bar if progress changed
+                    if (field === 'progress') {
+                        const fill = row.querySelector('.progress-fill');
+                        if (fill) fill.style.width = value + '%';
+                    }
+                }
+            })
+            .catch(() => showToast('Error updating rock', 'error'));
+        });
+
+        // Also fire on Enter for text inputs
+        if (input.tagName === 'INPUT') {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+            });
+        }
+    });
+
+    // ===== INLINE TODO UPDATE =====
+    function toggleTodo(todoId, checked) {
+        fetch(`/api/l10/todo/${todoId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ is_completed: checked })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-todo-id="${todoId}"]`);
+                if (row) {
+                    row.classList.toggle('todo-done', checked);
+                }
+                showToast(checked ? 'To-Do completed!' : 'To-Do reopened', 'success');
+            }
+        })
+        .catch(() => showToast('Error updating to-do', 'error'));
+    }
+
+    document.querySelectorAll('.todo-field').forEach(input => {
+        input.addEventListener('blur', function() {
+            const row = this.closest('tr');
+            const todoId = row.dataset.todoId;
+            const field = this.dataset.field;
+            fetch(`/api/l10/todo/${todoId}/update`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ [field]: this.value })
+            })
+            .then(r => r.json())
+            .then(data => { if (data.success) showToast('To-Do updated', 'success'); })
+            .catch(() => showToast('Error updating to-do', 'error'));
+        });
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+        });
+    });
+
+    // ===== CREATE TODO =====
+    function createTodo() {
+        const task = document.getElementById('newTodoTask').value.trim();
+        const owner = document.getElementById('newTodoOwner').value;
+        const due = document.getElementById('newTodoDue').value;
+        if (!task) { showToast('Task is required', 'error'); return; }
+
+        fetch('/api/l10/todo/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                division_id: DIVISION_ID,
+                meeting_id: MEETING_ID,
+                task: task,
+                owner: owner,
+                due_date: due
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Add row to table
+                const tbody = document.querySelector('#todosTable tbody');
+                const emptyEl = document.getElementById('todosEmpty');
+                if (emptyEl) emptyEl.remove();
+
+                const tr = document.createElement('tr');
+                tr.dataset.todoId = data.id;
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="todo-check" onchange="toggleTodo(${data.id}, this.checked)"></td>
+                    <td><input type="text" class="inline-input item-text" value="${escapeHtml(task)}" disabled></td>
+                    <td><span style="font-size:13px;color:#666;">${escapeHtml(owner)}</span></td>
+                    <td><span style="font-size:13px;color:#888;">${due || '—'}</span></td>
+                `;
+                tbody.appendChild(tr);
+
+                // Reset form
+                document.getElementById('newTodoTask').value = '';
+                document.getElementById('newTodoOwner').value = '';
+                document.getElementById('newTodoDue').value = '';
+                toggleAddForm('todo');
+                showToast('To-Do created!', 'success');
+            }
+        })
+        .catch(() => showToast('Error creating to-do', 'error'));
+    }
+
+    // ===== INLINE ISSUE UPDATE =====
+    document.querySelectorAll('.issue-field').forEach(input => {
+        const handler = input.tagName === 'SELECT' ? 'change' : 'blur';
+        input.addEventListener(handler, function() {
+            const row = this.closest('tr');
+            const issueId = row.dataset.issueId;
+            const field = this.dataset.field;
+            fetch(`/api/l10/issue/${issueId}/update`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ [field]: this.value })
+            })
+            .then(r => r.json())
+            .then(data => { if (data.success) showToast('Issue updated', 'success'); })
+            .catch(() => showToast('Error updating issue', 'error'));
+        });
+        if (input.tagName === 'INPUT') {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+            });
+        }
+    });
+
+    function resolveIssue(issueId) {
+        if (!confirm('Resolve this issue?')) return;
+        fetch(`/api/l10/issue/${issueId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ status: 'RESOLVED', ids_stage: 'SOLVE' })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-issue-id="${issueId}"]`);
+                if (row) row.classList.add('resolved');
+                showToast('Issue resolved!', 'success');
+            }
+        })
+        .catch(() => showToast('Error resolving issue', 'error'));
+    }
+
+    function createTodoFromIssue(issueId, issueText) {
+        const owner = prompt('Owner for this to-do?');
+        if (owner === null) return;
+        fetch('/api/l10/todo/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                division_id: DIVISION_ID,
+                meeting_id: MEETING_ID,
+                task: 'From Issue: ' + issueText,
+                owner: owner,
+                due_date: ''
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) showToast('To-Do created from issue!', 'success');
+        })
+        .catch(() => showToast('Error creating to-do', 'error'));
+    }
+
+    // ===== CREATE ISSUE =====
+    function createIssue() {
+        const issue = document.getElementById('newIssueText').value.trim();
+        const priority = document.getElementById('newIssuePriority').value;
+        const owner = document.getElementById('newIssueOwner').value;
+        if (!issue) { showToast('Issue description is required', 'error'); return; }
+
+        fetch('/api/l10/issue/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                division_id: DIVISION_ID,
+                meeting_id: MEETING_ID,
+                issue: issue,
+                priority: priority,
+                owner: owner
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const tbody = document.querySelector('#issuesTable tbody');
+                const emptyEl = document.getElementById('issuesEmpty');
+                if (emptyEl) emptyEl.remove();
+
+                const tr = document.createElement('tr');
+                tr.dataset.issueId = data.id;
+                tr.innerHTML = `
+                    <td><span class="priority-badge priority-${priority}">${priority}</span></td>
+                    <td><span style="font-weight:500;">${escapeHtml(issue)}</span></td>
+                    <td><span style="font-size:13px;color:#666;">${escapeHtml(owner)}</span></td>
+                    <td><span class="ids-badge ids-IDENTIFY">Identify</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="resolveIssue(${data.id})">&#10003;</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                document.getElementById('newIssueText').value = '';
+                document.getElementById('newIssueOwner').value = '';
+                toggleAddForm('issue');
+                showToast('Issue added!', 'success');
+            }
+        })
+        .catch(() => showToast('Error creating issue', 'error'));
+    }
+
+    // ===== RATING =====
+    function setRating(val) {
+        currentRating = val;
+        document.getElementById('ratingValue').textContent = val + '/10';
+        document.getElementById('modalRating').textContent = val;
+        document.querySelectorAll('.rating-star').forEach(star => {
+            star.classList.toggle('active', parseInt(star.dataset.value) <= val);
+        });
+    }
+
+    // ===== ADD FORM TOGGLE =====
+    function toggleAddForm(type) {
+        const formId = type === 'todo' ? 'addTodoForm' : 'addIssueForm';
+        const form = document.getElementById(formId);
+        if (form) form.classList.toggle('visible');
+    }
+
+    // ===== COMPLETE MODAL =====
+    function openCompleteModal() {
+        document.getElementById('completeModal').classList.add('visible');
+        document.getElementById('modalRating').textContent = currentRating || '—';
+        // Pre-fill conclude notes
+        const concludeArea = document.getElementById('notes-conclude');
+        if (concludeArea) document.getElementById('modalNotes').value = concludeArea.value;
+    }
+
+    function closeCompleteModal() {
+        document.getElementById('completeModal').classList.remove('visible');
+    }
+
+    // ===== EMAIL MANAGEMENT =====
+    function handleEmailKey(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addEmailFromInput();
+        }
+    }
+
+    function addEmailFromInput() {
+        const input = document.getElementById('emailInput');
+        addEmail(input.value.trim());
+        input.value = '';
+    }
+
+    function addEmail(email) {
+        if (!email || emailList.includes(email)) return;
+        if (!email.includes('@')) { showToast('Invalid email', 'error'); return; }
+        emailList.push(email);
+        renderEmailTags();
+    }
+
+    function removeEmail(email) {
+        emailList = emailList.filter(e => e !== email);
+        renderEmailTags();
+    }
+
+    function renderEmailTags() {
+        const container = document.getElementById('emailTags');
+        container.innerHTML = emailList.map(e =>
+            `<span class="email-tag">${escapeHtml(e)} <span class="remove" onclick="removeEmail('${e}')">&times;</span></span>`
+        ).join('');
+    }
+
+    // ===== COMPLETE MEETING =====
+    function completeMeeting(sendEmail) {
+        const notes = document.getElementById('modalNotes').value;
+        const btn = sendEmail ? document.getElementById('btnCompleteEmail') : document.getElementById('btnCompleteNoEmail');
+        btn.textContent = 'Completing...';
+        btn.disabled = true;
+
+        fetch(`/api/l10/${MEETING_ID}/complete-email`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                emails: sendEmail ? emailList : [],
+                rating: currentRating,
+                notes: notes
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                let msg = `Meeting completed! Duration: ${data.duration} min.`;
+                if (data.emails_sent && data.emails_sent.length > 0) {
+                    const sent = data.emails_sent.filter(e => e.status === 'sent').length;
+                    msg += ` ${sent} email(s) sent.`;
+                }
+                showToast(msg, 'success');
+                setTimeout(() => {
+                    window.location.href = `/division/${DIVISION_ID}/l10`;
+                }, 1500);
+            } else {
+                showToast('Error completing meeting: ' + (data.error || 'Unknown'), 'error');
+                btn.textContent = sendEmail ? 'Complete & Send Email' : 'Complete (No Email)';
+                btn.disabled = false;
+            }
+        })
+        .catch(() => {
+            showToast('Network error completing meeting', 'error');
+            btn.textContent = sendEmail ? 'Complete & Send Email' : 'Complete (No Email)';
+            btn.disabled = false;
+        });
+    }
+
+    // ===== TOAST =====
+    function showToast(message, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast toast-' + (type || 'success') + ' visible';
+        setTimeout(() => { toast.classList.remove('visible'); }, 3000);
+    }
+
+    // ===== UTILITY =====
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    </script>
 </body>
 </html>
