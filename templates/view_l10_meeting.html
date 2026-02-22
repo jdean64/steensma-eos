@@ -65,6 +65,11 @@
         .status-in_progress, .status-in-progress { background: #fff4e6; color: #cc7700; }
         .status-completed { background: #e8f8f0; color: #00aa55; }
 
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.4); }
+        }
+
         /* ===== SECTION NAVIGATION ===== */
         .section-nav {
             display: flex; gap: 4px; background: white; border-radius: 10px;
@@ -272,7 +277,14 @@
     <!-- HEADER -->
     <div class="header">
         <div class="header-content">
-            <h1>L10 Meeting &mdash; {{ meeting.meeting_date }} &mdash; {{ meeting.division_name or 'Division' }}</h1>
+            <h1>
+                {% if is_living %}
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,255,136,0.15);color:#00ff88;padding:3px 12px;border-radius:14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-right:10px;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#00ff88;animation:pulse 2s ease-in-out infinite;"></span>
+                    Living
+                </span>
+                {% endif %}
+                L10 Meeting &mdash; {{ meeting.meeting_date }} &mdash; {{ meeting.division_name or 'Division' }}</h1>
             <div class="header-right">
                 {% if meeting.status == 'IN_PROGRESS' %}
                 <span class="timer-display" id="meetingTimer">00:00:00</span>
@@ -1165,9 +1177,16 @@
                     const sent = data.emails_sent.filter(e => e.status === 'sent').length;
                     msg += ` ${sent} email(s) sent.`;
                 }
+                if (data.new_meeting_id) {
+                    msg += ' New Living L10 is ready!';
+                }
                 showToast(msg, 'success');
                 setTimeout(() => {
-                    window.location.href = `/division/${DIVISION_ID}/l10`;
+                    if (data.new_meeting_id) {
+                        window.location.href = `/division/${DIVISION_ID}/l10/${data.new_meeting_id}`;
+                    } else {
+                        window.location.href = `/division/${DIVISION_ID}/l10`;
+                    }
                 }, 1500);
             } else {
                 showToast('Error completing meeting: ' + (data.error || 'Unknown'), 'error');

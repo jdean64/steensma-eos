@@ -13,6 +13,52 @@ import time
 from datetime import datetime, timedelta
 
 
+def _create_living_l10(division_id, user_id):
+    """
+    Create the next 'Living L10' — an always-open meeting shell.
+    Staff can add notes, todos, issues between meetings.
+    When completed, a new one auto-spawns.
+    Returns the new meeting_id.
+    """
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT organization_id FROM divisions WHERE id = ?", (division_id,))
+        row = cursor.fetchone()
+        org_id = row['organization_id'] if row else 1
+
+        today = datetime.now().strftime('%Y-%m-%d')
+        cursor.execute("""
+            INSERT INTO l10_meetings (
+                organization_id, division_id, meeting_date, meeting_time,
+                frequency, duration_minutes, status, started_at,
+                created_by, created_at, updated_at
+            )
+            VALUES (?, ?, ?, '09:00', 'WEEKLY', 60, 'IN_PROGRESS', CURRENT_TIMESTAMP,
+                    ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        """, (org_id, division_id, today, user_id))
+        meeting_id = cursor.lastrowid
+
+        standard_sections = [
+            ('Segue', 1, 5),
+            ('Headlines', 2, 5),
+            ('Scorecard Review', 3, 5),
+            ('Rock Review', 4, 5),
+            ('To-Do List Review', 5, 5),
+            ('IDS', 6, 30),
+            ('Conclude', 7, 5),
+        ]
+        for section_name, order, minutes in standard_sections:
+            cursor.execute("""
+                INSERT INTO l10_sections (
+                    l10_meeting_id, section_name, section_order,
+                    allocated_minutes, status
+                ) VALUES (?, ?, ?, ?, 'PENDING')
+            """, (meeting_id, section_name, order, minutes))
+
+        conn.commit()
+    return meeting_id
+
+
 def register_l10_routes(app):
     """Register L10 meeting routes"""
 
@@ -37,11 +83,24 @@ def register_l10_routes(app):
             """, (division_id,))
             division = dict(cursor.fetchone())
 
+            # The Living L10 — the current open meeting
             cursor.execute("""
                 SELECT l.*, u.full_name as facilitator_name
                 FROM l10_meetings l
                 LEFT JOIN users u ON l.facilitator_user_id = u.id
-                WHERE l.division_id = ? AND l.status IN ('SCHEDULED', 'IN_PROGRESS')
+                WHERE l.division_id = ? AND l.status = 'IN_PROGRESS'
+                ORDER BY l.created_at DESC
+                LIMIT 1
+            """, (division_id,))
+            living_row = cursor.fetchone()
+            living_meeting = dict(living_row) if living_row else None
+
+            # Other upcoming (scheduled but not in-progress)
+            cursor.execute("""
+                SELECT l.*, u.full_name as facilitator_name
+                FROM l10_meetings l
+                LEFT JOIN users u ON l.facilitator_user_id = u.id
+                WHERE l.division_id = ? AND l.status = 'SCHEDULED'
                 ORDER BY l.meeting_date ASC, l.meeting_time ASC
                 LIMIT 10
             """, (division_id,))
@@ -52,7 +111,7 @@ def register_l10_routes(app):
                 FROM l10_meetings l
                 LEFT JOIN users u ON l.facilitator_user_id = u.id
                 WHERE l.division_id = ? AND l.status = 'COMPLETED'
-                ORDER BY l.meeting_date DESC, l.completed_at DESC
+                ORDER BY l.completed_at DESC
                 LIMIT 20
             """, (division_id,))
             past_meetings = [dict(row) for row in cursor.fetchall()]
@@ -69,9 +128,34 @@ def register_l10_routes(app):
         can_edit = can_edit_division(user, division_id)
         return render_template('l10_meetings.html',
                                user=user, division=division,
+                               living_meeting=living_meeting,
                                upcoming_meetings=upcoming_meetings,
                                past_meetings=past_meetings,
                                stats=stats, can_edit=can_edit)
+
+    @app.route('/division/<int:division_id>/l10/current')
+    @login_required
+    @division_access_required('division_id')
+    def l10_current(division_id):
+        """Redirect to the current Living L10, creating one if needed"""
+        user = session.get('user')
+        living = execute_with_retry("""
+            SELECT id FROM l10_meetings
+            WHERE division_id = ? AND status = 'IN_PROGRESS'
+            ORDER BY created_at DESC LIMIT 1
+        """, (division_id,), fetch='one', commit=False)
+
+        if living:
+            return redirect(url_for('view_l10_meeting', division_id=division_id, meeting_id=living['id']))
+
+        # No living L10 exists — create one
+        if can_edit_division(user, division_id):
+            new_id = _create_living_l10(division_id, user['id'])
+            flash('New Living L10 created — add notes anytime!', 'success')
+            return redirect(url_for('view_l10_meeting', division_id=division_id, meeting_id=new_id))
+        else:
+            flash('No active L10 meeting. Ask an admin to create one.', 'danger')
+            return redirect(url_for('l10_meetings', division_id=division_id))
 
     @app.route('/division/<int:division_id>/l10/add', methods=['GET', 'POST'])
     @login_required
@@ -230,11 +314,12 @@ def register_l10_routes(app):
             users = [dict(row) for row in cursor.fetchall()]
 
         can_edit = can_edit_division(user, division_id)
+        is_living = meeting.get('status') == 'IN_PROGRESS'
         return render_template('view_l10_meeting.html',
                                user=user, meeting=meeting, sections=sections,
                                rocks=rocks, issues=issues, todos=todos,
                                users=users, division_id=division_id,
-                               can_edit=can_edit)
+                               can_edit=can_edit, is_living=is_living)
 
     # =========================================================
     # MEETING LIFECYCLE (commit BEFORE log_action)
@@ -305,7 +390,13 @@ def register_l10_routes(app):
         except Exception:
             pass
 
-        flash(f'L10 meeting completed! Duration: {duration} minutes', 'success')
+        # Auto-create the next Living L10
+        try:
+            new_id = _create_living_l10(division_id, user['id'])
+            flash(f'L10 completed ({duration} min). New Living L10 is ready!', 'success')
+        except Exception:
+            flash(f'L10 meeting completed! Duration: {duration} minutes', 'success')
+
         return redirect(url_for('l10_meetings', division_id=division_id))
 
     # =========================================================
@@ -627,10 +718,19 @@ def register_l10_routes(app):
                 except ImportError:
                     email_results = [{'email': e, 'status': 'skipped', 'error': 'Email service not configured'} for e in emails]
 
+            # Auto-create next Living L10
+            new_living_id = None
+            try:
+                new_living_id = _create_living_l10(division_id, user['id'])
+            except Exception:
+                pass
+
             return jsonify({
                 'success': True,
                 'duration': duration,
-                'emails_sent': email_results
+                'emails_sent': email_results,
+                'new_meeting_id': new_living_id,
+                'redirect_url': f'/division/{division_id}/l10'
             })
         except sqlite3.OperationalError:
             return jsonify({'success': False, 'error': 'Database busy', 'retry': True}), 503

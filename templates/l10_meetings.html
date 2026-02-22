@@ -5,250 +5,177 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>L10 Meetings - {{ division.display_name }} - EOS Platform</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
-            background: #f5f5f5;
-            color: #2a2a2a;
-            line-height: 1.6;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
         }
-        
+
         .header {
-            background: #1a1a1a;
-            color: white;
-            padding: 20px 40px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: #1a1a1a; color: white;
+            padding: 20px 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 40px;
-        }
-        
+        .header h1 { font-size: 24px; font-weight: 600; }
+
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 40px; }
+
         .back-link {
-            display: inline-block;
-            color: #6a6a6a;
-            text-decoration: none;
-            font-size: 14px;
-            margin-bottom: 24px;
-            transition: color 0.2s;
+            display: inline-block; color: #6a6a6a; text-decoration: none;
+            font-size: 14px; margin-bottom: 24px; transition: color 0.2s;
         }
-        
-        .back-link:hover {
-            color: #1a1a1a;
+        .back-link:hover { color: #1a1a1a; }
+
+        .alert {
+            padding: 16px 20px; border-radius: 6px; margin-bottom: 24px; font-size: 14px;
         }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 32px;
+        .alert-success { background: #e8f8f0; color: #00aa55; border: 1px solid #b5eacf; }
+
+        /* ===== LIVING L10 HERO ===== */
+        .living-hero {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border-radius: 16px; padding: 40px; margin-bottom: 32px;
+            color: white; position: relative; overflow: hidden;
         }
-        
-        .page-title {
-            font-size: 32px;
-            font-weight: 700;
+        .living-hero::before {
+            content: ''; position: absolute; top: -50%; right: -10%;
+            width: 300px; height: 300px; border-radius: 50%;
+            background: rgba(0,255,136,0.06);
         }
-        
-        .btn {
-            padding: 12px 24px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            text-decoration: none;
-            display: inline-block;
+        .living-hero-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            position: relative; z-index: 1;
         }
-        
-        .btn-primary {
-            background: #1a1a1a;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #2d2d2d;
-            transform: translateY(-1px);
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #1a1a1a;
-        }
-        
-        .stat-label {
-            font-size: 13px;
-            color: #6a6a6a;
-            margin-top: 4px;
-        }
-        
-        .section {
-            background: white;
-            border-radius: 8px;
-            padding: 32px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 24px;
-        }
-        
-        .section-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .meetings-list {
-            list-style: none;
-        }
-        
-        .meeting-item {
-            padding: 16px 0;
-            border-bottom: 1px solid #e8e8e8;
-            display: grid;
-            grid-template-columns: 120px 100px 1fr 150px auto;
-            gap: 16px;
-            align-items: center;
-        }
-        
-        .meeting-item:last-child {
-            border-bottom: none;
-        }
-        
-        .meeting-date {
-            font-weight: 600;
-            color: #1a1a1a;
-        }
-        
-        .meeting-time {
-            font-size: 14px;
-            color: #6a6a6a;
-        }
-        
-        .meeting-info {
-            font-size: 14px;
-            color: #4a4a4a;
-        }
-        
-        .meeting-facilitator {
-            font-size: 13px;
-            color: #6a6a6a;
-        }
-        
-        .meeting-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-        }
-        
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 13px;
-            text-decoration: none;
-            background: #f0f0f0;
-            color: #2a2a2a;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-        
-        .btn-sm:hover {
-            background: #e0e0e0;
-        }
-        
-        .btn-sm.primary {
-            background: #1a1a1a;
-            color: white;
-        }
-        
-        .btn-sm.primary:hover {
-            background: #2d2d2d;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .badge-scheduled {
-            background: #e8f4fd;
-            color: #0066cc;
-        }
-        
-        .badge-in-progress {
-            background: #fff4e6;
-            color: #cc7700;
-        }
-        
-        .badge-completed {
-            background: #e8f8f0;
-            color: #00aa55;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 48px 20px;
-            color: #8a8a8a;
-        }
-        
-        .empty-state-icon {
-            font-size: 48px;
+        .living-label {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(0,255,136,0.15); color: #00ff88;
+            padding: 6px 16px; border-radius: 20px; font-size: 12px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
             margin-bottom: 16px;
         }
-        
-        .alert {
-            padding: 16px 20px;
-            border-radius: 6px;
-            margin-bottom: 24px;
-            font-size: 14px;
+        .living-pulse {
+            width: 8px; height: 8px; border-radius: 50%; background: #00ff88;
+            animation: pulse 2s ease-in-out infinite;
         }
-        
-        .alert-success {
-            background: #efe;
-            color: #3c3;
-            border: 1px solid #cfc;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.4); }
+        }
+        .living-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .living-subtitle { color: #aaa; font-size: 14px; margin-bottom: 24px; }
+        .living-stats {
+            display: flex; gap: 32px; margin-bottom: 28px; position: relative; z-index: 1;
+        }
+        .living-stat-item { display: flex; flex-direction: column; }
+        .living-stat-value { font-size: 20px; font-weight: 700; color: #00ff88; }
+        .living-stat-label { font-size: 12px; color: #888; margin-top: 2px; }
+        .btn-open-living {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: #00aa55; color: white; padding: 16px 36px;
+            border-radius: 10px; font-size: 16px; font-weight: 700;
+            text-decoration: none; transition: all 0.3s; border: none; cursor: pointer;
+            position: relative; z-index: 1;
+        }
+        .btn-open-living:hover {
+            background: #00cc66; transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,170,85,0.3);
+        }
+        .btn-open-living svg { width: 20px; height: 20px; }
+
+        /* ===== NO LIVING - CREATE STATE ===== */
+        .create-living {
+            background: white; border: 2px dashed #d0d0d0; border-radius: 16px;
+            padding: 48px; text-align: center; margin-bottom: 32px;
+            transition: border-color 0.3s;
+        }
+        .create-living:hover { border-color: #00aa55; }
+        .create-living-icon { font-size: 48px; margin-bottom: 16px; }
+        .create-living h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .create-living p { color: #6a6a6a; font-size: 14px; margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .btn-create-living {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #1a1a1a; color: white; padding: 14px 32px;
+            border-radius: 8px; font-size: 15px; font-weight: 600;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .btn-create-living:hover { background: #2d2d2d; transform: translateY(-1px); }
+
+        /* ===== STATS ===== */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 20px; margin-bottom: 32px;
+        }
+        .stat-card {
+            background: white; padding: 20px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .stat-value { font-size: 32px; font-weight: 700; color: #1a1a1a; }
+        .stat-label { font-size: 13px; color: #6a6a6a; margin-top: 4px; }
+
+        /* ===== SECTIONS ===== */
+        .section {
+            background: white; border-radius: 8px; padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;
+        }
+        .section-title {
+            font-size: 20px; font-weight: 600; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .meetings-list { list-style: none; }
+        .meeting-item {
+            padding: 16px 0; border-bottom: 1px solid #e8e8e8;
+            display: grid; grid-template-columns: 120px 100px 1fr 150px auto;
+            gap: 16px; align-items: center;
+        }
+        .meeting-item:last-child { border-bottom: none; }
+        .meeting-date { font-weight: 600; color: #1a1a1a; }
+        .meeting-time { font-size: 14px; color: #6a6a6a; }
+        .meeting-info { font-size: 14px; color: #4a4a4a; }
+        .meeting-facilitator { font-size: 13px; color: #6a6a6a; }
+        .meeting-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+        .btn-sm {
+            padding: 6px 12px; font-size: 13px; text-decoration: none;
+            background: #f0f0f0; color: #2a2a2a; border-radius: 4px; transition: all 0.2s;
+        }
+        .btn-sm:hover { background: #e0e0e0; }
+        .btn-sm.primary { background: #1a1a1a; color: white; }
+        .btn-sm.primary:hover { background: #2d2d2d; }
+
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-scheduled { background: #e8f4fd; color: #0066cc; }
+        .badge-in-progress { background: #fff4e6; color: #cc7700; }
+        .badge-completed { background: #e8f8f0; color: #00aa55; }
+
+        .empty-state {
+            text-align: center; padding: 48px 20px; color: #8a8a8a;
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 16px; }
+            .living-hero { padding: 24px; }
+            .living-title { font-size: 22px; }
+            .living-stats { flex-wrap: wrap; gap: 16px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .meeting-item {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>L10 Meetings - {{ division.display_name }}</h1>
+        <h1>L10 Meetings &mdash; {{ division.display_name }}</h1>
     </div>
-    
+
     <div class="container">
-        <a href="{{ url_for('division_dashboard', division_id=division.id) }}" class="back-link">← Back to Dashboard</a>
-        
+        <a href="{{ url_for('division_dashboard', division_id=division.id) }}" class="back-link">&larr; Back to Dashboard</a>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -256,14 +183,57 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        
-        <div class="page-header">
-            <h2 class="page-title">Level 10 Meetings</h2>
-            {% if can_edit %}
-            <a href="{{ url_for('add_l10_meeting', division_id=division.id) }}" class="btn btn-primary">+ Schedule L10</a>
-            {% endif %}
+
+        <!-- ===== LIVING L10 HERO ===== -->
+        {% if living_meeting %}
+        <div class="living-hero">
+            <div class="living-hero-top">
+                <div>
+                    <div class="living-label">
+                        <span class="living-pulse"></span>
+                        Living L10
+                    </div>
+                    <div class="living-title">Your Current L10 is Open</div>
+                    <div class="living-subtitle">
+                        Started {{ living_meeting.meeting_date }}
+                        {% if living_meeting.facilitator_name %}
+                         &middot; Facilitated by {{ living_meeting.facilitator_name }}
+                        {% endif %}
+                        &mdash; Add notes, todos, and issues anytime between meetings.
+                    </div>
+                </div>
+            </div>
+            <div class="living-stats">
+                <div class="living-stat-item">
+                    <div class="living-stat-value">{{ living_meeting.meeting_date }}</div>
+                    <div class="living-stat-label">Opened</div>
+                </div>
+                <div class="living-stat-item">
+                    <div class="living-stat-value">{{ living_meeting.status }}</div>
+                    <div class="living-stat-label">Status</div>
+                </div>
+            </div>
+            <a href="{{ url_for('view_l10_meeting', division_id=division.id, meeting_id=living_meeting.id) }}" class="btn-open-living">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+                </svg>
+                Open Current L10
+            </a>
         </div>
-        
+        {% else %}
+            {% if can_edit %}
+            <div class="create-living">
+                <div class="create-living-icon">&#9889;</div>
+                <h3>Start Your Living L10</h3>
+                <p>A Living L10 stays open between meetings so your team can add notes, surface issues, and track to-dos in real time. When you close it, a new one auto-opens.</p>
+                <a href="{{ url_for('l10_current', division_id=division.id) }}" class="btn-create-living">
+                    &#9889; Create Living L10
+                </a>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- ===== STATS ===== -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value">{{ stats.total_meetings or 0 }}</div>
@@ -278,11 +248,11 @@
                 <div class="stat-label">Avg Duration</div>
             </div>
         </div>
-        
+
+        <!-- ===== UPCOMING (Scheduled) ===== -->
+        {% if upcoming_meetings %}
         <div class="section">
-            <h3 class="section-title">📅 Upcoming Meetings</h3>
-            
-            {% if upcoming_meetings %}
+            <h3 class="section-title">&#128197; Scheduled Meetings</h3>
             <ul class="meetings-list">
                 {% for meeting in upcoming_meetings %}
                 <li class="meeting-item">
@@ -292,11 +262,11 @@
                         <span class="badge badge-{{ meeting.status.lower()|replace(' ', '-') }}">
                             {{ meeting.status }}
                         </span>
-                        • {{ meeting.frequency or 'WEEKLY' }}
+                        &middot; {{ meeting.frequency or 'WEEKLY' }}
                     </div>
                     <div class="meeting-facilitator">
                         {% if meeting.facilitator_name %}
-                        Facilitator: {{ meeting.facilitator_name }}
+                        {{ meeting.facilitator_name }}
                         {% endif %}
                     </div>
                     <div class="meeting-actions">
@@ -305,20 +275,13 @@
                 </li>
                 {% endfor %}
             </ul>
-            {% else %}
-            <div class="empty-state">
-                <div class="empty-state-icon">📆</div>
-                <p>No upcoming meetings scheduled</p>
-                {% if can_edit %}
-                <a href="{{ url_for('add_l10_meeting', division_id=division.id) }}" class="btn btn-primary" style="margin-top: 16px;">Schedule Your First L10</a>
-                {% endif %}
-            </div>
-            {% endif %}
         </div>
-        
+        {% endif %}
+
+        <!-- ===== PAST MEETINGS ===== -->
         <div class="section">
-            <h3 class="section-title">✅ Past Meetings</h3>
-            
+            <h3 class="section-title">&#9989; Past Meetings</h3>
+
             {% if past_meetings %}
             <ul class="meetings-list">
                 {% for meeting in past_meetings %}
@@ -328,7 +291,7 @@
                     <div class="meeting-info">
                         <span class="badge badge-completed">COMPLETED</span>
                         {% if meeting.actual_duration_minutes %}
-                        • {{ meeting.actual_duration_minutes }} min
+                        &middot; {{ meeting.actual_duration_minutes }} min
                         {% endif %}
                     </div>
                     <div class="meeting-facilitator">
@@ -344,8 +307,8 @@
             </ul>
             {% else %}
             <div class="empty-state">
-                <div class="empty-state-icon">📝</div>
-                <p>No past meetings yet</p>
+                <div class="empty-state-icon">&#128221;</div>
+                <p>No past meetings yet. Complete your first Living L10 to build history.</p>
             </div>
             {% endif %}
         </div>
