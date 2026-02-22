@@ -11,7 +11,9 @@ DATABASE_PATH = Path(__file__).parent / 'eos_data.db'
 
 def log_change(table_name, record_id, action, changed_by, changes, ip_address=None):
     """Log all changes to audit_log table"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA busy_timeout=30000')
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -24,7 +26,9 @@ def log_change(table_name, record_id, action, changed_by, changes, ip_address=No
 
 def update_rock(rock_id, field, new_value, changed_by):
     """Update a rock field and track the change"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA busy_timeout=30000')
     cursor = conn.cursor()
     
     # Get current value
@@ -61,7 +65,9 @@ def ids_workflow_issue(issue_id, stage, changed_by, notes=None, solution=None):
     2. DISCUSS - Team discusses root cause and options
     3. SOLVE - Solution is implemented
     """
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA busy_timeout=30000')
     cursor = conn.cursor()
     
     # Get current stage
@@ -105,7 +111,9 @@ def ids_workflow_issue(issue_id, stage, changed_by, notes=None, solution=None):
 
 def get_rock_history(rock_id):
     """Get full history of changes for a rock"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA busy_timeout=30000')
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -131,7 +139,9 @@ def get_rock_history(rock_id):
 
 def get_issue_history(issue_id):
     """Get full IDS workflow history for an issue"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA busy_timeout=30000')
     cursor = conn.cursor()
     
     cursor.execute('''

@@ -14,6 +14,15 @@ import bcrypt
 
 DATABASE_PATH = Path(__file__).parent / 'eos_data.db'
 
+def _get_db():
+    """Get database connection with WAL mode and proper timeout"""
+    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA synchronous=NORMAL')
+    conn.execute('PRAGMA busy_timeout=30000')
+    return conn
+
 # =====================================================
 # PASSWORD HASHING
 # =====================================================
@@ -45,8 +54,7 @@ def authenticate_user(username: str, password: str) -> dict:
     Authenticate a user by username and password
     Returns user dict with roles and permissions, or None if auth fails
     """
-    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
-    conn.row_factory = sqlite3.Row
+    conn = _get_db()
     cursor = conn.cursor()
 
     try:
@@ -173,8 +181,7 @@ def get_user_divisions(user: dict) -> list:
     """Get list of divisions the user has access to"""
     if user.get('is_parent_admin'):
         # Parent admins see all divisions
-        conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
-        conn.row_factory = sqlite3.Row
+        conn = _get_db()
         cursor = conn.cursor()
         try:
             cursor.execute("""
@@ -297,7 +304,7 @@ def division_edit_required(division_id_param='division_id'):
 
 def create_user(username: str, email: str, password: str, full_name: str = None) -> int:
     """Create a new user"""
-    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn = _get_db()
     cursor = conn.cursor()
 
     try:
@@ -318,7 +325,7 @@ def create_user(username: str, email: str, password: str, full_name: str = None)
 def assign_role(user_id: int, role_name: str, organization_id: int = None,
                 division_id: int = None, assigned_by: int = None) -> int:
     """Assign a role to a user"""
-    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn = _get_db()
     cursor = conn.cursor()
 
     try:
@@ -346,8 +353,7 @@ def assign_role(user_id: int, role_name: str, organization_id: int = None,
 
 def get_user_by_id(user_id: int) -> dict:
     """Get user by ID with roles"""
-    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
-    conn.row_factory = sqlite3.Row
+    conn = _get_db()
     cursor = conn.cursor()
 
     try:
@@ -399,7 +405,7 @@ def get_user_by_id(user_id: int) -> dict:
 def create_division(organization_id: int, name: str, slug: str,
                    display_name: str = None, created_by: int = None) -> int:
     """Create a new division"""
-    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn = _get_db()
     cursor = conn.cursor()
 
     try:
@@ -430,8 +436,7 @@ def create_division(organization_id: int, name: str, slug: str,
 
 def get_division_by_id(division_id: int) -> dict:
     """Get division by ID"""
-    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
-    conn.row_factory = sqlite3.Row
+    conn = _get_db()
     cursor = conn.cursor()
 
     try:
@@ -450,8 +455,7 @@ def get_division_by_id(division_id: int) -> dict:
 
 def get_all_divisions(organization_id: int = None) -> list:
     """Get all divisions, optionally filtered by organization"""
-    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
-    conn.row_factory = sqlite3.Row
+    conn = _get_db()
     cursor = conn.cursor()
 
     try:
@@ -482,7 +486,7 @@ def log_action(user_id: int, table_name: str, record_id: int, action: str,
                changes: dict = None, organization_id: int = None,
                division_id: int = None, ip_address: str = None):
     """Log an action to the audit trail"""
-    conn = sqlite3.connect(DATABASE_PATH, timeout=30.0)
+    conn = _get_db()
     cursor = conn.cursor()
 
     try:
