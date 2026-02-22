@@ -720,6 +720,27 @@
     let emailList = [];
     let saveTimers = {};
 
+    // ===== FETCH WITH RETRY (handles 503 from busy DB) =====
+    async function fetchWithRetry(url, options, maxRetries = 3) {
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 503 && attempt < maxRetries) {
+                    // Server said DB busy, wait and retry with exponential backoff
+                    await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
+                    continue;
+                }
+                return await response.json();
+            } catch (err) {
+                if (attempt < maxRetries) {
+                    await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
+                    continue;
+                }
+                throw err;
+            }
+        }
+    }
+
     // ===== TIMER =====
     function startTimer() {
         if (!STARTED_AT || MEETING_STATUS !== 'IN_PROGRESS') return;
@@ -789,12 +810,11 @@
         clearTimeout(saveTimers[field]);
         showIndicator(indicatorId, 'saving', 'Saving...');
         saveTimers[field] = setTimeout(() => {
-            fetch(`/api/l10/${MEETING_ID}/save-notes`, {
+            fetchWithRetry(`/api/l10/${MEETING_ID}/save-notes`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ field: field, value: value })
             })
-            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     showIndicator(indicatorId, 'saved', 'Saved');
@@ -803,29 +823,27 @@
                 }
             })
             .catch(() => showIndicator(indicatorId, 'error', 'Network error'));
-        }, 600);
+        }, 1500);
     }
 
     function autoSaveConclude(textarea) {
         clearTimeout(saveTimers['conclude']);
         showIndicator('save-conclude', 'saving', 'Saving...');
         saveTimers['conclude'] = setTimeout(() => {
-            // Save conclude notes to the section
             const sections = {{ sections|tojson }};
             const concludeSection = sections.find(s => s.section_name === 'Conclude');
             if (concludeSection) {
-                fetch(`/api/l10/${MEETING_ID}/save-section`, {
+                fetchWithRetry(`/api/l10/${MEETING_ID}/save-section`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ section_id: concludeSection.id, notes: textarea.value, status: 'ACTIVE' })
                 })
-                .then(r => r.json())
                 .then(data => {
                     showIndicator('save-conclude', data.success ? 'saved' : 'error', data.success ? 'Saved' : 'Error');
                 })
                 .catch(() => showIndicator('save-conclude', 'error', 'Network error'));
             }
-        }, 600);
+        }, 1500);
     }
 
     function showIndicator(id, cls, text) {
@@ -847,12 +865,11 @@
             const field = this.dataset.field;
             const value = this.value;
 
-            fetch(`/api/l10/rock/${rockId}/update`, {
+            fetchWithRetry(`/api/l10/rock/${rockId}/update`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ [field]: value })
             })
-            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     showToast('Rock updated', 'success');
@@ -876,12 +893,11 @@
 
     // ===== INLINE TODO UPDATE =====
     function toggleTodo(todoId, checked) {
-        fetch(`/api/l10/todo/${todoId}/update`, {
+        fetchWithRetry(`/api/l10/todo/${todoId}/update`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ is_completed: checked })
         })
-        .then(r => r.json())
         .then(data => {
             if (data.success) {
                 const row = document.querySelector(`tr[data-todo-id="${todoId}"]`);
@@ -899,12 +915,11 @@
             const row = this.closest('tr');
             const todoId = row.dataset.todoId;
             const field = this.dataset.field;
-            fetch(`/api/l10/todo/${todoId}/update`, {
+            fetchWithRetry(`/api/l10/todo/${todoId}/update`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ [field]: this.value })
             })
-            .then(r => r.json())
             .then(data => { if (data.success) showToast('To-Do updated', 'success'); })
             .catch(() => showToast('Error updating to-do', 'error'));
         });
@@ -920,7 +935,7 @@
         const due = document.getElementById('newTodoDue').value;
         if (!task) { showToast('Task is required', 'error'); return; }
 
-        fetch('/api/l10/todo/create', {
+        fetchWithRetry('/api/l10/todo/create', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -931,7 +946,6 @@
                 due_date: due
             })
         })
-        .then(r => r.json())
         .then(data => {
             if (data.success) {
                 // Add row to table
@@ -967,12 +981,11 @@
             const row = this.closest('tr');
             const issueId = row.dataset.issueId;
             const field = this.dataset.field;
-            fetch(`/api/l10/issue/${issueId}/update`, {
+            fetchWithRetry(`/api/l10/issue/${issueId}/update`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ [field]: this.value })
             })
-            .then(r => r.json())
             .then(data => { if (data.success) showToast('Issue updated', 'success'); })
             .catch(() => showToast('Error updating issue', 'error'));
         });
@@ -985,12 +998,11 @@
 
     function resolveIssue(issueId) {
         if (!confirm('Resolve this issue?')) return;
-        fetch(`/api/l10/issue/${issueId}/update`, {
+        fetchWithRetry(`/api/l10/issue/${issueId}/update`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ status: 'RESOLVED', ids_stage: 'SOLVE' })
         })
-        .then(r => r.json())
         .then(data => {
             if (data.success) {
                 const row = document.querySelector(`tr[data-issue-id="${issueId}"]`);
@@ -1004,7 +1016,7 @@
     function createTodoFromIssue(issueId, issueText) {
         const owner = prompt('Owner for this to-do?');
         if (owner === null) return;
-        fetch('/api/l10/todo/create', {
+        fetchWithRetry('/api/l10/todo/create', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -1015,7 +1027,6 @@
                 due_date: ''
             })
         })
-        .then(r => r.json())
         .then(data => {
             if (data.success) showToast('To-Do created from issue!', 'success');
         })
@@ -1029,7 +1040,7 @@
         const owner = document.getElementById('newIssueOwner').value;
         if (!issue) { showToast('Issue description is required', 'error'); return; }
 
-        fetch('/api/l10/issue/create', {
+        fetchWithRetry('/api/l10/issue/create', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -1040,7 +1051,6 @@
                 owner: owner
             })
         })
-        .then(r => r.json())
         .then(data => {
             if (data.success) {
                 const tbody = document.querySelector('#issuesTable tbody');
@@ -1139,7 +1149,7 @@
         btn.textContent = 'Completing...';
         btn.disabled = true;
 
-        fetch(`/api/l10/${MEETING_ID}/complete-email`, {
+        fetchWithRetry(`/api/l10/${MEETING_ID}/complete-email`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -1148,7 +1158,6 @@
                 notes: notes
             })
         })
-        .then(r => r.json())
         .then(data => {
             if (data.success) {
                 let msg = `Meeting completed! Duration: ${data.duration} min.`;
