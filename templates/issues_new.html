@@ -10,182 +10,214 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
             background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
         }
+
+        /* === HEADER === */
         .header {
-            background: #1a1a1a; color: white; padding: 14px 40px;
+            background: #1a1a1a; color: white; padding: 20px 40px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
         }
         .header-left { display: flex; align-items: center; gap: 16px; }
         .back-link { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.2s; }
         .back-link:hover { color: white; }
-        .header h1 { font-size: 22px; font-weight: 600; }
-        .header-right { display: flex; gap: 12px; align-items: center; }
-        .user-info { font-size: 13px; color: #888; }
-
-        .btn {
-            padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
-            cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
-            display: inline-flex; align-items: center; gap: 6px;
-        }
-        .btn-success { background: #00aa55; color: white; }
-        .btn-success:hover { background: #008844; }
-        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header-right { display: flex; gap: 16px; align-items: center; }
+        .user-info { font-size: 14px; color: #b0b0b0; }
         .btn-logout {
-            padding: 6px 14px; background: transparent; border: 1px solid #4a4a4a;
-            color: white; border-radius: 4px; font-size: 12px; text-decoration: none;
+            padding: 8px 16px; background: transparent; border: 1px solid #4a4a4a;
+            color: white; border-radius: 4px; font-size: 13px; text-decoration: none; transition: all 0.2s;
         }
+        .btn-logout:hover { background: #2d2d2d; border-color: #6a6a6a; }
         .btn-brainstorm {
-            padding: 8px 16px; background: #7c3aed; color: white; border-radius: 6px;
-            font-size: 13px; font-weight: 600; text-decoration: none;
+            padding: 8px 18px; background: #7c3aed; color: white; border-radius: 6px;
+            font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s;
         }
         .btn-brainstorm:hover { background: #6d28d9; }
 
-        .container { max-width: 1200px; margin: 24px auto; padding: 0 32px; }
+        /* === LAYOUT === */
+        .container { max-width: 1400px; margin: 40px auto; padding: 0 40px; }
+        .page-title { margin-bottom: 32px; }
+        .page-title h2 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+        .page-title p { font-size: 14px; color: #6a6a6a; }
 
-        /* Summary Strip */
-        .summary-strip {
-            display: flex; gap: 24px; margin-bottom: 20px; padding: 16px 24px;
-            background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            flex-wrap: wrap;
+        /* === SUMMARY CARDS === */
+        .summary-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px; margin-bottom: 32px;
         }
-        .summary-item { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
-        .summary-num { font-size: 28px; font-weight: 700; line-height: 1; }
-        .summary-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+        .summary-card {
+            background: white; padding: 24px; border-radius: 8px;
+            border: 1px solid #e5e5e5; transition: all 0.2s;
+        }
+        .summary-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .summary-card-label {
+            font-size: 11px; color: #8a8a8a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 8px;
+        }
+        .summary-card-value { font-size: 32px; font-weight: 700; color: #1a1a1a; line-height: 1.2; }
 
-        /* Filters */
+        /* === FILTER BAR === */
         .filter-bar {
-            display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;
+            display: flex; gap: 8px; margin-bottom: 24px; align-items: center; flex-wrap: wrap;
         }
         .filter-btn {
-            padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
             cursor: pointer; border: 1px solid #e0e0e0; background: white; color: #555;
             transition: all 0.2s;
         }
         .filter-btn.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
         .filter-btn:hover { border-color: #999; }
+        .filter-divider { width: 1px; height: 24px; background: #e0e0e0; margin: 0 4px; }
 
-        /* Quick Add Bar */
-        .quick-add {
-            display: flex; gap: 8px; margin-bottom: 20px; padding: 12px 16px;
-            background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            align-items: center; flex-wrap: wrap;
+        /* === QUICK ADD === */
+        .quick-add-section {
+            background: white; border: 1px solid #e0e0e0; border-radius: 8px;
+            margin-bottom: 32px; overflow: hidden;
         }
-        .quick-add input, .quick-add select {
-            padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 6px;
-            font-size: 14px; outline: none; transition: border-color 0.2s;
+        .quick-add-bar {
+            display: flex; gap: 12px; padding: 16px 24px; align-items: center; flex-wrap: wrap;
         }
-        .quick-add input:focus, .quick-add select:focus { border-color: #00aa55; }
-        .quick-add input[type="text"] { flex: 1; min-width: 220px; }
-        .quick-add select { min-width: 110px; }
+        .quick-add-bar input, .quick-add-bar select {
+            padding: 10px 14px; border: 1px solid #e5e5e5; border-radius: 6px;
+            font-size: 14px; outline: none; transition: border-color 0.2s; background: #fafafa;
+        }
+        .quick-add-bar input:focus, .quick-add-bar select:focus { border-color: #1a1a1a; background: white; }
+        .quick-add-bar input[type="text"] { flex: 1; min-width: 220px; }
+        .quick-add-bar select { min-width: 100px; }
+        .btn-add {
+            padding: 10px 20px; background: #1a1a1a; color: white; border: none;
+            border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-add:hover { background: #333; }
 
-        /* Issue Row */
-        .issue-panel {
-            background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            overflow: hidden; margin-bottom: 16px;
-        }
-        .issue-panel-header {
-            padding: 14px 20px; font-size: 13px; font-weight: 700; color: #6a6a6a;
-            text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .issue-row {
-            display: grid;
-            grid-template-columns: 1fr 120px 80px 90px 80px 44px;
-            gap: 8px; align-items: center; padding: 10px 20px;
-            border-bottom: 1px solid #f0f0f0; transition: background 0.15s;
-        }
-        .issue-row:hover { background: #fafafa; }
-        .issue-row:last-child { border-bottom: none; }
-        .issue-row.resolved { opacity: 0.45; }
-        .issue-row.resolved .issue-text { text-decoration: line-through; color: #aaa; }
-
-        .issue-text {
-            font-size: 14px; font-weight: 500; border: none; background: transparent;
-            width: 100%; padding: 4px 0; outline: none; color: #2a2a2a;
-        }
-        .issue-text:focus { border-bottom: 2px solid #00aa55; }
-
-        .issue-owner {
-            font-size: 13px; border: none; background: transparent;
-            padding: 4px 0; color: #555; outline: none; width: 100%;
-        }
-        .issue-owner:focus { border-bottom: 2px solid #2563eb; }
-
-        .issue-priority {
-            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
-            border: none; cursor: pointer; text-transform: uppercase; text-align: center;
-            outline: none; -webkit-appearance: none; appearance: none;
-        }
-        .priority-HIGH { background: #fee2e2; color: #991b1b; }
-        .priority-MEDIUM { background: #fef3c7; color: #92400e; }
-        .priority-LOW { background: #d1fae5; color: #065f46; }
-
-        .issue-ids {
-            font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 10px;
-            border: none; cursor: pointer; text-align: center;
-            outline: none; -webkit-appearance: none; appearance: none;
-        }
-        .ids-IDENTIFY { background: #dbeafe; color: #1e40af; }
-        .ids-DISCUSS { background: #e0e7ff; color: #4338ca; }
-        .ids-SOLVE { background: #d4edda; color: #155724; }
-
-        .issue-category {
-            font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
-            border: none; cursor: pointer; text-align: center;
-            outline: none; -webkit-appearance: none; appearance: none;
-            background: #f3f4f6; color: #374151;
+        /* === SECTION === */
+        .section { margin-bottom: 32px; }
+        .section-header {
+            font-size: 13px; font-weight: 700; color: #6a6a6a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 16px; padding-bottom: 8px;
+            border-bottom: 2px solid #e5e5e5; display: flex; justify-content: space-between;
         }
 
-        .issue-resolve-btn {
-            background: none; border: 1px solid #ccc; color: #888; font-size: 11px;
-            cursor: pointer; padding: 3px 8px; border-radius: 4px; transition: all 0.2s;
-            font-weight: 600;
+        /* === ISSUE CARD === */
+        .issue-card {
+            background: white; border: 1px solid #e5e5e5; border-radius: 8px;
+            padding: 24px; margin-bottom: 12px; transition: all 0.2s;
+            position: relative;
         }
-        .issue-resolve-btn:hover { background: #00aa55; color: white; border-color: #00aa55; }
+        .issue-card:hover { border-color: #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .issue-card.high-priority { border-left: 3px solid #dc3545; }
+        .issue-card.resolved-card { opacity: 0.5; }
+        .issue-card.resolved-card:hover { opacity: 0.7; }
 
-        .issue-delete {
-            background: none; border: none; color: #ccc; font-size: 16px;
-            cursor: pointer; padding: 4px; transition: color 0.2s;
+        .issue-card-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 16px; gap: 12px;
         }
-        .issue-delete:hover { color: #dc3545; }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center; padding: 48px 20px; color: #aaa; font-size: 15px;
+        .issue-text-input {
+            font-size: 16px; font-weight: 600; color: #1a1a1a; border: none;
+            background: transparent; outline: none; width: 100%; padding: 0;
+            flex: 1; min-width: 0;
         }
+        .issue-text-input:focus { border-bottom: 2px solid #1a1a1a; padding-bottom: 2px; }
+        .resolved-card .issue-text-input { text-decoration: line-through; color: #999; }
 
-        /* Toast */
-        .toast {
-            position: fixed; bottom: 24px; right: 24px; padding: 12px 24px;
-            background: #1a1a1a; color: white; border-radius: 8px; font-size: 14px;
-            transform: translateY(80px); opacity: 0; transition: all 0.3s;
-            z-index: 999;
+        .issue-badges { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+        .badge {
+            font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 4px;
+            border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.03em;
+            outline: none; -webkit-appearance: none; appearance: none; white-space: nowrap;
         }
-        .toast.visible { transform: translateY(0); opacity: 1; }
-        .toast.toast-success { background: #00aa55; }
-        .toast.toast-error { background: #dc3545; }
+        .badge-HIGH { background: #fee2e2; color: #991b1b; }
+        .badge-MEDIUM { background: #fef3c7; color: #92400e; }
+        .badge-LOW { background: #d1fae5; color: #065f46; }
+        .badge-IDENTIFY { background: #dbeafe; color: #1e40af; }
+        .badge-DISCUSS { background: #e0e7ff; color: #4338ca; }
+        .badge-SOLVE { background: #d4edda; color: #155724; }
 
-        /* Expandable notes row */
-        .issue-notes-row {
-            padding: 8px 20px 12px 20px; background: #fafbfc; border-bottom: 1px solid #f0f0f0;
+        .issue-meta {
+            display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+        }
+        .meta-group { display: flex; flex-direction: column; }
+        .meta-label {
+            font-size: 11px; color: #8a8a8a; text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 2px;
+        }
+        .meta-value-input {
+            font-size: 14px; font-weight: 500; color: #1a1a1a; border: none;
+            background: transparent; outline: none; padding: 2px 0;
+        }
+        .meta-value-input:focus { border-bottom: 1px solid #1a1a1a; }
+        .meta-value-input::placeholder { color: #ccc; }
+
+        .issue-notes-section {
+            margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0;
             display: none;
         }
-        .issue-notes-row.visible { display: block; }
-        .issue-notes-row textarea {
-            width: 100%; min-height: 60px; border: 1px solid #e0e0e0; border-radius: 6px;
-            padding: 8px 12px; font-size: 13px; font-family: inherit; resize: vertical;
-            outline: none;
+        .issue-notes-section.visible { display: block; }
+        .issue-notes-section textarea {
+            width: 100%; min-height: 80px; border: 1px solid #e5e5e5; border-radius: 6px;
+            padding: 12px 14px; font-size: 14px; font-family: inherit; resize: vertical;
+            outline: none; background: #fafafa; transition: all 0.2s;
         }
-        .issue-notes-row textarea:focus { border-color: #2563eb; }
-        .notes-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
+        .issue-notes-section textarea:focus { border-color: #1a1a1a; background: white; }
 
-        @media (max-width: 900px) {
-            .container { padding: 0 12px; }
-            .issue-row { grid-template-columns: 1fr 100px 70px 44px; gap: 4px; }
-            .issue-row .issue-ids, .issue-row .issue-category { display: none; }
-            .summary-strip { gap: 16px; }
-            .quick-add { flex-wrap: wrap; }
+        .issue-actions {
+            position: absolute; top: 16px; right: 16px;
+            opacity: 0; transition: opacity 0.2s; display: flex; gap: 4px; align-items: center;
+        }
+        .issue-card:hover .issue-actions { opacity: 1; }
+
+        .btn-notes {
+            background: none; border: 1px solid #e5e5e5; color: #999; font-size: 12px;
+            cursor: pointer; padding: 4px 10px; border-radius: 4px; transition: all 0.15s;
+            font-weight: 600;
+        }
+        .btn-notes:hover { color: #555; background: #f5f5f5; border-color: #ccc; }
+        .btn-resolve {
+            background: none; border: 1px solid #059669; color: #059669; font-size: 12px;
+            cursor: pointer; padding: 4px 10px; border-radius: 4px; transition: all 0.15s;
+            font-weight: 600;
+        }
+        .btn-resolve:hover { background: #059669; color: white; }
+        .btn-reopen {
+            background: none; border: 1px solid #6c757d; color: #6c757d; font-size: 12px;
+            cursor: pointer; padding: 4px 10px; border-radius: 4px; transition: all 0.15s;
+            font-weight: 600;
+        }
+        .btn-reopen:hover { background: #6c757d; color: white; }
+        .btn-icon {
+            background: none; border: none; color: #ccc; font-size: 18px;
+            cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all 0.15s;
+        }
+        .btn-icon:hover { color: #dc3545; background: #fef2f2; }
+
+        /* === EMPTY STATE === */
+        .empty-state {
+            text-align: center; padding: 60px 40px; color: #999;
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+        .empty-state h3 { font-size: 18px; font-weight: 600; color: #666; margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; }
+
+        /* === TOAST === */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; padding: 14px 28px;
+            background: #1a1a1a; color: white; border-radius: 8px; font-size: 14px;
+            font-weight: 500; transform: translateY(80px); opacity: 0; transition: all 0.3s;
+            z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .toast.visible { transform: translateY(0); opacity: 1; }
+        .toast.toast-success { background: #065f46; }
+        .toast.toast-error { background: #9b1c1c; }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 16px; margin: 24px auto; }
+            .summary-cards { grid-template-columns: repeat(2, 1fr); }
+            .issue-meta { gap: 12px; }
+            .quick-add-bar { flex-wrap: wrap; }
+            .issue-badges { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -203,27 +235,32 @@
     </div>
 
     <div class="container">
-        <!-- Summary Strip -->
-        <div class="summary-strip">
-            <div class="summary-item">
-                <div class="summary-num" id="statTotal">0</div>
-                <div class="summary-label">Total</div>
+        <div class="page-title">
+            <h2>{{ division.display_name }} Issues</h2>
+            <p>Identify, Discuss, Solve &mdash; Tackle obstacles to keep the team moving forward</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-card-label">Total Issues</div>
+                <div class="summary-card-value" id="statTotal">0</div>
             </div>
-            <div class="summary-item">
-                <div class="summary-num" style="color:#dc3545;" id="statOpen">0</div>
-                <div class="summary-label">Open</div>
+            <div class="summary-card">
+                <div class="summary-card-label">Open</div>
+                <div class="summary-card-value" style="color:#dc3545;" id="statOpen">0</div>
             </div>
-            <div class="summary-item">
-                <div class="summary-num" style="color:#f59e0b;" id="statInProgress">0</div>
-                <div class="summary-label">In Progress</div>
+            <div class="summary-card">
+                <div class="summary-card-label">In Progress</div>
+                <div class="summary-card-value" style="color:#f59e0b;" id="statInProgress">0</div>
             </div>
-            <div class="summary-item">
-                <div class="summary-num" style="color:#00aa55;" id="statResolved">0</div>
-                <div class="summary-label">Resolved</div>
+            <div class="summary-card">
+                <div class="summary-card-label">Resolved</div>
+                <div class="summary-card-value" style="color:#059669;" id="statResolved">0</div>
             </div>
-            <div class="summary-item">
-                <div class="summary-num" style="color:#991b1b;" id="statHigh">0</div>
-                <div class="summary-label">High Pri</div>
+            <div class="summary-card">
+                <div class="summary-card-label">High Priority</div>
+                <div class="summary-card-value" style="color:#991b1b;" id="statHigh">0</div>
             </div>
         </div>
 
@@ -233,7 +270,7 @@
             <button class="filter-btn" onclick="setFilter('OPEN',this)">Open</button>
             <button class="filter-btn" onclick="setFilter('IN PROGRESS',this)">In Progress</button>
             <button class="filter-btn" onclick="setFilter('RESOLVED',this)">Resolved</button>
-            <span style="color:#ccc;">|</span>
+            <div class="filter-divider"></div>
             <button class="filter-btn" onclick="setFilter('HIGH',this)">High</button>
             <button class="filter-btn" onclick="setFilter('MEDIUM',this)">Medium</button>
             <button class="filter-btn" onclick="setFilter('LOW',this)">Low</button>
@@ -241,43 +278,47 @@
 
         <!-- Quick Add -->
         {% if can_edit %}
-        <div class="quick-add" id="quickAdd">
-            <input type="text" id="qaIssue" placeholder="Identify a new issue..." onkeydown="if(event.key==='Enter')addIssue()">
-            <select id="qaOwner">
-                <option value="">Owner...</option>
-                {% for u in users %}
-                <option value="{{ u.full_name }}">{{ u.full_name }}</option>
-                {% endfor %}
-            </select>
-            <select id="qaPriority">
-                <option value="MEDIUM">Med</option>
-                <option value="HIGH">High</option>
-                <option value="LOW">Low</option>
-            </select>
-            <select id="qaCategory">
-                <option value="ADMINISTRATIVE">Admin</option>
-                <option value="CUSTOMER">Customer</option>
-                <option value="EMPLOYEE">Employee</option>
-                <option value="PROCESS">Process</option>
-                <option value="FINANCIAL">Financial</option>
-                <option value="STRATEGIC">Strategic</option>
-            </select>
-            <button class="btn btn-success btn-sm" onclick="addIssue()">+ Add Issue</button>
+        <div class="quick-add-section">
+            <div class="quick-add-bar">
+                <input type="text" id="qaIssue" placeholder="&#43; Identify a new issue..." onkeydown="if(event.key==='Enter')addIssue()">
+                <select id="qaOwner">
+                    <option value="">Owner...</option>
+                    {% for u in users %}
+                    <option value="{{ u.full_name }}">{{ u.full_name }}</option>
+                    {% endfor %}
+                </select>
+                <select id="qaPriority">
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="LOW">Low</option>
+                </select>
+                <select id="qaCategory">
+                    <option value="ADMINISTRATIVE">Admin</option>
+                    <option value="CUSTOMER">Customer</option>
+                    <option value="EMPLOYEE">Employee</option>
+                    <option value="PROCESS">Process</option>
+                    <option value="FINANCIAL">Financial</option>
+                    <option value="STRATEGIC">Strategic</option>
+                </select>
+                <button class="btn-add" onclick="addIssue()">Add Issue</button>
+            </div>
         </div>
         {% endif %}
 
-        <!-- Open / Active Issues -->
-        <div class="issue-panel" id="openPanel">
-            <div class="issue-panel-header">
-                <span>Issues (<span id="openCount">0</span>)</span>
+        <!-- Open Issues -->
+        <div class="section" id="openSection">
+            <div class="section-header">
+                <span>Open Issues</span>
+                <span id="openCount">0</span>
             </div>
             <div id="issueList"></div>
         </div>
 
         <!-- Resolved Issues -->
-        <div class="issue-panel" id="resolvedPanel" style="opacity:0.6; display:none;">
-            <div class="issue-panel-header">
-                <span>Resolved (<span id="resolvedCount">0</span>)</span>
+        <div class="section" id="resolvedSection" style="display:none;">
+            <div class="section-header">
+                <span>Resolved</span>
+                <span id="resolvedCount">0</span>
             </div>
             <div id="resolvedList"></div>
         </div>
@@ -293,224 +334,197 @@
     let saveTimers = {};
     let currentFilter = 'ALL';
 
-    // ===== API HELPER =====
-    function api(url, opts) {
-        opts = opts || {};
+    function api(url, opts = {}) {
         opts.headers = opts.headers || {};
         if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
             opts.headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(opts.body);
         }
-        return fetch(url, opts).then(function(r) {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
-        });
+        return fetch(url, opts).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
     }
 
-    // ===== LOAD ISSUES =====
     function loadIssues() {
         api('/api/division/' + DIVISION_ID + '/issues/all')
-            .then(function(data) {
-                allIssues = data.issues || data;
-                render();
-            })
-            .catch(function() { showToast('Failed to load issues', 'error'); });
+            .then(data => { allIssues = data.issues || data; render(); })
+            .catch(() => showToast('Failed to load issues', 'error'));
     }
 
-    // ===== FILTER =====
     function setFilter(f, btn) {
         currentFilter = f;
-        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
         render();
     }
 
     function filterIssues(issues) {
         if (currentFilter === 'ALL') return issues;
-        if (['HIGH','MEDIUM','LOW'].indexOf(currentFilter) >= 0) {
-            return issues.filter(function(i) { return i.priority === currentFilter; });
+        if (['HIGH','MEDIUM','LOW'].includes(currentFilter)) {
+            return issues.filter(i => i.priority === currentFilter);
         }
-        return issues.filter(function(i) { return i.status === currentFilter; });
+        return issues.filter(i => i.status === currentFilter);
     }
 
-    // ===== RENDER =====
     function render() {
-        var open = allIssues.filter(function(i) { return i.status !== 'RESOLVED'; });
-        var resolved = allIssues.filter(function(i) { return i.status === 'RESOLVED'; });
-
-        var filteredOpen = filterIssues(open);
-        var filteredResolved = filterIssues(resolved);
+        const open = allIssues.filter(i => i.status !== 'RESOLVED');
+        const resolved = allIssues.filter(i => i.status === 'RESOLVED');
+        const filteredOpen = filterIssues(open);
+        const filteredResolved = filterIssues(resolved);
 
         document.getElementById('issueList').innerHTML = filteredOpen.length
-            ? filteredOpen.map(function(i) { return issueRow(i, false); }).join('')
-            : '<div class="empty-state">No open issues. Nice work!</div>';
+            ? filteredOpen.map(i => issueCard(i, false)).join('')
+            : `<div class="empty-state"><div class="empty-state-icon">&#10003;</div><h3>No Open Issues</h3><p>The team is clear! Add a new issue above to start IDS.</p></div>`;
 
-        document.getElementById('resolvedList').innerHTML = filteredResolved.map(function(i) {
-            return issueRow(i, true);
-        }).join('');
-
+        document.getElementById('resolvedList').innerHTML = filteredResolved.map(i => issueCard(i, true)).join('');
         document.getElementById('openCount').textContent = filteredOpen.length;
         document.getElementById('resolvedCount').textContent = filteredResolved.length;
-        document.getElementById('resolvedPanel').style.display = filteredResolved.length ? 'block' : 'none';
+        document.getElementById('resolvedSection').style.display = filteredResolved.length ? 'block' : 'none';
 
-        // Summary stats (always from full list)
+        // Stats
         document.getElementById('statTotal').textContent = allIssues.length;
-        document.getElementById('statOpen').textContent = open.filter(function(i) { return i.status === 'OPEN'; }).length;
-        document.getElementById('statInProgress').textContent = open.filter(function(i) { return i.status === 'IN PROGRESS'; }).length;
+        document.getElementById('statOpen').textContent = open.filter(i => i.status === 'OPEN').length;
+        document.getElementById('statInProgress').textContent = open.filter(i => i.status === 'IN PROGRESS').length;
         document.getElementById('statResolved').textContent = resolved.length;
-        document.getElementById('statHigh').textContent = allIssues.filter(function(i) { return i.priority === 'HIGH' && i.status !== 'RESOLVED'; }).length;
+        document.getElementById('statHigh').textContent = allIssues.filter(i => i.priority === 'HIGH' && i.status !== 'RESOLVED').length;
     }
 
-    function esc(str) {
-        var d = document.createElement('div');
-        d.textContent = str || '';
-        return d.innerHTML;
+    function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+
+    function issueCard(i, isResolved) {
+        const pClass = 'badge-' + (i.priority || 'MEDIUM');
+        const idsClass = 'badge-' + (i.ids_stage || 'IDENTIFY');
+        const highPri = i.priority === 'HIGH' && !isResolved ? ' high-priority' : '';
+        const resolvedClass = isResolved ? ' resolved-card' : '';
+
+        return `
+        <div class="issue-card${highPri}${resolvedClass}" data-id="${i.id}">
+            ${CAN_EDIT ? `
+            <div class="issue-actions">
+                <button class="btn-notes" onclick="toggleNotes(${i.id})">Notes</button>
+                <button class="${isResolved ? 'btn-reopen' : 'btn-resolve'}" onclick="resolveIssue(${i.id},${!isResolved})">${isResolved ? 'Reopen' : 'Resolve'}</button>
+                <button class="btn-icon" onclick="deleteIssue(${i.id})" title="Remove">&times;</button>
+            </div>` : ''}
+            <div class="issue-card-header">
+                <input type="text" class="issue-text-input" value="${esc(i.issue)}"
+                    oninput="debounceSave(${i.id},'issue',this.value)"
+                    onchange="updateField(${i.id},'issue',this.value)"
+                    ${!CAN_EDIT ? 'disabled' : ''}>
+                <div class="issue-badges">
+                    <select class="badge ${pClass}" onchange="updatePriority(${i.id},this)" ${!CAN_EDIT ? 'disabled' : ''}>
+                        <option value="HIGH" ${i.priority==='HIGH'?'selected':''}>HIGH</option>
+                        <option value="MEDIUM" ${i.priority==='MEDIUM'?'selected':''}>MEDIUM</option>
+                        <option value="LOW" ${i.priority==='LOW'?'selected':''}>LOW</option>
+                    </select>
+                    <select class="badge ${idsClass}" onchange="updateIDS(${i.id},this)" ${!CAN_EDIT ? 'disabled' : ''}>
+                        <option value="IDENTIFY" ${i.ids_stage==='IDENTIFY'?'selected':''}>IDENTIFY</option>
+                        <option value="DISCUSS" ${i.ids_stage==='DISCUSS'?'selected':''}>DISCUSS</option>
+                        <option value="SOLVE" ${i.ids_stage==='SOLVE'?'selected':''}>SOLVE</option>
+                    </select>
+                </div>
+            </div>
+            <div class="issue-meta">
+                <div class="meta-group">
+                    <span class="meta-label">Owner</span>
+                    <input type="text" class="meta-value-input" value="${esc(i.owner || i.owner_full_name || i.owner_name || '')}"
+                        placeholder="Unassigned" onchange="updateField(${i.id},'owner',this.value)"
+                        ${!CAN_EDIT ? 'disabled' : ''}>
+                </div>
+                <div class="meta-group">
+                    <span class="meta-label">Category</span>
+                    <select class="meta-value-input" style="cursor:pointer;"
+                        onchange="updateField(${i.id},'category',this.value)" ${!CAN_EDIT ? 'disabled' : ''}>
+                        <option value="ADMINISTRATIVE" ${i.category==='ADMINISTRATIVE'?'selected':''}>Admin</option>
+                        <option value="CUSTOMER" ${i.category==='CUSTOMER'?'selected':''}>Customer</option>
+                        <option value="EMPLOYEE" ${i.category==='EMPLOYEE'?'selected':''}>Employee</option>
+                        <option value="PROCESS" ${i.category==='PROCESS'?'selected':''}>Process</option>
+                        <option value="FINANCIAL" ${i.category==='FINANCIAL'?'selected':''}>Financial</option>
+                        <option value="STRATEGIC" ${i.category==='STRATEGIC'?'selected':''}>Strategic</option>
+                    </select>
+                </div>
+                <div class="meta-group">
+                    <span class="meta-label">Created</span>
+                    <span class="meta-value-input" style="color:#888;">${i.created_date || 'Unknown'}</span>
+                </div>
+            </div>
+            <div class="issue-notes-section" id="notes-${i.id}">
+                <div class="meta-label" style="margin-bottom:8px;">Discussion Notes / Solution</div>
+                <textarea placeholder="Add notes, discussion points, or the solution..."
+                    onchange="updateField(${i.id},'discussion_notes',this.value)"
+                    oninput="debounceSave(${i.id},'discussion_notes',this.value)"
+                    ${!CAN_EDIT ? 'disabled' : ''}>${esc(i.discussion_notes || '')}</textarea>
+            </div>
+        </div>`;
     }
 
-    function issueRow(i, isResolved) {
-        var pClass = 'priority-' + (i.priority || 'MEDIUM');
-        var idsClass = 'ids-' + (i.ids_stage || 'IDENTIFY');
-        var resolveLabel = isResolved ? 'Reopen' : 'Resolve';
-
-        return '<div class="issue-row' + (isResolved ? ' resolved' : '') + '" data-id="' + i.id + '">' +
-            '<div style="display:flex;align-items:center;gap:6px;">' +
-                '<input type="text" class="issue-text" value="' + esc(i.issue) + '"' +
-                    ' oninput="debounceSave(' + i.id + ',\'issue\',this.value)"' +
-                    ' onchange="updateField(' + i.id + ',\'issue\',this.value)"' +
-                    (!CAN_EDIT ? ' disabled' : '') + '>' +
-                '<button style="background:none;border:none;color:#bbb;cursor:pointer;font-size:14px;" ' +
-                    'onclick="toggleNotes(' + i.id + ')" title="Notes">&#9998;</button>' +
-            '</div>' +
-            '<input type="text" class="issue-owner" value="' + esc(i.owner || i.owner_full_name || i.owner_name || '') + '"' +
-                ' placeholder="Owner..."' +
-                ' onchange="updateField(' + i.id + ',\'owner\',this.value)"' +
-                (!CAN_EDIT ? ' disabled' : '') + '>' +
-            '<select class="issue-priority ' + pClass + '"' +
-                ' onchange="updateField(' + i.id + ',\'priority\',this.value); this.className=\'issue-priority priority-\'+this.value;"' +
-                (!CAN_EDIT ? ' disabled' : '') + '>' +
-                '<option value="HIGH"' + (i.priority==='HIGH'?' selected':'') + '>HIGH</option>' +
-                '<option value="MEDIUM"' + (i.priority==='MEDIUM'?' selected':'') + '>MED</option>' +
-                '<option value="LOW"' + (i.priority==='LOW'?' selected':'') + '>LOW</option>' +
-            '</select>' +
-            '<select class="issue-ids ' + idsClass + '"' +
-                ' onchange="updateIDS(' + i.id + ',this)"' +
-                (!CAN_EDIT ? ' disabled' : '') + '>' +
-                '<option value="IDENTIFY"' + (i.ids_stage==='IDENTIFY'?' selected':'') + '>I</option>' +
-                '<option value="DISCUSS"' + (i.ids_stage==='DISCUSS'?' selected':'') + '>D</option>' +
-                '<option value="SOLVE"' + (i.ids_stage==='SOLVE'?' selected':'') + '>S</option>' +
-            '</select>' +
-            (CAN_EDIT ?
-                '<button class="issue-resolve-btn" onclick="resolveIssue(' + i.id + ',' + (!isResolved) + ')">' + resolveLabel + '</button>' +
-                '<button class="issue-delete" onclick="deleteIssue(' + i.id + ')" title="Remove">&times;</button>'
-            : '<span></span><span></span>') +
-        '</div>' +
-        '<div class="issue-notes-row" id="notes-' + i.id + '">' +
-            '<div class="notes-label">Discussion Notes / Solution</div>' +
-            '<textarea placeholder="Add notes..."' +
-                ' onchange="updateField(' + i.id + ',\'discussion_notes\',this.value)"' +
-                ' oninput="debounceSave(' + i.id + ',\'discussion_notes\',this.value)"' +
-                (!CAN_EDIT ? ' disabled' : '') + '>' + esc(i.discussion_notes || '') + '</textarea>' +
-        '</div>';
-    }
-
-    // ===== TOGGLE NOTES =====
     function toggleNotes(id) {
-        var el = document.getElementById('notes-' + id);
+        const el = document.getElementById('notes-' + id);
         if (el) el.classList.toggle('visible');
     }
 
-    // ===== ADD ISSUE =====
     function addIssue() {
-        var issue = document.getElementById('qaIssue').value.trim();
+        const issue = document.getElementById('qaIssue').value.trim();
         if (!issue) { document.getElementById('qaIssue').focus(); return; }
-        var owner = document.getElementById('qaOwner').value;
-        var priority = document.getElementById('qaPriority').value;
-        var category = document.getElementById('qaCategory').value;
-
+        const owner = document.getElementById('qaOwner').value;
+        const priority = document.getElementById('qaPriority').value;
+        const category = document.getElementById('qaCategory').value;
         api('/api/division/' + DIVISION_ID + '/issues', {
-            method: 'POST',
-            body: { issue: issue, owner: owner, priority: priority, category: category }
-        }).then(function(data) {
-            if (data.success) {
-                document.getElementById('qaIssue').value = '';
-                showToast('Issue added', 'success');
-                loadIssues();
-            }
-        }).catch(function() { showToast('Failed to add', 'error'); });
+            method: 'POST', body: { issue, owner, priority, category }
+        }).then(data => {
+            if (data.success) { document.getElementById('qaIssue').value = ''; showToast('Issue identified', 'success'); loadIssues(); }
+        }).catch(() => showToast('Failed to add', 'error'));
     }
 
-    // ===== UPDATE FIELD =====
     function updateField(id, field, value) {
         clearTimeout(saveTimers[id + '_' + field]);
         api('/api/division/' + DIVISION_ID + '/issues/' + id, {
-            method: 'PUT',
-            body: { [field]: value }
-        }).then(function(data) {
-            if (data.success) {
-                var i = allIssues.find(function(x) { return x.id === id; });
-                if (i) i[field] = value;
-            }
-        }).catch(function() { showToast('Save failed', 'error'); });
+            method: 'PUT', body: { [field]: value }
+        }).then(data => { if (data.success) { const i = allIssues.find(x => x.id === id); if (i) i[field] = value; } })
+            .catch(() => showToast('Save failed', 'error'));
+    }
+
+    function updatePriority(id, selectEl) {
+        const val = selectEl.value;
+        selectEl.className = 'badge badge-' + val;
+        updateField(id, 'priority', val);
     }
 
     function updateIDS(id, selectEl) {
-        var val = selectEl.value;
-        selectEl.className = 'issue-ids ids-' + val;
+        const val = selectEl.value;
+        selectEl.className = 'badge badge-' + val;
         updateField(id, 'ids_stage', val);
-        // If SOLVE, auto-resolve
-        if (val === 'SOLVE') {
-            resolveIssue(id, true);
-        }
+        if (val === 'SOLVE') resolveIssue(id, true);
     }
 
     function debounceSave(id, field, value) {
         clearTimeout(saveTimers[id + '_' + field]);
-        saveTimers[id + '_' + field] = setTimeout(function() {
-            updateField(id, field, value);
-        }, 1200);
+        saveTimers[id + '_' + field] = setTimeout(() => updateField(id, field, value), 1200);
     }
 
-    // ===== RESOLVE / REOPEN =====
     function resolveIssue(id, resolved) {
         api('/api/division/' + DIVISION_ID + '/issues/' + id + '/resolve', {
-            method: 'POST',
-            body: { resolved: resolved }
-        }).then(function(data) {
+            method: 'POST', body: { resolved }
+        }).then(data => {
             if (data.success) {
-                var i = allIssues.find(function(x) { return x.id === id; });
-                if (i) {
-                    i.status = resolved ? 'RESOLVED' : 'OPEN';
-                    i.ids_stage = resolved ? 'SOLVE' : 'IDENTIFY';
-                }
+                const i = allIssues.find(x => x.id === id);
+                if (i) { i.status = resolved ? 'RESOLVED' : 'OPEN'; i.ids_stage = resolved ? 'SOLVE' : 'IDENTIFY'; }
                 render();
                 showToast(resolved ? 'Issue resolved!' : 'Reopened', 'success');
             }
-        }).catch(function() { showToast('Failed to update', 'error'); });
+        }).catch(() => showToast('Failed to update', 'error'));
     }
 
-    // ===== DELETE =====
     function deleteIssue(id) {
         if (!confirm('Remove this issue?')) return;
-        api('/api/division/' + DIVISION_ID + '/issues/' + id, {
-            method: 'DELETE'
-        }).then(function(data) {
-            if (data.success) {
-                allIssues = allIssues.filter(function(x) { return x.id !== id; });
-                render();
-                showToast('Issue removed', 'success');
-            }
-        }).catch(function() { showToast('Failed to delete', 'error'); });
+        api('/api/division/' + DIVISION_ID + '/issues/' + id, { method: 'DELETE' })
+            .then(data => { if (data.success) { allIssues = allIssues.filter(x => x.id !== id); render(); showToast('Issue removed', 'success'); } })
+            .catch(() => showToast('Failed to delete', 'error'));
     }
 
-    // ===== TOAST =====
     function showToast(msg, type) {
-        var t = document.getElementById('toast');
-        t.textContent = msg;
-        t.className = 'toast toast-' + (type || 'success') + ' visible';
-        setTimeout(function() { t.classList.remove('visible'); }, 2500);
+        const t = document.getElementById('toast');
+        t.textContent = msg; t.className = 'toast toast-' + (type || 'success') + ' visible';
+        setTimeout(() => t.classList.remove('visible'), 2500);
     }
 
-    // ===== INIT =====
     loadIssues();
     </script>
 </body>
