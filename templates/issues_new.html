@@ -5,749 +5,513 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Issues - {{ division.display_name }} - EOS Platform</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
-            background: #f5f5f5;
-            color: #2a2a2a;
-            line-height: 1.6;
+            background: #f5f5f5; color: #2a2a2a; line-height: 1.6;
         }
-        
         .header {
-            background: #1a1a1a;
-            color: white;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: #1a1a1a; color: white; padding: 14px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
         }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .back-link { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .back-link:hover { color: white; }
+        .header h1 { font-size: 22px; font-weight: 600; }
+        .header-right { display: flex; gap: 12px; align-items: center; }
+        .user-info { font-size: 13px; color: #888; }
+
+        .btn {
+            padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        
-        .back-link {
-            color: #b0b0b0;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-        
-        .back-link:hover {
-            color: white;
-        }
-        
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .header-right {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        
-        .user-info {
-            font-size: 14px;
-            color: #b0b0b0;
-        }
-        
+        .btn-success { background: #00aa55; color: white; }
+        .btn-success:hover { background: #008844; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
         .btn-logout {
-            padding: 8px 16px;
-            background: transparent;
-            border: 1px solid #4a4a4a;
-            color: white;
-            border-radius: 4px;
-            font-size: 13px;
-            text-decoration: none;
-            transition: all 0.2s;
+            padding: 6px 14px; background: transparent; border: 1px solid #4a4a4a;
+            color: white; border-radius: 4px; font-size: 12px; text-decoration: none;
         }
-        
-        .btn-logout:hover {
-            background: #2d2d2d;
+        .btn-brainstorm {
+            padding: 8px 16px; background: #7c3aed; color: white; border-radius: 6px;
+            font-size: 13px; font-weight: 600; text-decoration: none;
         }
-        
-        .container {
-            max-width: 1400px;
-            margin: 32px auto;
-            padding: 0 40px;
+        .btn-brainstorm:hover { background: #6d28d9; }
+
+        .container { max-width: 1200px; margin: 24px auto; padding: 0 32px; }
+
+        /* Summary Strip */
+        .summary-strip {
+            display: flex; gap: 24px; margin-bottom: 20px; padding: 16px 24px;
+            background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
         }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 32px;
+        .summary-item { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+        .summary-num { font-size: 28px; font-weight: 700; line-height: 1; }
+        .summary-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+        /* Filters */
+        .filter-bar {
+            display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;
         }
-        
-        .page-title h2 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        
-        .page-title p {
-            font-size: 14px;
-            color: #6a6a6a;
-        }
-        
-        .btn-primary {
-            padding: 12px 24px;
-            background: #1a1a1a;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary:hover {
-            background: #2d2d2d;
-            transform: translateY(-1px);
-        }
-        
-        .category-filters {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding: 16px;
-            background: white;
-            border-radius: 8px;
-        }
-        
         .filter-btn {
-            padding: 8px 16px;
-            border: 1px solid #d0d0d0;
-            background: white;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
+            padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: 1px solid #e0e0e0; background: white; color: #555;
             transition: all 0.2s;
         }
-        
-        .filter-btn:hover,
-        .filter-btn.active {
-            background: #1a1a1a;
-            color: white;
-            border-color: #1a1a1a;
+        .filter-btn.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
+        .filter-btn:hover { border-color: #999; }
+
+        /* Quick Add Bar */
+        .quick-add {
+            display: flex; gap: 8px; margin-bottom: 20px; padding: 12px 16px;
+            background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            align-items: center; flex-wrap: wrap;
         }
-        
-        .filter-btn .count {
-            display: inline-block;
-            margin-left: 6px;
-            padding: 2px 6px;
-            background: #f0f0f0;
-            border-radius: 10px;
-            font-size: 11px;
+        .quick-add input, .quick-add select {
+            padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 6px;
+            font-size: 14px; outline: none; transition: border-color 0.2s;
         }
-        
-        .filter-btn:hover .count,
-        .filter-btn.active .count {
-            background: rgba(255,255,255,0.2);
-            color: white;
+        .quick-add input:focus, .quick-add select:focus { border-color: #00aa55; }
+        .quick-add input[type="text"] { flex: 1; min-width: 220px; }
+        .quick-add select { min-width: 110px; }
+
+        /* Issue Row */
+        .issue-panel {
+            background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            overflow: hidden; margin-bottom: 16px;
         }
-        
-        .issues-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        .issue-panel-header {
+            padding: 14px 20px; font-size: 13px; font-weight: 700; color: #6a6a6a;
+            text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        
-        .issue-card {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 24px;
-            transition: all 0.2s;
+
+        .issue-row {
+            display: grid;
+            grid-template-columns: 1fr 120px 80px 90px 80px 44px;
+            gap: 8px; align-items: center; padding: 10px 20px;
+            border-bottom: 1px solid #f0f0f0; transition: background 0.15s;
         }
-        
-        .issue-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        
-        .issue-card.resolved {
-            opacity: 0.6;
-            background: #f9f9f9;
-        }
-        
-        .issue-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-        
+        .issue-row:hover { background: #fafafa; }
+        .issue-row:last-child { border-bottom: none; }
+        .issue-row.resolved { opacity: 0.45; }
+        .issue-row.resolved .issue-text { text-decoration: line-through; color: #aaa; }
+
         .issue-text {
-            font-size: 16px;
+            font-size: 14px; font-weight: 500; border: none; background: transparent;
+            width: 100%; padding: 4px 0; outline: none; color: #2a2a2a;
+        }
+        .issue-text:focus { border-bottom: 2px solid #00aa55; }
+
+        .issue-owner {
+            font-size: 13px; border: none; background: transparent;
+            padding: 4px 0; color: #555; outline: none; width: 100%;
+        }
+        .issue-owner:focus { border-bottom: 2px solid #2563eb; }
+
+        .issue-priority {
+            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+            border: none; cursor: pointer; text-transform: uppercase; text-align: center;
+            outline: none; -webkit-appearance: none; appearance: none;
+        }
+        .priority-HIGH { background: #fee2e2; color: #991b1b; }
+        .priority-MEDIUM { background: #fef3c7; color: #92400e; }
+        .priority-LOW { background: #d1fae5; color: #065f46; }
+
+        .issue-ids {
+            font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 10px;
+            border: none; cursor: pointer; text-align: center;
+            outline: none; -webkit-appearance: none; appearance: none;
+        }
+        .ids-IDENTIFY { background: #dbeafe; color: #1e40af; }
+        .ids-DISCUSS { background: #e0e7ff; color: #4338ca; }
+        .ids-SOLVE { background: #d4edda; color: #155724; }
+
+        .issue-category {
+            font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+            border: none; cursor: pointer; text-align: center;
+            outline: none; -webkit-appearance: none; appearance: none;
+            background: #f3f4f6; color: #374151;
+        }
+
+        .issue-resolve-btn {
+            background: none; border: 1px solid #ccc; color: #888; font-size: 11px;
+            cursor: pointer; padding: 3px 8px; border-radius: 4px; transition: all 0.2s;
             font-weight: 600;
-            flex: 1;
-            margin-right: 16px;
         }
-        
-        .issue-badges {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
+        .issue-resolve-btn:hover { background: #00aa55; color: white; border-color: #00aa55; }
+
+        .issue-delete {
+            background: none; border: none; color: #ccc; font-size: 16px;
+            cursor: pointer; padding: 4px; transition: color 0.2s;
         }
-        
-        .badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-        
-        .badge-high {
-            background: #fee;
-            color: #c33;
-        }
-        
-        .badge-medium {
-            background: #ffd;
-            color: #a60;
-        }
-        
-        .badge-low {
-            background: #eff;
-            color: #38a;
-        }
-        
-        .badge-sales { background: #e3f2fd; color: #1976d2; }
-        .badge-service { background: #f3e5f5; color: #7b1fa2; }
-        .badge-process { background: #fff3e0; color: #e65100; }
-        .badge-parts { background: #e8f5e9; color: #2e7d32; }
-        .badge-administrative { background: #fce4ec; color: #c2185b; }
-        
-        .badge-open { background: #fff3e0; color: #e65100; }
-        .badge-in-progress { background: #e3f2fd; color: #1976d2; }
-        .badge-resolved { background: #e8f5e9; color: #2e7d32; }
-        
-        .issue-meta {
-            font-size: 13px;
-            color: #6a6a6a;
-            margin-bottom: 12px;
-        }
-        
-        .issue-meta span {
-            margin-right: 16px;
-        }
-        
-        .issue-discussion {
-            font-size: 14px;
-            color: #4a4a4a;
-            line-height: 1.6;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 4px;
-            margin-bottom: 12px;
-        }
-        
-        .issue-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid #e8e8e8;
-        }
-        
-        .btn-sm {
-            padding: 6px 14px;
-            font-size: 13px;
-            border: 1px solid #d0d0d0;
-            background: white;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #2a2a2a;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        
-        .btn-sm:hover {
-            border-color: #1a1a1a;
-            background: #f5f5f5;
-        }
-        
-        .btn-delete {
-            color: #c33;
-            border-color: #fcc;
-        }
-        
-        .btn-delete:hover {
-            background: #fee;
-            border-color: #c33;
-        }
-        
-        .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: white;
-            border: 1px solid #d0d0d0;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            min-width: 180px;
-            z-index: 1000;
-            margin-top: 4px;
-        }
-        
-        .dropdown-menu a {
-            display: block;
-            padding: 10px 16px;
-            color: #2a2a2a;
-            text-decoration: none;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-        
-        .dropdown-menu a:hover {
-            background: #f5f5f5;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            padding: 32px;
-            border-radius: 8px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-        }
-        
-        .modal-header {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-        
-        .modal-body {
-            margin-bottom: 24px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        
-        .modal-footer {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
-        .btn-modal {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-modal-primary {
-            background: #1a1a1a;
-            color: white;
-        }
-        
-        .btn-modal-primary:hover {
-            background: #2d2d2d;
-        }
-        
-        .btn-modal-secondary {
-            background: #e8e8e8;
-            color: #2a2a2a;
-        }
-        
-        .btn-modal-secondary:hover {
-            background: #d0d0d0;
-        }
-        
-        .form-group {
-            margin-bottom: 16px;
-        }
-        
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 6px;
-        }
-        
-        .form-group select,
-        .form-group input[type="checkbox"] {
-            margin-right: 8px;
-        }
-        
-        .form-group select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #d0d0d0;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            font-weight: 400;
-            cursor: pointer;
-        }
-        
-        .alert {
-            padding: 16px 20px;
-            border-radius: 6px;
-            margin-bottom: 24px;
-            font-size: 14px;
-        }
-        
-        .alert-success {
-            background: #efe;
-            color: #2a5a2a;
-            border: 1px solid #cfc;
-        }
-        
-        .alert-info {
-            background: #eef;
-            color: #2a2a5a;
-            border: 1px solid #ccf;
-        }
-        
+        .issue-delete:hover { color: #dc3545; }
+
+        /* Empty state */
         .empty-state {
-            text-align: center;
-            padding: 64px 32px;
-            background: white;
-            border-radius: 8px;
-            border: 2px dashed #d0d0d0;
+            text-align: center; padding: 48px 20px; color: #aaa; font-size: 15px;
         }
-        
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; padding: 12px 24px;
+            background: #1a1a1a; color: white; border-radius: 8px; font-size: 14px;
+            transform: translateY(80px); opacity: 0; transition: all 0.3s;
+            z-index: 999;
         }
-        
-        .empty-state h3 {
-            font-size: 20px;
-            margin-bottom: 8px;
-            color: #6a6a6a;
+        .toast.visible { transform: translateY(0); opacity: 1; }
+        .toast.toast-success { background: #00aa55; }
+        .toast.toast-error { background: #dc3545; }
+
+        /* Expandable notes row */
+        .issue-notes-row {
+            padding: 8px 20px 12px 20px; background: #fafbfc; border-bottom: 1px solid #f0f0f0;
+            display: none;
         }
-        
-        .empty-state p {
-            color: #8a8a8a;
-            font-size: 14px;
+        .issue-notes-row.visible { display: block; }
+        .issue-notes-row textarea {
+            width: 100%; min-height: 60px; border: 1px solid #e0e0e0; border-radius: 6px;
+            padding: 8px 12px; font-size: 13px; font-family: inherit; resize: vertical;
+            outline: none;
+        }
+        .issue-notes-row textarea:focus { border-color: #2563eb; }
+        .notes-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
+
+        @media (max-width: 900px) {
+            .container { padding: 0 12px; }
+            .issue-row { grid-template-columns: 1fr 100px 70px 44px; gap: 4px; }
+            .issue-row .issue-ids, .issue-row .issue-category { display: none; }
+            .summary-strip { gap: 16px; }
+            .quick-add { flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="header-left">
-            <a href="{{ url_for('division_dashboard', division_id=division.id) }}" class="back-link">← Back to Dashboard</a>
-            <h1>Issues - {{ division.display_name }}</h1>
+            <a href="{{ url_for('division_dashboard', division_id=division.id) }}" class="back-link">&#8592; {{ division.display_name }}</a>
+            <h1>Issues List</h1>
         </div>
         <div class="header-right">
-            <div class="user-info">{{ user.full_name or user.username }}</div>
+            <span class="user-info">{{ user.full_name or user.username }}</span>
+            <a href="{{ url_for('issue_brainstorm', division_id=division.id) }}" class="btn-brainstorm">&#9889; Brainstorm</a>
             <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
         </div>
     </div>
-    
+
     <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
+        <!-- Summary Strip -->
+        <div class="summary-strip">
+            <div class="summary-item">
+                <div class="summary-num" id="statTotal">0</div>
+                <div class="summary-label">Total</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num" style="color:#dc3545;" id="statOpen">0</div>
+                <div class="summary-label">Open</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num" style="color:#f59e0b;" id="statInProgress">0</div>
+                <div class="summary-label">In Progress</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num" style="color:#00aa55;" id="statResolved">0</div>
+                <div class="summary-label">Resolved</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-num" style="color:#991b1b;" id="statHigh">0</div>
+                <div class="summary-label">High Pri</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setFilter('ALL',this)">All</button>
+            <button class="filter-btn" onclick="setFilter('OPEN',this)">Open</button>
+            <button class="filter-btn" onclick="setFilter('IN PROGRESS',this)">In Progress</button>
+            <button class="filter-btn" onclick="setFilter('RESOLVED',this)">Resolved</button>
+            <span style="color:#ccc;">|</span>
+            <button class="filter-btn" onclick="setFilter('HIGH',this)">High</button>
+            <button class="filter-btn" onclick="setFilter('MEDIUM',this)">Medium</button>
+            <button class="filter-btn" onclick="setFilter('LOW',this)">Low</button>
+        </div>
+
+        <!-- Quick Add -->
+        {% if can_edit %}
+        <div class="quick-add" id="quickAdd">
+            <input type="text" id="qaIssue" placeholder="Identify a new issue..." onkeydown="if(event.key==='Enter')addIssue()">
+            <select id="qaOwner">
+                <option value="">Owner...</option>
+                {% for u in users %}
+                <option value="{{ u.full_name }}">{{ u.full_name }}</option>
                 {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        <div class="page-header">
-            <div class="page-title">
-                <h2>Issues List</h2>
-                <p>Identify, Discuss, and Solve problems</p>
-            </div>
-            {% if can_edit %}
-            <div style="display: flex; gap: 12px;">
-                <a href="{{ url_for('issue_brainstorm', division_id=division.id) }}" class="btn-primary" style="background: #e65100;">Brainstorm &amp; IDS</a>
-                <a href="{{ url_for('add_issue', division_id=division.id) }}" class="btn-primary">+ Add Issue</a>
-            </div>
-            {% endif %}
-        </div>
-        
-        <div class="category-filters">
-            <button class="filter-btn active" data-category="all">
-                All <span class="count">{{ issues|length }}</span>
-            </button>
-            <button class="filter-btn" data-category="SALES">
-                Sales <span class="count">{{ category_summary.SALES or 0 }}</span>
-            </button>
-            <button class="filter-btn" data-category="SERVICE">
-                Service <span class="count">{{ category_summary.SERVICE or 0 }}</span>
-            </button>
-            <button class="filter-btn" data-category="PROCESS">
-                Process <span class="count">{{ category_summary.PROCESS or 0 }}</span>
-            </button>
-            <button class="filter-btn" data-category="PARTS">
-                Parts <span class="count">{{ category_summary.PARTS or 0 }}</span>
-            </button>
-            <button class="filter-btn" data-category="ADMINISTRATIVE">
-                Admin <span class="count">{{ category_summary.ADMINISTRATIVE or 0 }}</span>
-            </button>
-        </div>
-        
-        {% if issues %}
-        <div class="issues-list">
-            {% for issue in issues %}
-            <div class="issue-card {% if issue.status == 'RESOLVED' %}resolved{% endif %}" data-category="{{ issue.category }}">
-                <div class="issue-header">
-                    <div class="issue-text">{{ issue.issue }}</div>
-                    <div class="issue-badges">
-                        <span class="badge badge-{{ issue.priority.lower() }}">{{ issue.priority }}</span>
-                        <span class="badge badge-{{ issue.category.lower() }}">{{ issue.category }}</span>
-                        <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}">{{ issue.status }}</span>
-                    </div>
-                </div>
-                
-                <div class="issue-meta">
-                    <span><strong>Owner:</strong> {{ issue.owner_name or 'Unassigned' }}</span>
-                    <span><strong>Added:</strong> {{ issue.date_added }}</span>
-                    <span><strong>Stage:</strong> {{ issue.ids_stage }}</span>
-                </div>
-                
-                {% if issue.discussion_notes %}
-                <div class="issue-discussion">
-                    <strong>Discussion:</strong> {{ issue.discussion_notes }}
-                </div>
-                {% endif %}
-                
-                {% if issue.solution %}
-                <div class="issue-discussion" style="background: #e8f5e9;">
-                    <strong>Solution:</strong> {{ issue.solution }}
-                </div>
-                {% endif %}
-                
-                {% if can_edit %}
-                <div class="issue-actions">
-                    <a href="{{ url_for('edit_issue', division_id=division.id, issue_id=issue.id) }}" class="btn-sm">Edit</a>
-                    <form method="POST" action="{{ url_for('delete_issue', division_id=division.id, issue_id=issue.id) }}" style="display: inline;" onsubmit="return confirm('Delete this issue?');">
-                        <button type="submit" class="btn-sm btn-delete">Delete</button>
-                    </form>
-                    <div class="dropdown-container" style="position: relative; display: inline-block;">
-                        <button type="button" class="btn-sm btn-actions" onclick="toggleDropdown(event, {{ issue.id }})">
-                            Actions ▼
-                        </button>
-                        <div id="dropdown-{{ issue.id }}" class="dropdown-menu" style="display: none;">
-                            <a href="#" onclick="showConvertModal({{ issue.id }}, 'rock'); return false;">Convert to Rock</a>
-                            <a href="#" onclick="showConvertModal({{ issue.id }}, 'todo'); return false;">Convert to To-Do</a>
-                            <a href="#" onclick="showMoveModal({{ issue.id }}); return false;">Move to Division</a>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon">⚠️</div>
-            <h3>No Issues Yet</h3>
-            <p>Add your first issue to get started with IDS (Identify, Discuss, Solve)</p>
+            </select>
+            <select id="qaPriority">
+                <option value="MEDIUM">Med</option>
+                <option value="HIGH">High</option>
+                <option value="LOW">Low</option>
+            </select>
+            <select id="qaCategory">
+                <option value="ADMINISTRATIVE">Admin</option>
+                <option value="CUSTOMER">Customer</option>
+                <option value="EMPLOYEE">Employee</option>
+                <option value="PROCESS">Process</option>
+                <option value="FINANCIAL">Financial</option>
+                <option value="STRATEGIC">Strategic</option>
+            </select>
+            <button class="btn btn-success btn-sm" onclick="addIssue()">+ Add Issue</button>
         </div>
         {% endif %}
-    </div>
-    
-    <!-- Convert to Rock Modal -->
-    <div id="convertRockModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">Convert Issue to Rock</div>
-            <div class="modal-body">
-                <p>This will create a new quarterly rock from this issue and mark the issue as resolved.</p>
-                <p><strong>Rock will be added to:</strong> Current Quarter (Q{{ ((now.month - 1) // 3 + 1) }} {{ now.year }})</p>
+
+        <!-- Open / Active Issues -->
+        <div class="issue-panel" id="openPanel">
+            <div class="issue-panel-header">
+                <span>Issues (<span id="openCount">0</span>)</span>
             </div>
-            <div class="modal-footer">
-                <button class="btn-modal btn-modal-secondary" onclick="closeModal('convertRockModal')">Cancel</button>
-                <button class="btn-modal btn-modal-primary" onclick="confirmConvertRock()">Convert to Rock</button>
+            <div id="issueList"></div>
+        </div>
+
+        <!-- Resolved Issues -->
+        <div class="issue-panel" id="resolvedPanel" style="opacity:0.6; display:none;">
+            <div class="issue-panel-header">
+                <span>Resolved (<span id="resolvedCount">0</span>)</span>
             </div>
+            <div id="resolvedList"></div>
         </div>
     </div>
-    
-    <!-- Convert to To-Do Modal -->
-    <div id="convertTodoModal" class="modal">
-        <div class="modal-content">
-            <form id="convertTodoForm" method="POST" action="">
-                <div class="modal-header">Convert Issue to To-Do</div>
-                <div class="modal-body">
-                    <p>This will create a new to-do item from this issue.</p>
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="resolve_issue" value="yes" checked>
-                            Mark issue as resolved after conversion
-                        </label>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal btn-modal-secondary" onclick="closeModal('convertTodoModal')">Cancel</button>
-                    <button type="submit" class="btn-modal btn-modal-primary">Convert to To-Do</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Move to Division Modal -->
-    <div id="moveDivisionModal" class="modal">
-        <div class="modal-content">
-            <form id="moveDivisionForm" method="POST" action="">
-                <div class="modal-header">Move Issue to Division</div>
-                <div class="modal-body">
-                    <p>Move this issue to a different division/location.</p>
-                    <div class="form-group">
-                        <label>Target Division:</label>
-                        <select name="target_division_id" required>
-                            <option value="">-- Select Division --</option>
-                            {% for div in all_divisions %}
-                            {% if div.id != division.id %}
-                            <option value="{{ div.id }}">{{ div.display_name }}</option>
-                            {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal btn-modal-secondary" onclick="closeModal('moveDivisionModal')">Cancel</button>
-                    <button type="submit" class="btn-modal btn-modal-primary">Move Issue</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
     <script>
-        let currentIssueId = null;
-        
-        // Toggle dropdown menu
-        function toggleDropdown(event, issueId) {
-            event.stopPropagation(); // Prevent document click handler from immediately closing
-            
-            // Close all other dropdowns
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                if (menu.id !== `dropdown-${issueId}`) {
-                    menu.style.display = 'none';
+    const DIVISION_ID = {{ division.id }};
+    const CAN_EDIT = {{ 'true' if can_edit else 'false' }};
+    let allIssues = [];
+    let saveTimers = {};
+    let currentFilter = 'ALL';
+
+    // ===== API HELPER =====
+    function api(url, opts) {
+        opts = opts || {};
+        opts.headers = opts.headers || {};
+        if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(opts.body);
+        }
+        return fetch(url, opts).then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        });
+    }
+
+    // ===== LOAD ISSUES =====
+    function loadIssues() {
+        api('/api/division/' + DIVISION_ID + '/issues/all')
+            .then(function(data) {
+                allIssues = data.issues || data;
+                render();
+            })
+            .catch(function() { showToast('Failed to load issues', 'error'); });
+    }
+
+    // ===== FILTER =====
+    function setFilter(f, btn) {
+        currentFilter = f;
+        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+        render();
+    }
+
+    function filterIssues(issues) {
+        if (currentFilter === 'ALL') return issues;
+        if (['HIGH','MEDIUM','LOW'].indexOf(currentFilter) >= 0) {
+            return issues.filter(function(i) { return i.priority === currentFilter; });
+        }
+        return issues.filter(function(i) { return i.status === currentFilter; });
+    }
+
+    // ===== RENDER =====
+    function render() {
+        var open = allIssues.filter(function(i) { return i.status !== 'RESOLVED'; });
+        var resolved = allIssues.filter(function(i) { return i.status === 'RESOLVED'; });
+
+        var filteredOpen = filterIssues(open);
+        var filteredResolved = filterIssues(resolved);
+
+        document.getElementById('issueList').innerHTML = filteredOpen.length
+            ? filteredOpen.map(function(i) { return issueRow(i, false); }).join('')
+            : '<div class="empty-state">No open issues. Nice work!</div>';
+
+        document.getElementById('resolvedList').innerHTML = filteredResolved.map(function(i) {
+            return issueRow(i, true);
+        }).join('');
+
+        document.getElementById('openCount').textContent = filteredOpen.length;
+        document.getElementById('resolvedCount').textContent = filteredResolved.length;
+        document.getElementById('resolvedPanel').style.display = filteredResolved.length ? 'block' : 'none';
+
+        // Summary stats (always from full list)
+        document.getElementById('statTotal').textContent = allIssues.length;
+        document.getElementById('statOpen').textContent = open.filter(function(i) { return i.status === 'OPEN'; }).length;
+        document.getElementById('statInProgress').textContent = open.filter(function(i) { return i.status === 'IN PROGRESS'; }).length;
+        document.getElementById('statResolved').textContent = resolved.length;
+        document.getElementById('statHigh').textContent = allIssues.filter(function(i) { return i.priority === 'HIGH' && i.status !== 'RESOLVED'; }).length;
+    }
+
+    function esc(str) {
+        var d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+
+    function issueRow(i, isResolved) {
+        var pClass = 'priority-' + (i.priority || 'MEDIUM');
+        var idsClass = 'ids-' + (i.ids_stage || 'IDENTIFY');
+        var resolveLabel = isResolved ? 'Reopen' : 'Resolve';
+
+        return '<div class="issue-row' + (isResolved ? ' resolved' : '') + '" data-id="' + i.id + '">' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+                '<input type="text" class="issue-text" value="' + esc(i.issue) + '"' +
+                    ' oninput="debounceSave(' + i.id + ',\'issue\',this.value)"' +
+                    ' onchange="updateField(' + i.id + ',\'issue\',this.value)"' +
+                    (!CAN_EDIT ? ' disabled' : '') + '>' +
+                '<button style="background:none;border:none;color:#bbb;cursor:pointer;font-size:14px;" ' +
+                    'onclick="toggleNotes(' + i.id + ')" title="Notes">&#9998;</button>' +
+            '</div>' +
+            '<input type="text" class="issue-owner" value="' + esc(i.owner || i.owner_full_name || i.owner_name || '') + '"' +
+                ' placeholder="Owner..."' +
+                ' onchange="updateField(' + i.id + ',\'owner\',this.value)"' +
+                (!CAN_EDIT ? ' disabled' : '') + '>' +
+            '<select class="issue-priority ' + pClass + '"' +
+                ' onchange="updateField(' + i.id + ',\'priority\',this.value); this.className=\'issue-priority priority-\'+this.value;"' +
+                (!CAN_EDIT ? ' disabled' : '') + '>' +
+                '<option value="HIGH"' + (i.priority==='HIGH'?' selected':'') + '>HIGH</option>' +
+                '<option value="MEDIUM"' + (i.priority==='MEDIUM'?' selected':'') + '>MED</option>' +
+                '<option value="LOW"' + (i.priority==='LOW'?' selected':'') + '>LOW</option>' +
+            '</select>' +
+            '<select class="issue-ids ' + idsClass + '"' +
+                ' onchange="updateIDS(' + i.id + ',this)"' +
+                (!CAN_EDIT ? ' disabled' : '') + '>' +
+                '<option value="IDENTIFY"' + (i.ids_stage==='IDENTIFY'?' selected':'') + '>I</option>' +
+                '<option value="DISCUSS"' + (i.ids_stage==='DISCUSS'?' selected':'') + '>D</option>' +
+                '<option value="SOLVE"' + (i.ids_stage==='SOLVE'?' selected':'') + '>S</option>' +
+            '</select>' +
+            (CAN_EDIT ?
+                '<button class="issue-resolve-btn" onclick="resolveIssue(' + i.id + ',' + (!isResolved) + ')">' + resolveLabel + '</button>' +
+                '<button class="issue-delete" onclick="deleteIssue(' + i.id + ')" title="Remove">&times;</button>'
+            : '<span></span><span></span>') +
+        '</div>' +
+        '<div class="issue-notes-row" id="notes-' + i.id + '">' +
+            '<div class="notes-label">Discussion Notes / Solution</div>' +
+            '<textarea placeholder="Add notes..."' +
+                ' onchange="updateField(' + i.id + ',\'discussion_notes\',this.value)"' +
+                ' oninput="debounceSave(' + i.id + ',\'discussion_notes\',this.value)"' +
+                (!CAN_EDIT ? ' disabled' : '') + '>' + esc(i.discussion_notes || '') + '</textarea>' +
+        '</div>';
+    }
+
+    // ===== TOGGLE NOTES =====
+    function toggleNotes(id) {
+        var el = document.getElementById('notes-' + id);
+        if (el) el.classList.toggle('visible');
+    }
+
+    // ===== ADD ISSUE =====
+    function addIssue() {
+        var issue = document.getElementById('qaIssue').value.trim();
+        if (!issue) { document.getElementById('qaIssue').focus(); return; }
+        var owner = document.getElementById('qaOwner').value;
+        var priority = document.getElementById('qaPriority').value;
+        var category = document.getElementById('qaCategory').value;
+
+        api('/api/division/' + DIVISION_ID + '/issues', {
+            method: 'POST',
+            body: { issue: issue, owner: owner, priority: priority, category: category }
+        }).then(function(data) {
+            if (data.success) {
+                document.getElementById('qaIssue').value = '';
+                showToast('Issue added', 'success');
+                loadIssues();
+            }
+        }).catch(function() { showToast('Failed to add', 'error'); });
+    }
+
+    // ===== UPDATE FIELD =====
+    function updateField(id, field, value) {
+        clearTimeout(saveTimers[id + '_' + field]);
+        api('/api/division/' + DIVISION_ID + '/issues/' + id, {
+            method: 'PUT',
+            body: { [field]: value }
+        }).then(function(data) {
+            if (data.success) {
+                var i = allIssues.find(function(x) { return x.id === id; });
+                if (i) i[field] = value;
+            }
+        }).catch(function() { showToast('Save failed', 'error'); });
+    }
+
+    function updateIDS(id, selectEl) {
+        var val = selectEl.value;
+        selectEl.className = 'issue-ids ids-' + val;
+        updateField(id, 'ids_stage', val);
+        // If SOLVE, auto-resolve
+        if (val === 'SOLVE') {
+            resolveIssue(id, true);
+        }
+    }
+
+    function debounceSave(id, field, value) {
+        clearTimeout(saveTimers[id + '_' + field]);
+        saveTimers[id + '_' + field] = setTimeout(function() {
+            updateField(id, field, value);
+        }, 1200);
+    }
+
+    // ===== RESOLVE / REOPEN =====
+    function resolveIssue(id, resolved) {
+        api('/api/division/' + DIVISION_ID + '/issues/' + id + '/resolve', {
+            method: 'POST',
+            body: { resolved: resolved }
+        }).then(function(data) {
+            if (data.success) {
+                var i = allIssues.find(function(x) { return x.id === id; });
+                if (i) {
+                    i.status = resolved ? 'RESOLVED' : 'OPEN';
+                    i.ids_stage = resolved ? 'SOLVE' : 'IDENTIFY';
                 }
-            });
-            
-            const dropdown = document.getElementById(`dropdown-${issueId}`);
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        }
-        
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.dropdown-container')) {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.style.display = 'none';
-                });
+                render();
+                showToast(resolved ? 'Issue resolved!' : 'Reopened', 'success');
             }
-        });
-        
-        // Show convert modal
-        function showConvertModal(issueId, type) {
-            currentIssueId = issueId;
-            closeAllDropdowns();
-            
-            if (type === 'rock') {
-                document.getElementById('convertRockModal').classList.add('active');
-            } else if (type === 'todo') {
-                const form = document.getElementById('convertTodoForm');
-                form.action = `/division/{{ division.id }}/issues/${issueId}/convert-to-todo`;
-                document.getElementById('convertTodoModal').classList.add('active');
+        }).catch(function() { showToast('Failed to update', 'error'); });
+    }
+
+    // ===== DELETE =====
+    function deleteIssue(id) {
+        if (!confirm('Remove this issue?')) return;
+        api('/api/division/' + DIVISION_ID + '/issues/' + id, {
+            method: 'DELETE'
+        }).then(function(data) {
+            if (data.success) {
+                allIssues = allIssues.filter(function(x) { return x.id !== id; });
+                render();
+                showToast('Issue removed', 'success');
             }
-        }
-        
-        // Show move modal
-        function showMoveModal(issueId) {
-            currentIssueId = issueId;
-            closeAllDropdowns();
-            
-            const form = document.getElementById('moveDivisionForm');
-            form.action = `/division/{{ division.id }}/issues/${issueId}/move`;
-            document.getElementById('moveDivisionModal').classList.add('active');
-        }
-        
-        // Close modal
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-            currentIssueId = null;
-        }
-        
-        // Close all dropdowns
-        function closeAllDropdowns() {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.style.display = 'none';
-            });
-        }
-        
-        // Confirm convert to rock
-        function confirmConvertRock() {
-            if (currentIssueId) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/division/{{ division.id }}/issues/${currentIssueId}/convert-to-rock`;
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-        
-        // Close modals when clicking outside
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    closeModal(modal.id);
-                }
-            });
-        });
-        
-        // Category filter buttons
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const category = btn.dataset.category;
-                
-                // Update active state
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // Filter issues
-                document.querySelectorAll('.issue-card').forEach(card => {
-                    if (category === 'all' || card.dataset.category === category) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        });
+        }).catch(function() { showToast('Failed to delete', 'error'); });
+    }
+
+    // ===== TOAST =====
+    function showToast(msg, type) {
+        var t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast toast-' + (type || 'success') + ' visible';
+        setTimeout(function() { t.classList.remove('visible'); }, 2500);
+    }
+
+    // ===== INIT =====
+    loadIssues();
     </script>
 </body>
 </html>

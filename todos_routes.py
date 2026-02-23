@@ -388,3 +388,151 @@ def register_todos_routes(app):
             'division': division_name,
             'recipients': preview
         })
+
+    # =========================================================
+    # LIVE / AJAX API ENDPOINTS
+    # =========================================================
+
+    @app.route('/api/division/<int:division_id>/todos', methods=['GET'])
+    @login_required
+    @division_access_required('division_id')
+    def api_get_todos(division_id):
+        """Get all active todos as JSON"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT t.id, t.task, t.owner, t.due_date, t.status, t.priority,
+                   t.source, t.is_completed, t.completed_at, t.owner_user_id,
+                   u.full_name as owner_full_name
+            FROM todos t
+            LEFT JOIN users u ON t.owner_user_id = u.id
+            WHERE t.division_id = ? AND t.is_active = 1
+            ORDER BY t.is_completed ASC,
+                CASE t.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 ELSE 3 END,
+                t.due_date ASC
+        """, (division_id,))
+        todos = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return jsonify({'success': True, 'todos': todos})
+
+    @app.route('/api/division/<int:division_id>/todos', methods=['POST'])
+    @login_required
+    @division_edit_required('division_id')
+    def api_add_todo(division_id):
+        """Add a new todo via AJAX"""
+        user = session.get('user')
+        data = request.get_json()
+        task = (data.get('task') or '').strip()
+        if not task:
+            return jsonify({'success': False, 'error': 'Task is required'}), 400
+
+        owner = (data.get('owner') or '').strip()
+        due_date = data.get('due_date') or None
+        priority = data.get('priority', 'MEDIUM')
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT organization_id FROM divisions WHERE id = ?", (division_id,))
+        org_id = cursor.fetchone()['organization_id']
+
+        owner_user_id = None
+        if owner:
+            cursor.execute("""
+                SELECT u.id FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                WHERE ur.division_id = ? AND u.full_name = ? AND u.is_active = 1
+            """, (division_id, owner))
+            row = cursor.fetchone()
+            if row:
+                owner_user_id = row['id']
+
+        cursor.execute("""
+            INSERT INTO todos (
+                organization_id, division_id, task, owner, owner_user_id,
+                due_date, status, priority, source, created_by,
+                is_active, is_completed
+            ) VALUES (?, ?, ?, ?, ?, ?, 'OPEN', ?, 'MANUAL', ?, 1, 0)
+        """, (org_id, division_id, task, owner or 'Unassigned', owner_user_id,
+              due_date, priority, user['id']))
+        todo_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'todo_id': todo_id})
+
+    @app.route('/api/division/<int:division_id>/todos/<int:todo_id>', methods=['PUT'])
+    @login_required
+    @division_edit_required('division_id')
+    def api_update_todo(division_id, todo_id):
+        """Update a todo field inline"""
+        user = session.get('user')
+        data = request.get_json()
+
+        allowed_fields = {'task', 'owner', 'due_date', 'priority', 'status'}
+        updates = []
+        params = []
+        for field, value in data.items():
+            if field in allowed_fields:
+                updates.append(f"{field} = ?")
+                params.append(value)
+
+        if not updates:
+            return jsonify({'success': False, 'error': 'No valid fields'}), 400
+
+        updates.append("updated_by = ?")
+        params.append(user['id'])
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        params.extend([todo_id, division_id])
+
+        conn = get_db()
+        conn.execute(
+            f"UPDATE todos SET {', '.join(updates)} WHERE id = ? AND division_id = ?",
+            params
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+
+    @app.route('/api/division/<int:division_id>/todos/<int:todo_id>/toggle', methods=['POST'])
+    @login_required
+    @division_edit_required('division_id')
+    def api_toggle_todo(division_id, todo_id):
+        """Toggle complete/reopen a todo"""
+        user = session.get('user')
+        data = request.get_json()
+        completed = data.get('completed', False)
+
+        conn = get_db()
+        if completed:
+            conn.execute("""
+                UPDATE todos SET status = 'COMPLETE', is_completed = 1,
+                    completed_at = CURRENT_TIMESTAMP, completed_by = ?,
+                    updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND division_id = ?
+            """, (user['id'], user['id'], todo_id, division_id))
+        else:
+            conn.execute("""
+                UPDATE todos SET status = 'OPEN', is_completed = 0,
+                    completed_at = NULL, completed_by = NULL,
+                    updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND division_id = ?
+            """, (user['id'], todo_id, division_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+
+    @app.route('/api/division/<int:division_id>/todos/<int:todo_id>', methods=['DELETE'])
+    @login_required
+    @division_edit_required('division_id')
+    def api_delete_todo(division_id, todo_id):
+        """Soft-delete a todo via AJAX"""
+        user = session.get('user')
+        conn = get_db()
+        conn.execute("""
+            UPDATE todos SET is_active = 0, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND division_id = ?
+        """, (user['id'], todo_id, division_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})

@@ -84,6 +84,19 @@ def register_rocks_routes(app):
         conn.close()
         
         can_edit = can_edit_division(user, division_id)
+
+        # Get division users for owner dropdown
+        conn2 = get_db()
+        cursor2 = conn2.cursor()
+        cursor2.execute("""
+            SELECT DISTINCT u.id, u.full_name
+            FROM users u
+            JOIN user_roles ur ON u.id = ur.user_id
+            WHERE ur.division_id = ? AND u.is_active = 1
+            ORDER BY u.full_name
+        """, (division_id,))
+        users = [dict(row) for row in cursor2.fetchall()]
+        conn2.close()
         
         return render_template('rocks.html',
                              user=user,
@@ -92,7 +105,8 @@ def register_rocks_routes(app):
                              summary=summary,
                              current_quarter=current_quarter,
                              current_year=current_year,
-                             can_edit=can_edit)
+                             can_edit=can_edit,
+                             users=users)
     
     @app.route('/division/<int:division_id>/rocks/add', methods=['GET', 'POST'])
     @login_required
@@ -358,17 +372,67 @@ def register_rocks_routes(app):
         """Get rocks as JSON"""
         conn = get_db()
         cursor = conn.cursor()
-        
+
         cursor.execute("""
-            SELECT 
-                id, description as rock, owner, status, due_date,
-                progress, quarter, year, priority, updated_at, updated_by
-            FROM rocks
-            WHERE division_id = ? AND is_active = 1
-            ORDER BY year DESC, quarter DESC, priority
+            SELECT
+                r.id, r.description, r.owner, r.status, r.due_date,
+                r.progress, r.quarter, r.year, r.priority, r.updated_at,
+                r.owner_user_id, u.full_name as owner_full_name
+            FROM rocks r
+            LEFT JOIN users u ON r.owner_user_id = u.id
+            WHERE r.division_id = ? AND r.is_active = 1
+            ORDER BY r.year DESC, r.quarter DESC, r.priority
         """, (division_id,))
-        
+
         rocks = [dict(row) for row in cursor.fetchall()]
         conn.close()
-        
-        return jsonify(rocks)
+
+        return jsonify({'success': True, 'rocks': rocks})
+
+    @app.route('/api/division/<int:division_id>/rocks', methods=['POST'])
+    @login_required
+    @division_edit_required('division_id')
+    def api_add_rock(division_id):
+        """Add a rock via AJAX"""
+        user = session.get('user')
+        data = request.get_json()
+        description = (data.get('description') or '').strip()
+        if not description:
+            return jsonify({'success': False, 'error': 'Description required'}), 400
+
+        owner = data.get('owner', '')
+        quarter = data.get('quarter', f"Q{(datetime.now().month - 1) // 3 + 1}")
+        year = data.get('year', datetime.now().year)
+        priority = data.get('priority', 1)
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT organization_id FROM divisions WHERE id = ?", (division_id,))
+        org_id = cursor.fetchone()['organization_id']
+
+        cursor.execute("""
+            INSERT INTO rocks (
+                organization_id, division_id, description, owner,
+                quarter, year, priority, status, progress,
+                created_by, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'NOT STARTED', 0, ?, 1)
+        """, (org_id, division_id, description, owner, quarter, year, priority, user['id']))
+        rock_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'rock_id': rock_id})
+
+    @app.route('/api/division/<int:division_id>/rocks/<int:rock_id>', methods=['DELETE'])
+    @login_required
+    @division_edit_required('division_id')
+    def api_delete_rock(division_id, rock_id):
+        """Soft-delete a rock via AJAX"""
+        user = session.get('user')
+        conn = get_db()
+        conn.execute("""
+            UPDATE rocks SET is_active = 0, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND division_id = ?
+        """, (user['id'], rock_id, division_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})

@@ -81,6 +81,16 @@ def register_issues_routes(app):
         
             can_edit = can_edit_division(user, division_id)
             
+            # Get division users for owner dropdown
+            cursor.execute("""
+                SELECT DISTINCT u.id, u.full_name
+                FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                WHERE ur.division_id = ? AND u.is_active = 1
+                ORDER BY u.full_name
+            """, (division_id,))
+            users = [dict(row) for row in cursor.fetchall()]
+
             # Get current date for rock quarter calculation
             from datetime import datetime
             now = datetime.now()
@@ -92,6 +102,7 @@ def register_issues_routes(app):
                                  category_summary=category_summary,
                                  can_edit=can_edit,
                                  all_divisions=all_divisions,
+                                 users=users,
                              now=now)
     
     @app.route('/division/<int:division_id>/issues/add', methods=['GET', 'POST'])
@@ -710,3 +721,145 @@ def register_issues_routes(app):
         )
 
         return jsonify({'success': True, 'results': results})
+
+    # =====================================================
+    # AJAX API ENDPOINTS FOR LIVE INLINE EDITING
+    # =====================================================
+
+    @app.route('/api/division/<int:division_id>/issues/all')
+    @login_required
+    @division_access_required('division_id')
+    @retry_on_lock(max_retries=3)
+    def api_issues_all(division_id):
+        """Get all issues as JSON (for live page)"""
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT i.*, u.full_name as owner_full_name
+                FROM issues i
+                LEFT JOIN users u ON i.owner_user_id = u.id
+                WHERE i.division_id = ? AND i.is_active = 1
+                ORDER BY
+                    CASE i.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END,
+                    CASE i.status WHEN 'OPEN' THEN 1 WHEN 'IN PROGRESS' THEN 2 WHEN 'RESOLVED' THEN 3 ELSE 4 END,
+                    i.date_added DESC
+            """, (division_id,))
+            issues = [dict(row) for row in cursor.fetchall()]
+        return jsonify({'success': True, 'issues': issues})
+
+    @app.route('/api/division/<int:division_id>/issues', methods=['POST'])
+    @login_required
+    @division_edit_required('division_id')
+    @retry_on_lock(max_retries=5)
+    def api_add_issue(division_id):
+        """Add an issue via AJAX"""
+        user = session.get('user')
+        data = request.get_json()
+        issue_text = (data.get('issue') or '').strip()
+        if not issue_text:
+            return jsonify({'success': False, 'error': 'Issue text required'}), 400
+
+        owner = data.get('owner', '')
+        priority = data.get('priority', 'MEDIUM')
+        category = data.get('category', 'ADMINISTRATIVE')
+
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT organization_id FROM divisions WHERE id = ?", (division_id,))
+            org_id = cursor.fetchone()['organization_id']
+
+            cursor.execute("""
+                INSERT INTO issues (
+                    organization_id, division_id, issue, category, priority,
+                    owner, owner_name, date_added, status, ids_stage,
+                    created_by, updated_by, is_active
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', 'IDENTIFY', ?, ?, 1)
+            """, (org_id, division_id, issue_text, category, priority,
+                  owner, owner, datetime.now().strftime('%Y-%m-%d'),
+                  user['id'], user['id']))
+            issue_id = cursor.lastrowid
+            conn.commit()
+
+        log_to_audit(user['id'], 'issues', issue_id, 'CREATE',
+                     changes={'issue': issue_text, 'source': 'live_page'},
+                     organization_id=1, division_id=division_id,
+                     ip_address=request.remote_addr)
+
+        return jsonify({'success': True, 'issue_id': issue_id})
+
+    @app.route('/api/division/<int:division_id>/issues/<int:issue_id>', methods=['PUT'])
+    @login_required
+    @division_edit_required('division_id')
+    @retry_on_lock(max_retries=5)
+    def api_update_issue(division_id, issue_id):
+        """Update an issue field inline via AJAX"""
+        user = session.get('user')
+        data = request.get_json()
+        allowed = ['issue', 'owner', 'priority', 'category', 'status',
+                   'ids_stage', 'discussion_notes', 'solution', 'owner_name']
+
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            for field in allowed:
+                if field in data:
+                    cursor.execute(f"""
+                        UPDATE issues SET {field} = ?, updated_by = ?,
+                               updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ? AND division_id = ?
+                    """, (data[field], user['id'], issue_id, division_id))
+
+            # If status changed to RESOLVED, set resolved_at
+            if data.get('status') == 'RESOLVED':
+                cursor.execute("""
+                    UPDATE issues SET resolved_at = CURRENT_TIMESTAMP,
+                           resolved_by = ? WHERE id = ? AND division_id = ?
+                """, (user['id'], issue_id, division_id))
+
+            conn.commit()
+
+        return jsonify({'success': True})
+
+    @app.route('/api/division/<int:division_id>/issues/<int:issue_id>/resolve', methods=['POST'])
+    @login_required
+    @division_edit_required('division_id')
+    @retry_on_lock(max_retries=5)
+    def api_resolve_issue(division_id, issue_id):
+        """Toggle resolve/reopen an issue via AJAX"""
+        user = session.get('user')
+        data = request.get_json() or {}
+        resolved = data.get('resolved', True)
+
+        with get_db_connection() as conn:
+            if resolved:
+                conn.execute("""
+                    UPDATE issues SET status = 'RESOLVED', ids_stage = 'SOLVE',
+                           resolved_at = CURRENT_TIMESTAMP, resolved_by = ?,
+                           updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ? AND division_id = ?
+                """, (user['id'], user['id'], issue_id, division_id))
+            else:
+                conn.execute("""
+                    UPDATE issues SET status = 'OPEN', ids_stage = 'IDENTIFY',
+                           resolved_at = NULL, resolved_by = NULL,
+                           updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ? AND division_id = ?
+                """, (user['id'], issue_id, division_id))
+            conn.commit()
+
+        return jsonify({'success': True})
+
+    @app.route('/api/division/<int:division_id>/issues/<int:issue_id>', methods=['DELETE'])
+    @login_required
+    @division_edit_required('division_id')
+    @retry_on_lock(max_retries=5)
+    def api_delete_issue(division_id, issue_id):
+        """Soft-delete an issue via AJAX"""
+        user = session.get('user')
+        with get_db_connection() as conn:
+            conn.execute("""
+                UPDATE issues SET is_active = 0, updated_by = ?,
+                       updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND division_id = ?
+            """, (user['id'], issue_id, division_id))
+            conn.commit()
+        return jsonify({'success': True})
