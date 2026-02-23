@@ -25,3 +25,10 @@ Thumbs.db
 
 # Archive
 archive/
+
+# Backup files
+*.backup
+*.bak
+*.live_v1
+*_old.html
+*.v2backup
