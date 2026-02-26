@@ -346,22 +346,31 @@ def register_rocks_routes(app):
         params.append(user['id'])
         params.extend([rock_id, division_id])
         
-        cursor.execute(f"""
-            UPDATE rocks
-            SET {', '.join(updates)}
-            WHERE id = ? AND division_id = ?
-        """, params)
+        try:
+            cursor.execute(f"""
+                UPDATE rocks
+                SET {', '.join(updates)}
+                WHERE id = ? AND division_id = ?
+            """, params)
+            
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'success': False, 'error': str(e)}), 500
+        finally:
+            conn.close()
         
-        log_to_audit(
-            user['id'], 'rocks', rock_id, 'UPDATE',
-            changes=data,
-            organization_id=1,
-            division_id=division_id,
-            ip_address=request.remote_addr
-        )
-        
-        conn.commit()
-        conn.close()
+        # Audit AFTER commit to avoid deadlock (log_to_audit opens its own connection)
+        try:
+            log_to_audit(
+                user['id'], 'rocks', rock_id, 'UPDATE',
+                changes=data,
+                organization_id=1,
+                division_id=division_id,
+                ip_address=request.remote_addr
+            )
+        except Exception:
+            pass  # Don't fail the save if audit logging fails
         
         return jsonify({'success': True, 'message': 'Rock updated successfully'})
     
