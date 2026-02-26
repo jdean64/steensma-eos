@@ -32,3 +32,4 @@ archive/
 *.live_v1
 *_old.html
 *.v2backup
+*.db

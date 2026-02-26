@@ -653,70 +653,32 @@ def register_l10_routes(app):
                 "SELECT task, owner FROM todos WHERE source_l10_id = ? AND is_active = 1",
                 (meeting_id,), fetch='all', commit=False) or []
 
-            # Build email
+            # Build email subject and plain-text body for mailto
             meeting_date = meeting['meeting_date']
             subject = f"L10 Meeting Summary - {div_name} - {meeting_date}"
-
-            html_body = f"""
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto;">
-                <div style="background: #1a1a1a; color: white; padding: 24px 32px; border-radius: 8px 8px 0 0;">
-                    <h1 style="margin: 0; font-size: 22px;">L10 Meeting Summary</h1>
-                    <p style="margin: 8px 0 0; color: #b0b0b0;">{div_name} &bull; {meeting_date} &bull; {duration} min</p>
-                </div>
-                <div style="background: #ffffff; padding: 24px 32px; border: 1px solid #e0e0e0;">
-                    <p><strong>Meeting Rating:</strong> {rating}/10</p>
-            """
+            text_body = f"L10 Meeting Summary - {div_name}\n"
+            text_body += f"Date: {meeting_date}  |  Duration: {duration} min\n"
+            text_body += f"Meeting Rating: {rating}/10\n\n"
 
             if m.get('segue_good_news'):
-                html_body += f"<h3 style='margin-top:20px;'>Segue</h3><p>{m['segue_good_news']}</p>"
+                text_body += f"SEGUE:\n{m['segue_good_news']}\n\n"
             if m.get('customer_employee_headlines'):
-                html_body += f"<h3 style='margin-top:20px;'>Headlines</h3><p>{m['customer_employee_headlines']}</p>"
+                text_body += f"HEADLINES:\n{m['customer_employee_headlines']}\n\n"
             if m.get('scorecard_review'):
-                html_body += f"<h3 style='margin-top:20px;'>Scorecard Review</h3><p>{m['scorecard_review']}</p>"
+                text_body += f"SCORECARD REVIEW:\n{m['scorecard_review']}\n\n"
             if m.get('rock_review'):
-                html_body += f"<h3 style='margin-top:20px;'>Rock Review</h3><p>{m['rock_review']}</p>"
+                text_body += f"ROCK REVIEW:\n{m['rock_review']}\n\n"
 
             if new_todos:
-                html_body += "<h3 style='margin-top:20px;'>New To-Dos</h3><ul>"
+                text_body += "NEW TO-DOS:\n"
                 for t in new_todos:
-                    html_body += f"<li><strong>{t['owner']}:</strong> {t['task']}</li>"
-                html_body += "</ul>"
+                    text_body += f"  - {t['owner']}: {t['task']}\n"
+                text_body += "\n"
 
             if notes:
-                html_body += f"<h3 style='margin-top:20px;'>Conclude Notes</h3><p>{notes}</p>"
+                text_body += f"CONCLUDE NOTES:\n{notes}\n\n"
 
-            html_body += """
-                </div>
-                <div style="background: #f5f5f5; padding: 16px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none; font-size: 12px; color: #888;">
-                    Sent from EOS Platform &bull; eos.coresteensma.com
-                </div>
-            </div>
-            """
-
-            # Send emails
-            email_results = []
-            if emails:
-                try:
-                    import boto3
-                    ses = boto3.client('ses', region_name='us-east-2')
-                    for email_addr in emails:
-                        email_addr = email_addr.strip()
-                        if not email_addr:
-                            continue
-                        try:
-                            ses.send_email(
-                                Source='eos@coresteensma.com',
-                                Destination={'ToAddresses': [email_addr]},
-                                Message={
-                                    'Subject': {'Data': subject, 'Charset': 'UTF-8'},
-                                    'Body': {'Html': {'Data': html_body, 'Charset': 'UTF-8'}}
-                                }
-                            )
-                            email_results.append({'email': email_addr, 'status': 'sent'})
-                        except Exception as e:
-                            email_results.append({'email': email_addr, 'status': 'failed', 'error': str(e)})
-                except ImportError:
-                    email_results = [{'email': e, 'status': 'skipped', 'error': 'Email service not configured'} for e in emails]
+            text_body += "---\nSent from EOS Platform - eos.coresteensma.com"
 
             # Auto-create next Living L10
             new_living_id = None
@@ -728,7 +690,8 @@ def register_l10_routes(app):
             return jsonify({
                 'success': True,
                 'duration': duration,
-                'emails_sent': email_results,
+                'email_subject': subject,
+                'email_body': text_body,
                 'new_meeting_id': new_living_id,
                 'redirect_url': f'/division/{division_id}/l10'
             })

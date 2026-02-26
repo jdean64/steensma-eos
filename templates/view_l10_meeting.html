@@ -1234,10 +1234,16 @@
         .then(data => {
             if (data.success) {
                 let msg = `Meeting completed! Duration: ${data.duration} min.`;
-                if (data.emails_sent && data.emails_sent.length > 0) {
-                    const sent = data.emails_sent.filter(e => e.status === 'sent').length;
-                    msg += ` ${sent} email(s) sent.`;
+
+                // Open mailto link if sending email
+                if (sendEmail && emailList.length > 0 && data.email_subject && data.email_body) {
+                    const mailto = 'mailto:' + emailList.join(',') +
+                        '?subject=' + encodeURIComponent(data.email_subject) +
+                        '&body=' + encodeURIComponent(data.email_body);
+                    window.open(mailto, '_blank');
+                    msg += ' Email client opened.';
                 }
+
                 if (data.new_meeting_id) {
                     msg += ' New Living L10 is ready!';
                 }
@@ -1248,7 +1254,7 @@
                     } else {
                         window.location.href = `/division/${DIVISION_ID}/l10`;
                     }
-                }, 1500);
+                }, 2500);
             } else {
                 showToast('Error completing meeting: ' + (data.error || 'Unknown'), 'error');
                 btn.textContent = sendEmail ? 'Complete & Send Email' : 'Complete (No Email)';
