@@ -11,7 +11,7 @@
 
 | App | Domain | Proxy Port | Cognito Client ID | Backend Port |
 |-----|--------|-----------|-------------------|-------------|
-| Shop | shop.coresteensma.com | 4181 | `2ct71va1p5birq81lbodgjj783` ⚠️ shared | 8080 |
+| Shop | shop.coresteensma.com | 4181 | `3bvoh4vqfrj872jrtoi34pcsim` | 8080 |
 | Warranty | warranty.coresteensma.com | 4182 | `5j8mrpmni5n85bpshmagq94580` | 8081 |
 | Western | western.coresteensma.com | 4183 | `5fp9ql1abe89nanuonpaqas8js` | 8083 |
 | KPI | kpi.coresteensma.com | 4184 | `3ge7jiiv6nknnuteiteaiam3k` | 8084 |
@@ -20,7 +20,7 @@
 | Havyn | havyn.coresteensma.com | 4187 | `5l6igsgmovuuhkm2j54kdb2td0` | 8087 |
 | EOS | eos.coresteensma.com | 4188 | `2ct71va1p5birq81lbodgjj783` ⚠️ shared | 5002 |
 
-> ⚠️ Shop and EOS currently share the same Cognito client ID. Create a separate one for Shop (see below).
+> ✅ Shop now has its own dedicated Cognito client (updated Feb 26, 2026).
 
 ---
 
@@ -164,8 +164,10 @@ sudo ss -tlnp | grep :4181
 
 ## TO DO: Remaining Setup
 
-- [ ] Create separate Cognito app client for **Shop** (currently shares with EOS)
-- [ ] Add Brian, Kurt, Tammy as Cognito users
-- [ ] Create Cognito groups for per-app access control
-- [ ] Assign users to groups
-- [ ] Add `allowed_groups` to each oauth2-proxy config
+- [x] Create separate Cognito app client for **Shop** ✅ (Feb 26, 2026)
+- [x] Add Brian, Kurt, Tammy as Cognito users ✅ (Feb 26, 2026)
+- [x] Create Cognito groups for per-app access control ✅ (Feb 26, 2026)
+- [x] Assign users to groups ✅ (Feb 26, 2026)
+- [x] Add `allowed_groups` + `oidc_groups_claim` to each oauth2-proxy config ✅ (Feb 26, 2026)
+- [ ] Verify each user can only access their assigned apps
+- [ ] Confirm Brian, Kurt, Tammy received invite emails and set passwords
