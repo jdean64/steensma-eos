@@ -97,6 +97,7 @@ Example assignments:
 | User | Groups |
 |------|--------|
 | Jeff (jdean64@gmail.com) | All groups (admin) |
+| Terry (terry@steensmalawn.com) | All groups (admin) |
 | Brian (brian@steensmalawn.com) | shop-users, eos-users, warranty-users |
 | Kurt (kurt@steensmalawn.com) | shop-users, eos-users |
 | Tammy (tammy@steensmalawn.com) | kpi-users, eos-users |
@@ -115,6 +116,7 @@ Then restart: `sudo systemctl restart oauth2-proxy@{app}`
 | Name | Email (Cognito) | EOS Username |
 |------|----------------|-------------|
 | Jeff Dean | jdean64@gmail.com | jeff |
+| Terry | terry@steensmalawn.com | terry |
 | Brian | brian@steensmalawn.com | brian |
 | Kurt | kurt@steensmalawn.com | kurt |
 | Tammy | tammy@steensmalawn.com | tammy |
