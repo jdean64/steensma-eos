@@ -339,7 +339,8 @@
                 L10 Meeting &mdash; {{ meeting.meeting_date }} &mdash; {{ meeting.division_name or 'Division' }}</h1>
             <div class="header-right">
                 {% if meeting.status == 'IN_PROGRESS' %}
-                <span class="timer-display" id="meetingTimer">00:00:00</span>
+                <span class="timer-display" id="meetingTimer">00:00</span>
+                <button class="btn btn-sm btn-success" id="restartTimerBtn" onclick="restartTimer()" style="display:none;margin-left:4px;padding:4px 10px;font-size:11px;">▶ Start</button>
                 {% endif %}
                 <a href="{{ url_for('l10_meetings', division_id=division_id) }}" class="btn btn-secondary" style="color: #ccc; border-color: #555;">Back to Meetings</a>
                 <button class="btn btn-secondary no-print" style="color: #ccc; border-color: #555;" onclick="window.print()">&#128424; Print</button>
@@ -815,29 +816,81 @@
     }
 
     // ===== TIMER =====
+    let timerStarted = null;
+    let timerIntervalId = null;
+
     function startTimer() {
-        if (!STARTED_AT || MEETING_STATUS !== 'IN_PROGRESS') return;
+        if (MEETING_STATUS !== 'IN_PROGRESS') return;
         const timerEl = document.getElementById('meetingTimer');
+        const restartBtn = document.getElementById('restartTimerBtn');
         if (!timerEl) return;
 
-        const started = new Date(STARTED_AT + (STARTED_AT.includes('Z') ? '' : 'Z'));
+        // If no started_at or started more than 4 hours ago, show restart button
+        if (!STARTED_AT) {
+            timerEl.textContent = '00:00';
+            if (restartBtn) restartBtn.style.display = 'inline-flex';
+            return;
+        }
 
+        const started = new Date(STARTED_AT + (STARTED_AT.includes('Z') ? '' : 'Z'));
+        const elapsedSec = Math.floor((new Date() - started) / 1000);
+
+        if (elapsedSec > 4 * 3600) {
+            // Meeting was started more than 4 hours ago — stale timer
+            timerEl.textContent = '00:00';
+            if (restartBtn) restartBtn.style.display = 'inline-flex';
+            return;
+        }
+
+        // Normal timer — count up from started_at
+        timerStarted = started;
+        if (restartBtn) restartBtn.style.display = 'none';
+        runTimer();
+    }
+
+    function runTimer() {
+        const timerEl = document.getElementById('meetingTimer');
         function updateTimer() {
             const now = new Date();
-            const diff = Math.floor((now - started) / 1000);
+            const diff = Math.floor((now - timerStarted) / 1000);
             const hrs = Math.floor(diff / 3600);
             const mins = Math.floor((diff % 3600) / 60);
             const secs = diff % 60;
-            timerEl.textContent = String(hrs).padStart(2, '0') + ':' +
-                                  String(mins).padStart(2, '0') + ':' +
-                                  String(secs).padStart(2, '0');
+            if (hrs > 0) {
+                timerEl.textContent = String(hrs) + ':' +
+                                      String(mins).padStart(2, '0') + ':' +
+                                      String(secs).padStart(2, '0');
+            } else {
+                timerEl.textContent = String(mins).padStart(2, '0') + ':' +
+                                      String(secs).padStart(2, '0');
+            }
             if (diff > DURATION_MINUTES * 60) {
                 timerEl.classList.add('overtime');
+            } else {
+                timerEl.classList.remove('overtime');
             }
         }
         updateTimer();
-        setInterval(updateTimer, 1000);
+        if (timerIntervalId) clearInterval(timerIntervalId);
+        timerIntervalId = setInterval(updateTimer, 1000);
     }
+
+    async function restartTimer() {
+        const resp = await fetch(`/api/l10/${MEETING_ID}/restart-timer`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await resp.json();
+        if (data.success) {
+            timerStarted = new Date();
+            const timerEl = document.getElementById('meetingTimer');
+            const restartBtn = document.getElementById('restartTimerBtn');
+            timerEl.classList.remove('overtime');
+            if (restartBtn) restartBtn.style.display = 'none';
+            runTimer();
+        }
+    }
+
     startTimer();
 
     // ===== SECTION NAVIGATION =====

@@ -33,7 +33,7 @@ def _create_living_l10(division_id, user_id):
                 frequency, duration_minutes, status, started_at,
                 created_by, created_at, updated_at
             )
-            VALUES (?, ?, ?, '09:00', 'WEEKLY', 60, 'IN_PROGRESS', CURRENT_TIMESTAMP,
+            VALUES (?, ?, ?, '07:30', 'WEEKLY', 60, 'IN_PROGRESS', CURRENT_TIMESTAMP,
                     ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         """, (org_id, division_id, today, user_id))
         meeting_id = cursor.lastrowid
@@ -166,7 +166,7 @@ def register_l10_routes(app):
 
         if request.method == 'POST':
             meeting_date = request.form.get('meeting_date')
-            meeting_time = request.form.get('meeting_time', '09:00')
+            meeting_time = request.form.get('meeting_time', '07:30')
             frequency = request.form.get('frequency', 'WEEKLY')
             duration_minutes = request.form.get('duration_minutes', 60)
             facilitator_user_id = request.form.get('facilitator_user_id')
@@ -697,5 +697,23 @@ def register_l10_routes(app):
             })
         except sqlite3.OperationalError:
             return jsonify({'success': False, 'error': 'Database busy', 'retry': True}), 503
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    # =========================================================
+    # RESTART TIMER (reset started_at to now)
+    # =========================================================
+
+    @app.route('/api/l10/<int:meeting_id>/restart-timer', methods=['POST'])
+    @login_required
+    def restart_l10_timer(meeting_id):
+        """Reset the meeting timer by updating started_at to now"""
+        try:
+            execute_with_retry("""
+                UPDATE l10_meetings
+                SET started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (meeting_id,))
+            return jsonify({'success': True, 'started_at': datetime.now().isoformat()})
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
