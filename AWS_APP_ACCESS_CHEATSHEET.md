@@ -98,8 +98,8 @@ Example assignments:
 |------|--------|
 | Jeff (jdean64@gmail.com) | All groups (admin) |
 | Terry (terry@steensmalawn.com) | All groups (admin) |
-| Brian (brian@steensmalawn.com) | shop-users, eos-users, warranty-users |
-| Kurt (kurt@steensmalawn.com) | shop-users, eos-users |
+| Brian (brian@steensmalawn.com) | shop-users, eos-users, warranty-users, parts-users |
+| Kurt (kurt@steensmalawn.com) | shop-users, eos-users, warranty-users, parts-users |
 | Tammy (tammy@steensmalawn.com) | kpi-users, eos-users |
 
 ### Step 3: Tell the Server to Enforce Groups
