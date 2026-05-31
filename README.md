@@ -1,5 +1,12 @@
 # EOS Platform - Complete Setup Guide
 
+## Document Control
+- Status: Active
+- Owner: EOS Leadership + CoreSteensma Ops
+- Last Reviewed: 2026-05-23
+- Validation: Confirm service health, datasource freshness, and route access after updates.
+- Rollback Reference: Restore prior app/service config and latest verified datasheets.
+
 ## 🎯 What You Built
 
 **Live URL:** https://eos.coresteensma.com
